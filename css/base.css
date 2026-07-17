@@ -1,0 +1,174 @@
+/* ============================================================
+   Bolsillo · Base
+   Reset, fuentes self-hosted, shell mobile y safe-areas iOS.
+   ============================================================ */
+
+/* ---- Fuentes self-hosted (variable, subset latin) ---- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/inter-latin-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url('../fonts/spacegrotesk-latin-var.woff2') format('woff2');
+}
+
+/* ---- Reset acotado ---- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: 1.45;
+  color: var(--text-1);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+/* toda cifra usa tabular-nums */
+.num,
+input[inputmode="decimal"],
+input[inputmode="numeric"] {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a { color: var(--accent); text-decoration: none; }
+
+svg { display: block; }
+
+img { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ============================================================
+   Shell mobile
+   ============================================================ */
+.app-shell {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  background:
+    radial-gradient(120% 80% at 50% -8%, var(--bg-2) 0%, var(--bg-1) 42%, var(--bg-0) 100%);
+}
+
+/* ---- Header (respeta el notch / Dynamic Island) ---- */
+.app-header {
+  flex: 0 0 auto;
+  height: calc(var(--header-h) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(var(--sp-5), env(safe-area-inset-left));
+  padding-right: max(var(--sp-5), env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  background: var(--glass-header);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(1.3);
+  backdrop-filter: blur(var(--blur)) saturate(1.3);
+  border-bottom: 1px solid var(--line-1);
+  position: relative;
+  z-index: 30;
+}
+
+/* ---- Zona de vistas (scroll) ---- */
+.view-stage {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: var(--sp-5) max(var(--sp-5), env(safe-area-inset-left))
+           calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-8))
+           max(var(--sp-5), env(safe-area-inset-right));
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transition: opacity var(--dur) var(--ease),
+              transform var(--dur) var(--ease),
+              visibility 0s linear var(--dur);
+}
+
+.view > .view-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* vista activa */
+.view.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur) var(--ease),
+              transform var(--dur) var(--ease),
+              visibility 0s;
+  z-index: 2;
+}
+
+/* transición: entrante desde abajo, saliente hacia arriba (solo transform/opacity) */
+.view.is-entering { transform: translateY(14px); opacity: 0; }
+.view.is-leaving  { transform: translateY(-10px); opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .view,
+  .view.is-active,
+  .view.is-entering,
+  .view.is-leaving {
+    transition: opacity var(--dur-fast) linear;
+    transform: none;
+  }
+}
+
+/* util */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}

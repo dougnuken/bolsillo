@@ -1,0 +1,317 @@
+/* ============================================================
+   Bolsillo · Vistas
+   ============================================================ */
+
+/* ---- Saludo / encabezado de vista ---- */
+.view-greet {
+  margin-bottom: var(--sp-5);
+}
+.view-greet__eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.view-greet__title {
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   HOY · gauge semáforo
+   ============================================================ */
+.gauge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sp-7) var(--sp-5) var(--sp-6);
+  gap: var(--sp-5);
+}
+.gauge {
+  position: relative;
+  width: min(74vw, 262px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.gauge__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.gauge__track {
+  fill: none;
+  stroke: var(--glass-3);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+/* aro de progreso: en vacío queda punteado y tenue */
+.gauge__arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 14;
+  stroke-linecap: round;
+  opacity: 0.28;
+  stroke-dasharray: 3 16;
+}
+.gauge__center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-6);
+}
+.gauge__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-display);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+}
+.gauge__value--muted { color: var(--text-3); }
+.gauge__caption {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  max-width: 20ch;
+  line-height: 1.4;
+}
+.gauge__hint {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* leyenda del semáforo */
+.legend {
+  display: flex;
+  gap: var(--sp-5);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.legend__dot { width: 8px; height: 8px; border-radius: var(--r-full); }
+.legend__dot--verde { background: var(--semaforo-verde); }
+.legend__dot--ambar { background: var(--semaforo-ambar); }
+.legend__dot--rojo  { background: var(--semaforo-rojo); }
+
+/* ---- mini-stats fila ---- */
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.stat {
+  padding: var(--sp-4);
+}
+.stat__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-weight: var(--fw-medium);
+}
+.stat__value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h2);
+  color: var(--text-2);
+  margin-top: var(--sp-2);
+  letter-spacing: -0.01em;
+}
+.stat__value--empty { color: var(--text-3); }
+
+/* ============================================================
+   Listas (movimientos / créditos)
+   ============================================================ */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+}
+.list-row__icon {
+  width: 42px; height: 42px;
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  background: var(--glass-2);
+  color: var(--text-2);
+}
+.list-row__body { flex: 1 1 auto; min-width: 0; }
+.list-row__title {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.list-row__meta { font-size: var(--fs-xs); color: var(--text-3); margin-top: 2px; }
+.list-row__amount {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-body);
+  color: var(--text-1);
+}
+
+/* ============================================================
+   Asesor (placeholder de chat)
+   ============================================================ */
+.advisor-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-4) var(--sp-2);
+}
+.advisor-orb {
+  width: 84px; height: 84px;
+  border-radius: var(--r-full);
+  display: grid; place-items: center;
+  color: var(--text-inverse);
+  background: var(--accent-grad);
+  box-shadow: 0 12px 34px -12px var(--accent-glow);
+}
+.advisor-orb svg { width: 40px; height: 40px; }
+.suggest-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-top: var(--sp-2);
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+  text-align: left;
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.chip:hover { background: var(--glass-2); border-color: var(--line-accent); }
+.chip:active { transform: scale(0.98); }
+.chip__q { flex: 1 1 auto; }
+.chip svg { width: 18px; height: 18px; color: var(--accent); flex: 0 0 auto; }
+
+/* barra de composición (deshabilitada por ahora) */
+.composer {
+  margin-top: var(--sp-5);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-radius: var(--r-full);
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+  opacity: 0.6;
+}
+.composer input {
+  flex: 1 1 auto;
+  border: none;
+  background: none;
+  color: var(--text-2);
+  font-size: var(--fs-input);
+  outline: none;
+}
+.composer input::placeholder { color: var(--text-3); }
+.composer__send {
+  width: 40px; height: 40px;
+  flex: 0 0 auto;
+  border-radius: var(--r-full);
+  display: grid; place-items: center;
+  color: var(--text-inverse);
+  background: var(--accent);
+}
+.composer__send svg { width: 18px; height: 18px; }
+
+/* ============================================================
+   Ajustes
+   ============================================================ */
+.settings-group { margin-bottom: var(--sp-5); }
+.settings-group__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin: 0 var(--sp-2) var(--sp-3);
+}
+.settings-list {
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--line-1);
+  background: var(--glass-1);
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease);
+}
+.settings-row + .settings-row { border-top: 1px solid var(--line-1); }
+.settings-row:hover { background: var(--glass-2); }
+.settings-row:active { background: var(--glass-3); }
+.settings-row__icon {
+  width: 34px; height: 34px;
+  flex: 0 0 auto;
+  display: grid; place-items: center;
+  border-radius: var(--r-xs);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.settings-row__icon svg { width: 19px; height: 19px; }
+.settings-row__body { flex: 1 1 auto; min-width: 0; }
+.settings-row__title {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-medium);
+  color: var(--text-1);
+}
+.settings-row__sub { font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px; }
+.settings-row__chev { color: var(--text-3); flex: 0 0 auto; }
+.settings-row__chev svg { width: 18px; height: 18px; }
+
+.app-foot {
+  text-align: center;
+  padding: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.app-foot__ver {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
