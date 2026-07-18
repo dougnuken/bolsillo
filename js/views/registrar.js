@@ -11,7 +11,7 @@ import {
   crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga,
 } from '../model.js';
 import { formatCOP } from '../money.js';
-import { CATEGORIAS, categoriaPorId } from '../categories.js';
+import { catalogo, categoriaPorId } from '../categories.js';
 import { parseTextoLibre } from '../categorize.js';
 import { toast } from '../toast.js';
 
@@ -140,7 +140,7 @@ function keypadHTML() {
 
 function chipsCategoria() {
   return `<div class="cat-grid" role="listbox" aria-label="Categoría">${
-    CATEGORIAS.map((c) => `
+    catalogo().map((c) => `
       <button type="button" class="cat-chip ${c.cls}${STATE.categoriaId === c.id ? ' is-sel' : ''}"
         role="option" aria-selected="${STATE.categoriaId === c.id}" data-cat="${c.id}">
         <span class="cat-chip__ic">${c.icon}</span>

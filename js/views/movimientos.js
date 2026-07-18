@@ -8,7 +8,7 @@
 import { getAll, del, put, getConfig, saveConfig } from '../db.js';
 import { actualizar, derivarEsHormiga } from '../model.js';
 import { formatCOP } from '../money.js';
-import { CATEGORIAS, categoriaPorId } from '../categories.js';
+import { catalogo, categoriaPorId } from '../categories.js';
 import { aprender } from '../categorize.js';
 import { confirmar, menu } from '../overlay.js';
 import { toast } from '../toast.js';
@@ -245,7 +245,7 @@ export default {
     async function recategorizar(m, cfg) {
       const elegido = await menu({
         title: 'Cambiar categoría',
-        items: CATEGORIAS.map((c) => ({ value: c.id, label: c.label, icon: c.icon })),
+        items: catalogo().map((c) => ({ value: c.id, label: c.label, icon: c.icon })),
       });
       if (!elegido || elegido === m.categoria) return;
       try {

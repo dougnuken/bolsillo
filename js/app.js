@@ -10,9 +10,10 @@ import creditos from './views/creditos.js';
 import asesor from './views/asesor.js';
 import ajustes from './views/ajustes.js';
 import registrar from './views/registrar.js';
-import { abrirSueldo } from './views/sueldo-sheet.js';
+import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
 import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
+import { aplicarPersonalizacion } from './categories.js';
 
 const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
 
@@ -122,12 +123,12 @@ function initTabbar() {
   });
 }
 
-/* ---- header: engrane abre el sueldo (lo mínimo de Ajustes en T4) ---- */
+/* ---- header: el engrane lleva a la vista Ajustes completa ---- */
 function initHeader() {
   const settingsBtn = document.getElementById('open-ajustes');
   if (settingsBtn) {
     settingsBtn.addEventListener('click', () => {
-      abrirSueldo({ onSaved: () => refreshActive('hoy') });
+      location.hash = '#/ajustes';
     });
   }
 }
@@ -166,10 +167,29 @@ const ICON_BANG =
 
 async function initData() {
   await openDB();
-  const cfg = await getConfig();
+  let cfg = await getConfig();
   if (!Array.isArray(cfg.cuentas) || cfg.cuentas.length === 0) {
-    await saveConfig({ cuentas: CUENTAS_SEMILLA });
+    cfg = await saveConfig({ cuentas: CUENTAS_SEMILLA });
   }
+
+  // El catálogo de categorías refleja los renombres y las categorías propias.
+  const personalizado = (cfg.categoriasPersonalizadas || []).length > 0
+    || Object.keys(cfg.categoriasRenombradas || {}).length > 0;
+  aplicarPersonalizacion(cfg);
+  if (personalizado) refreshActive(currentRoute); // repinta con las etiquetas del usuario
+
+  // Primer arranque: guía de inicio antes que nada.
+  const ingresos = await getAll('ingresos');
+  if (debeMostrarse(cfg, ingresos)) {
+    abrirOnboarding({
+      onDone: () => {
+        refreshActive('hoy');
+        correrRecurrentes().catch((err) => console.warn('[Bolsillo] recurrentes:', err));
+      },
+    });
+    return; // no materializamos por debajo de la guía
+  }
+
   await correrRecurrentes();
 }
 

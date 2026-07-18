@@ -203,6 +203,8 @@ export function crearIngreso(datos = {}, { now = new Date() } = {}) {
     fuente: datos.fuente,
     monto: montoEntero(datos.monto),
     diaDelMes: datos.diaDelMes,
+    // Etiqueta editable (solo para negocios; el empleo no la necesita).
+    nombre: typeof datos.nombre === 'string' ? datos.nombre.trim() : '',
   };
   const v = validarIngreso(base);
   if (!v.ok) throw new Error('Ingreso inválido: ' + v.errores.join(' '));
@@ -215,6 +217,7 @@ export function validarIngreso(obj = {}) {
   if (!FUENTES_INGRESO.includes(obj.fuente)) errores.push(`Fuente inválida: "${obj.fuente}". Use uno de: ${FUENTES_INGRESO.join(', ')}.`);
   if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El monto debe ser un entero de pesos mayor a 0.');
   if (!esDiaDelMes(obj.diaDelMes)) errores.push('El día del mes debe estar entre 1 y 31.');
+  if (obj.nombre != null && typeof obj.nombre !== 'string') errores.push('El nombre debe ser texto.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }
 
@@ -231,10 +234,16 @@ export function configDefault() {
     cuentas: Object.freeze([]),
     // Overrides de categorización que el usuario "enseñó" (comercioNorm→categoríaId).
     categoriasAprendidas: Object.freeze({}),
+    // Categorías propias del usuario: [{id, label}]. Los ids son estables
+    // (los movimientos guardan categoriaId) y nunca chocan con los canónicos.
+    categoriasPersonalizadas: Object.freeze([]),
+    // Renombres de las categorías canónicas: {categoriaId: 'Nuevo nombre'}.
+    categoriasRenombradas: Object.freeze({}),
     apiKey: null,
     modelos: Object.freeze({ vision: 'claude-haiku-4-5', extractos: 'claude-sonnet-4-5' }),
     tema: 'dark',
     fechaUltimoBackup: null,
+    onboardingCompletado: false,
   });
 }
 
@@ -252,6 +261,14 @@ export function crearConfig(datos = {}) {
     cuentas: Object.freeze(Array.isArray(datos.cuentas) ? datos.cuentas.slice() : d.cuentas.slice()),
     // categoriasAprendidas: merge sobre lo existente (el llamante pasa el mapa completo).
     categoriasAprendidas: Object.freeze({ ...d.categoriasAprendidas, ...(datos.categoriasAprendidas || {}) }),
+    // categoriasPersonalizadas: reemplazo (el llamante pasa el arreglo completo).
+    categoriasPersonalizadas: Object.freeze(
+      Array.isArray(datos.categoriasPersonalizadas)
+        ? datos.categoriasPersonalizadas.map((c) => Object.freeze({ ...c }))
+        : d.categoriasPersonalizadas.slice(),
+    ),
+    categoriasRenombradas: Object.freeze({ ...d.categoriasRenombradas, ...(datos.categoriasRenombradas || {}) }),
+    onboardingCompletado: datos.onboardingCompletado === true,
   });
 }
 

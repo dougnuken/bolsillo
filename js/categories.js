@@ -43,17 +43,103 @@ export const CATEGORIAS = Object.freeze([
   { id: 'otros', label: 'Otros', icon: I.otros },
 ].map((c) => Object.freeze({ ...c, cls: 'cat--' + c.id })));
 
-const POR_ID = Object.freeze(
-  CATEGORIAS.reduce((acc, c) => { acc[c.id] = c; return acc; }, {}),
-);
+function indexar(lista) {
+  return Object.freeze(lista.reduce((acc, c) => { acc[c.id] = c; return acc; }, {}));
+}
+
+const POR_ID = indexar(CATEGORIAS);
 
 /** El id "Otros", usado como fallback seguro. */
 export const CATEGORIA_OTROS = POR_ID.otros;
 
+const esTexto = (v) => typeof v === 'string' && v.trim() !== '';
+
 /**
- * Devuelve la categoría por id. Si no existe, cae en "Otros"
- * (evita null en el render de listas). Nunca lanza.
+ * Catálogo EFECTIVO = canónicas (con los renombres del usuario aplicados)
+ * + las categorías propias que haya creado. PURA: no toca estado ni DOM.
+ *
+ * Los ids canónicos nunca cambian (los movimientos guardan `categoriaId`);
+ * un renombre solo afecta la etiqueta visible.
+ *
+ * @param {object} [config] config del usuario
+ * @returns {ReadonlyArray<object>} catálogo congelado
+ */
+export function construirCatalogo(config = {}) {
+  const renombradas = (config && typeof config.categoriasRenombradas === 'object' && config.categoriasRenombradas) || {};
+  const propias = Array.isArray(config && config.categoriasPersonalizadas) ? config.categoriasPersonalizadas : [];
+
+  const base = CATEGORIAS.map((c) => {
+    const nuevo = renombradas[c.id];
+    return esTexto(nuevo) ? Object.freeze({ ...c, label: nuevo.trim() }) : c;
+  });
+
+  const vistos = new Set(base.map((c) => c.id));
+  const extra = [];
+  for (const p of propias) {
+    if (!p || typeof p !== 'object') continue;
+    const id = esTexto(p.id) ? p.id.trim() : '';
+    if (id === '' || vistos.has(id)) continue;      // ids duplicados: se ignoran
+    if (!esTexto(p.label)) continue;                // sin nombre: se ignora
+    vistos.add(id);
+    extra.push(Object.freeze({
+      id,
+      label: p.label.trim(),
+      icon: I.otros,        // las propias reusan el ícono e ícono-tint neutros
+      cls: 'cat--otros',
+      propia: true,
+    }));
+  }
+
+  return Object.freeze([...base, ...extra]);
+}
+
+/**
+ * Genera un id estable para una categoría propia a partir del nombre.
+ * PURA. Prefijo `usr-` para no chocar jamás con los canónicos.
+ * @param {string} nombre
+ * @param {string[]} [existentes] ids ya usados
+ */
+export function idPersonalizada(nombre, existentes = []) {
+  const slug = String(nombre == null ? '' : nombre)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24);
+  const base = 'usr-' + (slug || 'categoria');
+  const usados = new Set(existentes);
+  if (!usados.has(base)) return base;
+  let n = 2;
+  while (usados.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+/* ---- catálogo activo (cache de solo lectura, se reemplaza entero) ----
+   No es mutación de datos: cada aplicación construye un catálogo NUEVO
+   y congelado, y se cambia la referencia. app.js lo ceba al arrancar. */
+let CATALOGO_ACTIVO = CATEGORIAS;
+let POR_ID_ACTIVO = POR_ID;
+
+/**
+ * Aplica la personalización del usuario a todo el catálogo de la app.
+ * @param {object} config
+ * @returns {ReadonlyArray<object>} el catálogo efectivo
+ */
+export function aplicarPersonalizacion(config) {
+  CATALOGO_ACTIVO = construirCatalogo(config);
+  POR_ID_ACTIVO = indexar(CATALOGO_ACTIVO);
+  return CATALOGO_ACTIVO;
+}
+
+/** Catálogo efectivo actual (canónicas + personalización aplicada). */
+export function catalogo() {
+  return CATALOGO_ACTIVO;
+}
+
+/**
+ * Devuelve la categoría por id respetando la personalización activa.
+ * Si no existe, cae en "Otros" (evita null en el render). Nunca lanza.
  */
 export function categoriaPorId(id) {
-  return POR_ID[id] || CATEGORIA_OTROS;
+  return POR_ID_ACTIVO[id] || POR_ID_ACTIVO.otros || CATEGORIA_OTROS;
 }

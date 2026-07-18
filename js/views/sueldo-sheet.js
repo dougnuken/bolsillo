@@ -96,7 +96,7 @@ export async function abrirSueldo({ onSaved } = {}) {
     amarillo: amarilloActual,
   });
 
-  hoja(html, (panel, cerrar) => {
+  return hoja(html, (panel, cerrar) => {
     const $ = (sel) => panel.querySelector(sel);
     const form = $('#sueldo-form');
     const advToggle = $('#sueldo-adv-toggle');
