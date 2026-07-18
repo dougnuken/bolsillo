@@ -70,6 +70,8 @@ export function crearMovimiento(datos = {}, { now = new Date(), config } = {}) {
     adjuntoId: datos.adjuntoId ?? null,
     aiMeta: datos.aiMeta ?? null,
     dedupKey: datos.dedupKey ?? null,
+    // Vínculo al recurrente que lo materializó (null si es manual/foto/pdf).
+    recurrenteId: datos.recurrenteId ?? null,
   };
   base.esHormiga = derivarEsHormiga(base, config ?? configDefault());
 
@@ -225,6 +227,10 @@ export function configDefault() {
     umbralHormiga: UMBRAL_HORMIGA_DEFAULT,
     umbralesSemaforo: Object.freeze({ amarillo: 1.25 }),
     presupuestos: Object.freeze({}),
+    // Cuentas del usuario (se siembran en el primer arranque desde app.js).
+    cuentas: Object.freeze([]),
+    // Overrides de categorización que el usuario "enseñó" (comercioNorm→categoríaId).
+    categoriasAprendidas: Object.freeze({}),
     apiKey: null,
     modelos: Object.freeze({ vision: 'claude-haiku-4-5', extractos: 'claude-sonnet-4-5' }),
     tema: 'dark',
@@ -242,6 +248,10 @@ export function crearConfig(datos = {}) {
     umbralesSemaforo: Object.freeze({ ...d.umbralesSemaforo, ...(datos.umbralesSemaforo || {}) }),
     modelos: Object.freeze({ ...d.modelos, ...(datos.modelos || {}) }),
     presupuestos: Object.freeze({ ...d.presupuestos, ...(datos.presupuestos || {}) }),
+    // cuentas: reemplazo (no merge) — al agregar una cuenta se pasa el arreglo completo.
+    cuentas: Object.freeze(Array.isArray(datos.cuentas) ? datos.cuentas.slice() : d.cuentas.slice()),
+    // categoriasAprendidas: merge sobre lo existente (el llamante pasa el mapa completo).
+    categoriasAprendidas: Object.freeze({ ...d.categoriasAprendidas, ...(datos.categoriasAprendidas || {}) }),
   });
 }
 

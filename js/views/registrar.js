@@ -1,63 +1,445 @@
-/* Bottom-sheet REGISTRAR — 4 métodos de captura (solo visual en T1). */
+/* ============================================================
+   Bolsillo · Registrar (bottom-sheet del FAB)
+   T3: Teclado numérico propio + Texto libre. Foto/PDF = "pronto".
+   Guarda con crearMovimiento/actualizar, valida, toast, borrador
+   autosave (localStorage, debounce) y modo edición.
+   Sin estilos inline (CSP style-src 'self').
+   ============================================================ */
 
-const ICON_CLOSE =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-const ICON_SPARK =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6L12 4Z"/></svg>';
+import { get, put, getConfig, saveConfig } from '../db.js';
+import {
+  crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga,
+} from '../model.js';
+import { formatCOP } from '../money.js';
+import { CATEGORIAS, categoriaPorId } from '../categories.js';
+import { parseTextoLibre } from '../categorize.js';
+import { toast } from '../toast.js';
 
-const METHODS = [
-  {
-    key: 'teclado',
-    name: 'Teclado',
-    desc: 'Escribe el monto a mano',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>',
-  },
-  {
-    key: 'texto',
-    name: 'Texto libre',
-    desc: '"Pagué 50k de mercado"',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
-  },
-  {
-    key: 'foto',
-    name: 'Foto',
-    desc: 'Recibo o factura',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-2h5l1 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.2"/></svg>',
-  },
-  {
-    key: 'pdf',
-    name: 'PDF',
-    desc: 'Extracto o comprobante',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M9 14h6M9 17h4"/></svg>',
-  },
-];
+const DRAFT_KEY = 'bolsillo:draft:registrar';
+const MAX_DIGITOS = 12;
+
+/* ---- iconos ---- */
+const IC = {
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
+  del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m13 9 4 6M17 9l-4 6"/></svg>',
+  keyboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>',
+  text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-2h5l1 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>',
+  bang: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+};
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
+));
+const hoyISO = () => new Date().toISOString().slice(0, 10);
+
+/* ---- estado ---- */
+function fresh() {
+  return {
+    screen: 'metodos', modo: 'teclado', editId: null,
+    montoStr: '', categoriaId: '', cuenta: '', fecha: hoyISO(),
+    comercio: '', esFijo: false, notas: '', fuente: 'manual',
+    detalles: false, keypad: true, agregandoCuenta: false,
+  };
+}
+let STATE = fresh();
+let cfg = null;
+let draftPend = null;
+
+let sheetRef = null, openRef = null, closeRef = null, onSavedRef = null;
+
+const montoActual = () => (parseInt(STATE.montoStr || '0', 10) || 0);
+const cuentas = () => (cfg && Array.isArray(cfg.cuentas) ? cfg.cuentas : []);
+
+/* ---- borrador ---- */
+function hasContent() {
+  return montoActual() > 0 || !!STATE.categoriaId || !!STATE.comercio.trim();
+}
+function saveDraft() {
+  if (STATE.editId) return;
+  if (!hasContent()) { clearDraft(); return; }
+  const d = {
+    modo: STATE.modo, montoStr: STATE.montoStr, categoriaId: STATE.categoriaId,
+    cuenta: STATE.cuenta, fecha: STATE.fecha, comercio: STATE.comercio,
+    esFijo: STATE.esFijo, notas: STATE.notas,
+  };
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* cuota llena: ignorar */ }
+}
+let saveTimer = null;
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 500); }
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }
+function loadDraft() {
+  try { const r = localStorage.getItem(DRAFT_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+window.addEventListener('beforeunload', () => { if (!STATE.editId && hasContent()) saveDraft(); });
+
+/* ============================================================
+   Render de pantallas
+   ============================================================ */
+function cabecera(titulo, conBack) {
+  return `
+    <div class="sheet__grip" aria-hidden="true"></div>
+    ${conBack ? `<button class="icon-btn sheet__back" data-act="back" type="button" aria-label="Volver">${IC.back}</button>` : ''}
+    <button class="icon-btn sheet__close" data-act="close" type="button" aria-label="Cerrar">${IC.close}</button>
+    <h2 class="sheet__title">${esc(titulo)}</h2>`;
+}
+
+function renderMetodos() {
+  const draftBar = draftPend ? `
+    <div class="draft-bar" role="status">
+      <span class="draft-bar__ic">${IC.bang}</span>
+      <div class="draft-bar__body">
+        <p class="draft-bar__title">Tienes un registro sin terminar</p>
+        <p class="draft-bar__text">${draftPend.montoStr ? formatCOP(parseInt(draftPend.montoStr, 10) || 0) : 'Borrador'}${draftPend.categoriaId ? ' · ' + esc(categoriaPorId(draftPend.categoriaId).label) : ''}</p>
+      </div>
+      <div class="draft-bar__actions">
+        <button type="button" class="btn btn--primary btn--sm" data-act="draft-resume">Retomar</button>
+        <button type="button" class="btn btn--ghost btn--sm" data-act="draft-discard">Descartar</button>
+      </div>
+    </div>` : '';
+
+  return `
+    ${cabecera('Registrar', false)}
+    <p class="sheet__sub">¿Cómo quieres capturar tu gasto?</p>
+    ${draftBar}
+    <div class="capture-grid">
+      <button class="capture-opt" type="button" data-metodo="teclado">
+        <span class="capture-opt__icon">${IC.keyboard}</span>
+        <span class="capture-opt__name">Teclado</span>
+        <span class="capture-opt__desc">Escribe el monto a mano</span>
+      </button>
+      <button class="capture-opt" type="button" data-metodo="texto">
+        <span class="capture-opt__icon">${IC.text}</span>
+        <span class="capture-opt__name">Texto libre</span>
+        <span class="capture-opt__desc">"Pagué 50k de mercado"</span>
+      </button>
+      <button class="capture-opt is-soon" type="button" disabled aria-disabled="true">
+        <span class="capture-opt__icon">${IC.photo}</span>
+        <span class="capture-opt__name">Foto</span>
+        <span class="capture-opt__badge">Pronto</span>
+      </button>
+      <button class="capture-opt is-soon" type="button" disabled aria-disabled="true">
+        <span class="capture-opt__icon">${IC.pdf}</span>
+        <span class="capture-opt__name">PDF</span>
+        <span class="capture-opt__badge">Pronto</span>
+      </button>
+    </div>`;
+}
+
+function keypadHTML() {
+  const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', 'del'];
+  return `<div class="keypad">${teclas.map((t) => {
+    if (t === 'del') return `<button type="button" class="keypad__key keypad__key--del" data-key="del" aria-label="Borrar">${IC.del}</button>`;
+    return `<button type="button" class="keypad__key" data-key="${t}">${t}</button>`;
+  }).join('')}</div>`;
+}
+
+function chipsCategoria() {
+  return `<div class="cat-grid" role="listbox" aria-label="Categoría">${
+    CATEGORIAS.map((c) => `
+      <button type="button" class="cat-chip ${c.cls}${STATE.categoriaId === c.id ? ' is-sel' : ''}"
+        role="option" aria-selected="${STATE.categoriaId === c.id}" data-cat="${c.id}">
+        <span class="cat-chip__ic">${c.icon}</span>
+        <span class="cat-chip__label">${esc(c.label)}</span>
+      </button>`).join('')
+  }</div>`;
+}
+
+function cuentaSelector() {
+  const opts = cuentas().map((c) => `
+    <button type="button" class="acct-chip${STATE.cuenta === c ? ' is-sel' : ''}" data-cuenta="${esc(c)}">${esc(c)}</button>`).join('');
+  const nueva = STATE.agregandoCuenta
+    ? `<div class="acct-new">
+         <input type="text" class="field__input" id="reg-nueva-cuenta" placeholder="Nombre de la cuenta" autocomplete="off" />
+         <button type="button" class="btn btn--primary btn--sm" data-act="cuenta-add">Agregar</button>
+       </div>`
+    : `<button type="button" class="acct-chip acct-chip--add" data-act="cuenta-new">${IC.plus}<span>Nueva</span></button>`;
+  return `<div class="acct-row">${opts}${nueva}</div>`;
+}
+
+function detallesHTML() {
+  return `
+    <button type="button" class="detalles-toggle${STATE.detalles ? ' is-open' : ''}" data-act="detalles">
+      <span>Detalles${!STATE.detalles ? ' · cuenta, fecha, comercio…' : ''}</span>
+      <span class="detalles-toggle__chev">${IC.chev}</span>
+    </button>
+    ${STATE.detalles ? `
+    <div class="detalles">
+      <div class="field">
+        <span class="field__label">Cuenta</span>
+        ${cuentaSelector()}
+      </div>
+      <div class="field field--split">
+        <label class="field__col">
+          <span class="field__label">Fecha</span>
+          <input type="date" class="field__input" id="reg-fecha" value="${esc(STATE.fecha)}" max="${hoyISO()}" />
+        </label>
+        <label class="field__col">
+          <span class="field__label">Comercio</span>
+          <input type="text" class="field__input" id="reg-comercio" value="${esc(STATE.comercio)}" placeholder="Opcional" autocomplete="off" />
+        </label>
+      </div>
+      <label class="field toggle-row">
+        <span class="field__label">Gasto fijo (no cuenta como hormiga)</span>
+        <span class="switch${STATE.esFijo ? ' is-on' : ''}" role="switch" aria-checked="${STATE.esFijo}" tabindex="0" data-act="fijo"><span class="switch__dot"></span></span>
+      </label>
+      <label class="field">
+        <span class="field__label">Notas</span>
+        <textarea class="field__input field__textarea" id="reg-notas" rows="2" placeholder="Opcional">${esc(STATE.notas)}</textarea>
+      </label>
+    </div>` : ''}`;
+}
+
+function renderForm() {
+  const monto = montoActual();
+  const puedeGuardar = monto > 0 && !!STATE.categoriaId;
+  const textInput = STATE.modo === 'texto' ? `
+    <div class="free-text">
+      <input type="text" class="field__input free-text__input" id="reg-texto"
+        placeholder="Pagué 15.000 en taxi" autocomplete="off" inputmode="text" />
+      <p class="free-text__hint">Escribe en lenguaje natural y lo interpretamos.</p>
+    </div>` : '';
+
+  return `
+    ${cabecera(STATE.editId ? 'Editar movimiento' : 'Nuevo gasto', true)}
+    ${textInput}
+    <button type="button" class="amt${STATE.keypad ? ' is-active' : ''}" data-act="amt-toggle" aria-label="Monto">
+      <span class="amt__cur">$</span>
+      <span class="amt__value num" id="reg-amt">${monto ? formatCOP(monto).replace('$', '') : '0'}</span>
+    </button>
+    ${STATE.keypad ? keypadHTML() : ''}
+    <p class="field__label field__label--section">Categoría</p>
+    ${chipsCategoria()}
+    ${detallesHTML()}
+    <button type="button" class="btn btn--primary btn--block btn--save" data-act="guardar" ${puedeGuardar ? '' : 'disabled'}>
+      ${STATE.editId ? 'Guardar cambios' : 'Guardar gasto'}
+    </button>`;
+}
+
+/* ============================================================
+   Paint + binds
+   ============================================================ */
+function paint() {
+  if (!sheetRef) return;
+  sheetRef.scrollTop = 0;
+  sheetRef.innerHTML = STATE.screen === 'form' ? renderForm() : renderMetodos();
+  bind();
+  if (STATE.screen === 'form' && STATE.modo === 'texto') {
+    const ti = sheetRef.querySelector('#reg-texto');
+    if (ti) setTimeout(() => ti.focus(), 60);
+  }
+}
+
+/* actualizaciones puntuales sin repintar (preservan foco/caret) */
+function syncMonto() {
+  const amt = sheetRef.querySelector('#reg-amt');
+  if (amt) { const m = montoActual(); amt.textContent = m ? formatCOP(m).replace('$', '') : '0'; }
+  const save = sheetRef.querySelector('[data-act="guardar"]');
+  if (save) save.disabled = !(montoActual() > 0 && !!STATE.categoriaId);
+}
+function syncCategoria() {
+  sheetRef.querySelectorAll('.cat-chip').forEach((ch) => {
+    const sel = ch.dataset.cat === STATE.categoriaId;
+    ch.classList.toggle('is-sel', sel);
+    ch.setAttribute('aria-selected', String(sel));
+  });
+  syncMonto();
+}
+
+function bind() {
+  sheetRef.querySelectorAll('[data-act]').forEach((el) => {
+    const act = el.dataset.act;
+    if (act === 'close') el.addEventListener('click', cerrar);
+    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; draftPend = null; paint(); });
+    else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
+    else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
+    else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
+    else if (act === 'detalles') el.addEventListener('click', () => { STATE.detalles = !STATE.detalles; paint(); });
+    else if (act === 'guardar') el.addEventListener('click', guardar);
+    else if (act === 'cuenta-new') el.addEventListener('click', () => { STATE.agregandoCuenta = true; STATE.detalles = true; paint(); const i = sheetRef.querySelector('#reg-nueva-cuenta'); if (i) i.focus(); });
+    else if (act === 'cuenta-add') el.addEventListener('click', agregarCuenta);
+    else if (act === 'fijo') {
+      const toggle = () => { STATE.esFijo = !STATE.esFijo; scheduleSave(); paint(); };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    }
+  });
+
+  // métodos
+  sheetRef.querySelectorAll('[data-metodo]').forEach((b) => {
+    b.addEventListener('click', () => {
+      STATE.modo = b.dataset.metodo;
+      STATE.screen = 'form';
+      STATE.keypad = STATE.modo === 'teclado';
+      if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+      paint();
+    });
+  });
+
+  // teclado numérico
+  sheetRef.querySelectorAll('[data-key]').forEach((k) => {
+    k.addEventListener('click', () => {
+      const key = k.dataset.key;
+      if (key === 'del') STATE.montoStr = STATE.montoStr.slice(0, -1);
+      else if (STATE.montoStr.length < MAX_DIGITOS) {
+        const next = (STATE.montoStr + key).replace(/^0+(?=\d)/, '');
+        STATE.montoStr = next.slice(0, MAX_DIGITOS);
+      }
+      syncMonto();
+      scheduleSave();
+    });
+  });
+
+  // categorías
+  sheetRef.querySelectorAll('.cat-chip').forEach((ch) => {
+    ch.addEventListener('click', () => {
+      STATE.categoriaId = STATE.categoriaId === ch.dataset.cat ? '' : ch.dataset.cat;
+      syncCategoria();
+      scheduleSave();
+    });
+  });
+
+  // cuentas
+  sheetRef.querySelectorAll('[data-cuenta]').forEach((b) => {
+    b.addEventListener('click', () => { STATE.cuenta = b.dataset.cuenta; paint(); });
+  });
+
+  // inputs de texto (sin repintar)
+  const texto = sheetRef.querySelector('#reg-texto');
+  if (texto) texto.addEventListener('input', () => interpretarTexto(texto.value));
+
+  const comercio = sheetRef.querySelector('#reg-comercio');
+  if (comercio) comercio.addEventListener('input', () => { STATE.comercio = comercio.value; scheduleSave(); });
+
+  const fecha = sheetRef.querySelector('#reg-fecha');
+  if (fecha) fecha.addEventListener('change', () => { STATE.fecha = fecha.value || hoyISO(); scheduleSave(); });
+
+  const notas = sheetRef.querySelector('#reg-notas');
+  if (notas) notas.addEventListener('input', () => { STATE.notas = notas.value; scheduleSave(); });
+
+  const nuevaCuenta = sheetRef.querySelector('#reg-nueva-cuenta');
+  if (nuevaCuenta) nuevaCuenta.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agregarCuenta(); } });
+}
+
+/* interpreta el texto libre y sincroniza el formulario en vivo */
+function interpretarTexto(valor) {
+  const { monto, categoriaId, comercio } = parseTextoLibre(valor, cfg || {});
+  STATE.montoStr = monto ? String(monto) : '';
+  if (categoriaId) STATE.categoriaId = categoriaId;
+  STATE.comercio = comercio || '';
+  syncCategoria();
+  const ci = sheetRef.querySelector('#reg-comercio');
+  if (ci) ci.value = STATE.comercio;
+  scheduleSave();
+}
+
+function retomarDraft() {
+  if (!draftPend) return;
+  STATE = { ...fresh(), ...draftPend, screen: 'form', editId: null };
+  STATE.keypad = STATE.modo !== 'texto';
+  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  draftPend = null;
+  paint();
+}
+
+async function agregarCuenta() {
+  const input = sheetRef.querySelector('#reg-nueva-cuenta');
+  const nombre = input ? input.value.trim() : '';
+  if (!nombre) { STATE.agregandoCuenta = false; paint(); return; }
+  if (cuentas().includes(nombre)) { STATE.cuenta = nombre; STATE.agregandoCuenta = false; paint(); return; }
+  try {
+    cfg = await saveConfig({ cuentas: [...cuentas(), nombre] });
+    STATE.cuenta = nombre;
+    STATE.agregandoCuenta = false;
+    paint();
+    toast('Cuenta agregada');
+  } catch (err) {
+    toast('No se pudo agregar la cuenta: ' + err.message, { icono: false });
+  }
+}
+
+async function guardar() {
+  const monto = montoActual();
+  if (monto <= 0 || !STATE.categoriaId) return;
+  const cuenta = STATE.cuenta || cuentas()[0] || '';
+  if (!cuenta) { toast('Agrega una cuenta primero', { icono: false }); return; }
+
+  try {
+    if (STATE.editId) {
+      const orig = await get('movimientos', STATE.editId);
+      if (!orig) throw new Error('no se encontró el movimiento');
+      const cambios = {
+        monto, categoria: STATE.categoriaId, cuenta,
+        fecha: STATE.fecha, comercio: STATE.comercio.trim(),
+        esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+      };
+      const esHormiga = derivarEsHormiga({ ...orig, ...cambios }, cfg || undefined);
+      const actualizado = actualizar(orig, { ...cambios, esHormiga });
+      const v = validarMovimiento(actualizado);
+      if (!v.ok) throw new Error(v.errores.join(' '));
+      await put('movimientos', actualizado);
+      toast('Cambios guardados');
+    } else {
+      const mov = crearMovimiento({
+        monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
+        cuenta, fecha: STATE.fecha, fuente: STATE.fuente, esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+      }, { config: cfg || undefined });
+      await put('movimientos', mov);
+      toast('Guardado');
+    }
+    clearDraft();
+    STATE = fresh();
+    if (closeRef) closeRef();
+    if (typeof onSavedRef === 'function') onSavedRef();
+  } catch (err) {
+    toast('No se pudo guardar: ' + err.message, { icono: false, ms: 3200 });
+  }
+}
+
+/* ============================================================
+   API pública
+   ============================================================ */
+async function abrir(mov = null) {
+  try { cfg = await getConfig(); } catch { cfg = null; }
+  if (mov) {
+    STATE = {
+      ...fresh(), screen: 'form', modo: 'teclado', editId: mov.id,
+      montoStr: mov.monto ? String(mov.monto) : '',
+      categoriaId: mov.categoria || '', cuenta: mov.cuenta || (cuentas()[0] || ''),
+      fecha: (mov.fecha || hoyISO()).slice(0, 10), comercio: mov.comercio || '',
+      esFijo: !!mov.esFijo, notas: mov.notas || '', fuente: mov.fuente || 'manual',
+      detalles: true, keypad: true, agregandoCuenta: false,
+    };
+    draftPend = null;
+  } else {
+    STATE = fresh();
+    STATE.cuenta = cuentas()[0] || '';
+    draftPend = loadDraft();
+  }
+  if (openRef) openRef();
+  paint();
+}
+
+function cerrar() {
+  if (!STATE.editId && hasContent()) saveDraft();
+  if (closeRef) closeRef();
+}
 
 export default {
-  render() {
-    const cards = METHODS.map(
-      (m) => `<button class="capture-opt" type="button" data-method="${m.key}">
-        <span class="capture-opt__icon">${m.icon}</span>
-        <span class="capture-opt__name">${m.name}</span>
-        <span class="capture-opt__desc">${m.desc}</span>
-      </button>`,
-    ).join('');
-
-    return `
-      <div class="sheet__grip" aria-hidden="true"></div>
-      <button class="icon-btn sheet__close" id="sheet-close" type="button" aria-label="Cerrar">${ICON_CLOSE}</button>
-      <h2 class="sheet__title">Registrar</h2>
-      <p class="sheet__sub">Elige cómo quieres capturar tu movimiento</p>
-      <div class="capture-grid">${cards}</div>
-      <p class="soon-note">${ICON_SPARK} La captura se activa en la próxima versión</p>
-    `;
+  label: 'Registrar',
+  render() { return renderMetodos(); },
+  mount(sheet, { open, close, onSaved } = {}) {
+    sheetRef = sheet;
+    openRef = open;
+    closeRef = close;
+    onSavedRef = onSaved;
+    getConfig().then((c) => { cfg = c; }).catch(() => { cfg = null; });
+    bind();
   },
-
-  mount(sheetEl, { close } = {}) {
-    sheetEl.querySelectorAll('.capture-opt').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        // T1: solo visual — cierra el sheet con feedback
-        if (typeof close === 'function') close();
-      });
-    });
-  },
+  abrir,
+  cerrar,
 };

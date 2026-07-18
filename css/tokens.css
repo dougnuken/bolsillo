@@ -54,6 +54,23 @@
   --semaforo-rojo-bg: rgba(251, 113, 133, 0.14);
   --semaforo-rojo-line: rgba(251, 113, 133, 0.34);
 
+  /* ---- Tints de categoría (identidad, NO estado; desaturados para dark) ----
+     El fondo translúcido se deriva con color-mix; aquí solo el color base. */
+  --cat-vivienda: #8AA6FF;
+  --cat-servicios: #63C2D6;
+  --cat-mercado: #8FCF7A;
+  --cat-transporte: #E4A76A;
+  --cat-colegio: #C79BF0;
+  --cat-seguros: #5FC7B0;
+  --cat-salud: #F28FB4;
+  --cat-creditos: #7E9CD8;
+  --cat-comisiones: #A6B0C7;
+  --cat-ocio: #B58CF2;
+  --cat-restaurantes: #E0996F;
+  --cat-hormiga: #D9C173;
+  --cat-negocios: #5CB6C9;
+  --cat-otros: #98A4B8;
+
   /* ---- Tipografía ---- */
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-num: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
