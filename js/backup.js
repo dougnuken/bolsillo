@@ -9,11 +9,93 @@
 export const FORMATO = 'bolsillo-backup';
 export const VERSION_BACKUP = 1;
 
-/** Quita apiKey por completo (ni la clave ni el valor deben salir). */
-function sinApiKey(config) {
+/**
+ * Campos que viven SOLO en este dispositivo: nunca salen en un export ni
+ * entran desde un archivo importado. Una sola lista para las dos puertas,
+ * así la simetría es imposible de olvidar al agregar un campo sensible.
+ */
+export const CAMPOS_SOLO_LOCALES = Object.freeze(['apiKey']);
+
+/**
+ * Copia de la config sin los campos solo-locales (hoy: apiKey). PURA.
+ * Se usa en las DOS direcciones: al serializar (que no salga) y al importar
+ * (que no entre y pise la clave del usuario).
+ */
+export function sinCamposLocales(config) {
   if (!config || typeof config !== 'object') return config;
-  const { apiKey, ...resto } = config; // apiKey descartada intencionalmente
-  return resto;
+  return Object.fromEntries(
+    Object.entries(config).filter(([clave]) => !CAMPOS_SOLO_LOCALES.includes(clave)),
+  );
+}
+
+/* ---- fusión de catálogos del usuario (solo para la ruta de IMPORTACIÓN) ----
+   Al importar NO se puede reemplazar lo que el usuario tenga hoy: un respaldo
+   viejo borraría cuentas y categorías propias creadas después, y los
+   movimientos que las usan quedarían huérfanos ("Otros") para siempre.
+   Ojo: el CRUD de Ajustes SÍ necesita la semántica de reemplazo de
+   crearConfig/saveConfig (al borrar una cuenta pasa el arreglo completo);
+   por eso la fusión vive aquí y no allá. */
+
+/** Clave de comparación de cuentas: sin tildes, sin caso, sin espacios extra. */
+function claveCuenta(nombre) {
+  return String(nombre == null ? '' : nombre)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim().toLowerCase();
+}
+
+/** Unión de cuentas sin duplicados; las locales van primero. PURA. */
+export function fusionarCuentas(locales, importadas) {
+  const base = Array.isArray(locales) ? locales : [];
+  const extra = Array.isArray(importadas) ? importadas : [];
+  const vistas = new Set();
+  const salida = [];
+  for (const nombre of [...base, ...extra]) {
+    if (typeof nombre !== 'string') continue;
+    const limpio = nombre.trim();
+    const clave = claveCuenta(limpio);
+    if (clave === '' || vistas.has(clave)) continue;
+    vistas.add(clave);
+    salida.push(limpio);
+  }
+  return salida;
+}
+
+/** Unión de categorías propias por id; gana la definición local. PURA. */
+export function fusionarCategorias(locales, importadas) {
+  const base = Array.isArray(locales) ? locales : [];
+  const extra = Array.isArray(importadas) ? importadas : [];
+  const vistos = new Set();
+  const salida = [];
+  for (const cat of [...base, ...extra]) {
+    if (!cat || typeof cat !== 'object') continue;
+    const id = typeof cat.id === 'string' ? cat.id.trim() : '';
+    if (id === '' || vistos.has(id)) continue;
+    vistos.add(id);
+    salida.push({ ...cat, id });
+  }
+  return salida;
+}
+
+/**
+ * Config resultante de importar: parte de la LOCAL y le suma la del archivo.
+ * Los catálogos y mapas del usuario se FUSIONAN (nunca se reemplazan) y los
+ * campos solo-locales jamás cruzan. Los escalares (tema, umbrales, fechas) sí
+ * se restauran desde el archivo: para eso se importa un respaldo. PURA.
+ */
+export function fusionarConfig(local, importada) {
+  const base = local && typeof local === 'object' ? local : {};
+  const entrante = sinCamposLocales(importada && typeof importada === 'object' ? importada : {});
+  return {
+    ...base,
+    ...entrante,
+    cuentas: fusionarCuentas(base.cuentas, entrante.cuentas),
+    categoriasPersonalizadas: fusionarCategorias(base.categoriasPersonalizadas, entrante.categoriasPersonalizadas),
+    // Mapas: se conserva lo local y el archivo agrega/actualiza sus llaves, así
+    // un presupuesto de una categoría que solo existe local no se pierde.
+    presupuestos: { ...(base.presupuestos || {}), ...(entrante.presupuestos || {}) },
+    categoriasRenombradas: { ...(base.categoriasRenombradas || {}), ...(entrante.categoriasRenombradas || {}) },
+    categoriasAprendidas: { ...(base.categoriasAprendidas || {}), ...(entrante.categoriasAprendidas || {}) },
+  };
 }
 
 /**
@@ -38,7 +120,7 @@ export function serializar(datos = {}, { incluirAdjuntos = false, now = new Date
     recurrentes,
     creditos,
     ingresos,
-    config: config ? sinApiKey(config) : null,
+    config: config ? sinCamposLocales(config) : null,
   };
   if (incluirAdjuntos) payload.adjuntos = adjuntos;
 
@@ -117,9 +199,21 @@ export async function exportar(db, { now = new Date(), incluirAdjuntos = false }
   ]);
   const config = await db.getConfig();
 
+  // La fecha de ESTE respaldo se sella DENTRO del archivo: si se sellara solo
+  // en la config local, el JSON saldría con la fecha vieja y restaurarlo haría
+  // que la app volviera a decir "nunca has respaldado".
+  const momento = now instanceof Date ? now : new Date(now);
+  const exportadoEn = momento.toISOString();
+
   const backup = serializar(
-    { movimientos, recurrentes, creditos, ingresos, config },
-    { incluirAdjuntos, now },
+    {
+      movimientos,
+      recurrentes,
+      creditos,
+      ingresos,
+      config: { ...config, fechaUltimoBackup: exportadoEn },
+    },
+    { incluirAdjuntos, now: momento },
   );
   const json = JSON.stringify(backup, null, 2);
   const nombre = `bolsillo-backup-${backup.exportadoEn.slice(0, 10)}.json`;
@@ -133,7 +227,13 @@ export async function exportar(db, { now = new Date(), incluirAdjuntos = false }
 /**
  * Deserializa e inserta en cada store (merge por id vía bulkPut; no borra
  * lo existente salvo colisión de id). Devuelve resumen de importados.
- * @param {object} db módulo db.js (bulkPut, saveConfig)
+ *
+ * La config NO se pasa tal cual a saveConfig: se fusiona explícitamente con la
+ * local (ver fusionarConfig) para que un respaldo viejo no borre cuentas ni
+ * categorías propias creadas después, y para que la apiKey del archivo —venga
+ * de donde venga— nunca pueda sustituir la del dispositivo.
+ *
+ * @param {object} db módulo db.js (bulkPut, getConfig, saveConfig)
  * @param {string|object} json
  */
 export async function importar(db, json) {
@@ -151,7 +251,8 @@ export async function importar(db, json) {
   }
 
   if (d.config && typeof d.config === 'object') {
-    await db.saveConfig(d.config); // apiKey local se preserva (el backup no la trae)
+    const local = await db.getConfig();
+    await db.saveConfig(fusionarConfig(local, d.config));
     importados.config = 1;
   } else {
     importados.config = 0;

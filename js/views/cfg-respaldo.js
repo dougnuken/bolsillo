@@ -2,8 +2,9 @@
    Bolsillo · views/cfg-respaldo.js
    Exportar / importar el respaldo + borrar todos los datos.
 
-   El respaldo NUNCA incluye la clave de Anthropic (backup.js la
-   excluye en `serializar`). Al importar, la clave local se conserva.
+   El respaldo NUNCA incluye la clave de Anthropic: `serializar` la
+   excluye al exportar e `importar` la filtra al entrar, así que un
+   archivo ajeno no puede sustituir la clave de este dispositivo.
    ============================================================ */
 
 import * as db from '../db.js';
@@ -11,6 +12,7 @@ import { exportar, importar } from '../backup.js';
 import { confirmar } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
+import { aplicarPersonalizacion } from '../categories.js';
 import { hojaNav, cabecera, bindCabecera, notaCfg } from './cfg-sheet.js';
 
 const DIAS_AVISO = 7;
@@ -95,13 +97,29 @@ export async function abrirRespaldo({ onSaved } = {}) {
         const file = panel.querySelector('#resp-file');
         panel.querySelector('[data-act="importar"]').addEventListener('click', () => file.click());
 
+        // La confirmación va DESPUÉS de elegir el archivo: así el click que
+        // abre el selector sigue siendo un gesto directo del usuario (Safari
+        // bloquea file.click() si se dispara tras esperar un diálogo).
         file.addEventListener('change', async () => {
           const f = file.files && file.files[0];
           if (!f) return;
           try {
+            const ok = await confirmar({
+              title: '¿Importar este respaldo?',
+              text: 'Se suman movimientos, gastos fijos, créditos e ingresos. Tus cuentas, '
+                + 'categorías y presupuestos se fusionan: nada de lo que ya tienes se borra. '
+                + 'Tu clave de Anthropic no se toca.',
+              okText: 'Importar',
+            });
+            if (!ok) return;
+
             const texto = await f.text();
             const { importados } = await importar(db, texto);
             config = await db.getConfig();
+            // El catálogo activo es un cache de módulo: sin esto, las
+            // categorías propias restauradas se verían como "Otros" hasta
+            // recargar la app y parecería que la importación falló.
+            aplicarPersonalizacion(config);
             toast('Respaldo importado');
             avisar();
             pantalla(importados);
