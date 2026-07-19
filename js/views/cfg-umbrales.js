@@ -36,7 +36,7 @@ export async function abrirUmbrales({ onSaved } = {}) {
 
       <label class="field">
         <span class="field__label">Gasto hormiga</span>
-        <input class="field__input" id="umb-hormiga" type="text" inputmode="numeric" autocomplete="off"
+        <input class="field__input" id="umb-hormiga" type="text" data-monto inputmode="numeric" autocomplete="off"
           placeholder="20.000" value="${esc(formatCOP(hormiga).replace('$', ''))}" />
         <span class="sueldo-hint">Todo gasto variable por debajo de este monto se marca como “hormiga”. Son los pequeños que no duelen uno a uno, pero sumados sí. Por defecto ${esc(formatCOP(UMBRAL_HORMIGA_DEFAULT))}.</span>
       </label>

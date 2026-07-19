@@ -10,6 +10,7 @@ import { hoja } from '../overlay.js';
 import { getAll, put, getConfig, saveConfig } from '../db.js';
 import { crearIngreso } from '../model.js';
 import { parseCOP, formatCOP } from '../money.js';
+import { bindMontosVivos } from '../money-input.js';
 import { toast } from '../toast.js';
 
 const ICON_WALLET =
@@ -33,7 +34,7 @@ function formularioHTML({ montoStr, dia, hormigaStr, amarillo }) {
     <form class="sueldo-form" id="sueldo-form" novalidate>
       <label class="field">
         <span class="field__label">Sueldo mensual</span>
-        <input class="field__input" id="sueldo-monto" type="text" inputmode="numeric"
+        <input class="field__input" id="sueldo-monto" type="text" data-monto inputmode="numeric"
           autocomplete="off" placeholder="3.000.000" value="${esc(montoStr)}" />
       </label>
 
@@ -53,7 +54,7 @@ function formularioHTML({ montoStr, dia, hormigaStr, amarillo }) {
       <div class="sueldo-adv" id="sueldo-adv" hidden>
         <label class="field">
           <span class="field__label">Umbral gasto hormiga</span>
-          <input class="field__input" id="sueldo-hormiga" type="text" inputmode="numeric"
+          <input class="field__input" id="sueldo-hormiga" type="text" data-monto inputmode="numeric"
             autocomplete="off" placeholder="20.000" value="${esc(hormigaStr)}" />
           <span class="sueldo-hint">Gastos variables por debajo de este monto se marcan como “hormiga”.</span>
         </label>
@@ -98,6 +99,7 @@ export async function abrirSueldo({ onSaved } = {}) {
 
   return hoja(html, (panel, cerrar) => {
     const $ = (sel) => panel.querySelector(sel);
+    bindMontosVivos(panel); // máscara de miles en sueldo y umbral hormiga
     const form = $('#sueldo-form');
     const advToggle = $('#sueldo-adv-toggle');
     const adv = $('#sueldo-adv');

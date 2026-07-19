@@ -605,6 +605,22 @@
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .field__textarea { min-height: 62px; padding: var(--sp-3) var(--sp-4); resize: vertical; line-height: 1.4; }
+
+/* error INLINE: se queda junto al campo (el toast se desvanece) */
+.field__input.is-error {
+  border-color: var(--semaforo-rojo-line);
+  box-shadow: 0 0 0 3px var(--semaforo-rojo-bg);
+}
+.field__input.is-error:focus { border-color: var(--semaforo-rojo); }
+.field__err {
+  display: block;
+  margin-top: var(--sp-2);
+  color: var(--semaforo-rojo);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.35;
+}
+.field__err:empty { display: none; }
 .field--split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 .field__col { display: block; }
 .field__col .field__label { margin-bottom: var(--sp-2); }

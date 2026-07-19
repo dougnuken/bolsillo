@@ -34,7 +34,7 @@ export async function abrirPresupuestos({ onSaved } = {}) {
         <label class="cfg-presu">
           <span class="cfg-presu__ic ${esc(c.cls)}">${c.icon}</span>
           <span class="cfg-presu__label">${esc(c.label)}</span>
-          <input class="field__input cfg-presu__input" type="text" inputmode="numeric" autocomplete="off"
+          <input class="field__input cfg-presu__input" type="text" data-monto inputmode="numeric" autocomplete="off"
             data-cat="${esc(c.id)}" placeholder="Sin tope"
             value="${esc(Number.isInteger(v) && v > 0 ? formatCOP(v).replace('$', '') : '')}" />
         </label>`;

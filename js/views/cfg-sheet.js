@@ -8,6 +8,7 @@
 
 import { hoja } from '../overlay.js';
 import { esc } from '../html.js';
+import { bindMontosVivos } from '../money-input.js';
 
 export const IC = {
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
@@ -32,6 +33,8 @@ export function hojaNav(inicio) {
       pintar(html, bind) {
         panel.innerHTML = html;
         panel.scrollTop = 0;
+        // Todo campo marcado con data-monto se enmascara por miles solo.
+        bindMontosVivos(panel);
         if (typeof bind === 'function') bind(panel);
       },
     };
@@ -90,6 +93,60 @@ export function notaCfg(html, { tipo = 'info' } = {}) {
 /** Botón de "agregar" a ancho completo. */
 export function botonAgregar(texto, accion = 'nuevo') {
   return `<button type="button" class="cfg-add" data-act="${esc(accion)}">${IC.plus}<span>${esc(texto)}</span></button>`;
+}
+
+/* ============================================================
+   Errores INLINE de formulario
+   El toast se desvanece y en el teléfono no alcanza a leerse: el
+   error tiene que quedarse pegado al campo que falta.
+   ============================================================ */
+
+/** Hueco donde caerá el error de un campo. `id` = el id del input. */
+export function huecoError(id) {
+  return `<span class="field__err" data-err="${esc(id)}" role="alert"></span>`;
+}
+
+/** Pinta el error de un campo y devuelve el input (o null si no existe). */
+export function mostrarError(panel, id, mensaje) {
+  const hueco = panel.querySelector(`[data-err="${id}"]`);
+  if (hueco) hueco.textContent = mensaje;
+  const input = panel.querySelector(`#${id}`);
+  if (input) input.classList.add('is-error');
+  return input;
+}
+
+/** Borra todos los errores visibles del panel. */
+export function limpiarErrores(panel) {
+  panel.querySelectorAll('[data-err]').forEach((h) => { h.textContent = ''; });
+  panel.querySelectorAll('.is-error').forEach((i) => i.classList.remove('is-error'));
+}
+
+/**
+ * Pinta la lista de errores, enfoca el primero y devuelve true si hubo alguno.
+ * @param {HTMLElement} panel
+ * @param {Array<[string, string]>} errores pares [idDelInput, mensaje]
+ */
+export function pintarErrores(panel, errores) {
+  if (!errores.length) return false;
+  errores.forEach(([id, msg]) => mostrarError(panel, id, msg));
+  const primero = panel.querySelector(`#${errores[0][0]}`);
+  if (primero) primero.focus();
+  return true;
+}
+
+/** Limpia el error de un campo en cuanto el usuario lo corrige. */
+export function autoLimpiarErrores(panel) {
+  panel.querySelectorAll('[data-err]').forEach((hueco) => {
+    const input = panel.querySelector(`#${hueco.dataset.err}`);
+    if (!input) return;
+    const limpiar = () => {
+      if (!input.classList.contains('is-error')) return;
+      input.classList.remove('is-error');
+      hueco.textContent = '';
+    };
+    input.addEventListener('input', limpiar);
+    input.addEventListener('change', limpiar);
+  });
 }
 
 /** Lee un input de monto y devuelve entero de pesos o null. */

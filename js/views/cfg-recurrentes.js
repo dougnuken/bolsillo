@@ -105,7 +105,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
           <div class="field field--split">
             <label class="field__col">
               <span class="field__label">Monto</span>
-              <input class="field__input" id="rec-monto" type="text" inputmode="numeric" autocomplete="off"
+              <input class="field__input" id="rec-monto" type="text" data-monto inputmode="numeric" autocomplete="off"
                 placeholder="1.800.000" value="${esc(rec ? formatCOP(rec.monto).replace('$', '') : '')}" />
             </label>
             <label class="field__col">
@@ -145,7 +145,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
           </label>
           <label class="field" id="rec-exc-monto-wrap"${saltado ? ' hidden' : ''}>
             <span class="field__label">Monto distinto este mes (opcional)</span>
-            <input class="field__input" id="rec-exc-monto" type="text" inputmode="numeric" autocomplete="off"
+            <input class="field__input" id="rec-exc-monto" type="text" data-monto inputmode="numeric" autocomplete="off"
               placeholder="Déjalo vacío para usar el de siempre" value="${esc(montoMes != null ? formatCOP(montoMes).replace('$', '') : '')}" />
             <span class="sueldo-hint">Aplica únicamente a ${esc(mesLegible())}; los demás meses siguen igual.</span>
           </label>`}

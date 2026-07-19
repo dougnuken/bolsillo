@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCOP, formatCOP } from '../js/money.js';
+import {
+  parseCOP, formatCOP, formatearMontoEnVivo, borrarDigitoAtras, MAX_DIGITOS_MONTO,
+} from '../js/money.js';
 
 /* ---------------- parseCOP ---------------- */
 
@@ -87,4 +89,109 @@ test('formatCOP: entrada no numérica devuelve cadena vacía', () => {
   assert.equal(formatCOP(null), '');
   assert.equal(formatCOP(undefined), '');
   assert.equal(formatCOP(NaN), '');
+});
+
+/* ---------------- máscara en vivo: formatearMontoEnVivo ---------------- */
+
+test('formatearMontoEnVivo: agrupa por miles mientras se teclea', () => {
+  // Lo que reportó Doug: escribir 17000000 debe verse 17.000.000.
+  const pasos = ['1', '17', '170', '1700', '17000', '170000', '1700000', '17000000'];
+  const esperado = ['1', '17', '170', '1.700', '17.000', '170.000', '1.700.000', '17.000.000'];
+  pasos.forEach((crudo, i) => {
+    assert.equal(formatearMontoEnVivo(crudo, crudo.length).texto, esperado[i]);
+  });
+});
+
+test('formatearMontoEnVivo: el cursor queda al final al teclear de corrido', () => {
+  // "1.700" tras escribir el 4.º dígito: el cursor va al final (índice 5).
+  assert.deepEqual(formatearMontoEnVivo('1700', 4), { texto: '1.700', caret: 5 });
+});
+
+test('formatearMontoEnVivo: editar EN MEDIO no manda el cursor al final', () => {
+  // "17.000.000" con el cursor tras el "7" (índice 2); se teclea un 5 => "175.000.000".
+  // Antes del 5 hay 3 dígitos, así que el cursor debe quedar tras el 3.er dígito.
+  const r = formatearMontoEnVivo('175.000.000', 3);
+  assert.equal(r.texto, '175.000.000');
+  assert.equal(r.caret, 3); // "175|.000.000"
+  assert.equal(r.texto.slice(0, r.caret), '175');
+});
+
+test('formatearMontoEnVivo: recolocar cuenta DÍGITOS, no caracteres', () => {
+  // "1.000" + un 2 al inicio => "21.000"; el cursor va tras 1 dígito.
+  const r = formatearMontoEnVivo('21.000', 1);
+  assert.deepEqual(r, { texto: '21.000', caret: 1 });
+  // Un separador nuevo empujó el texto, pero el cursor sigue tras el mismo dígito.
+  assert.equal(r.texto[r.caret - 1], '2');
+});
+
+test('formatearMontoEnVivo: pegar un valor lo formatea', () => {
+  assert.equal(formatearMontoEnVivo('$ 17.000.000', null).texto, '17.000.000');
+  assert.equal(formatearMontoEnVivo('17000000', null).texto, '17.000.000');
+  assert.equal(formatearMontoEnVivo('1 700 000', null).texto, '1.700.000');
+});
+
+test('formatearMontoEnVivo: descarta lo que no sea dígito', () => {
+  assert.equal(formatearMontoEnVivo('abc', 3).texto, '');
+  assert.equal(formatearMontoEnVivo('12a3', 4).texto, '123');
+  assert.equal(formatearMontoEnVivo('-500', 4).texto, '500'); // no hay montos negativos
+});
+
+test('formatearMontoEnVivo: entrada vacía deja el campo vacío y el cursor en 0', () => {
+  assert.deepEqual(formatearMontoEnVivo('', 0), { texto: '', caret: 0 });
+  assert.deepEqual(formatearMontoEnVivo(null), { texto: '', caret: 0 });
+  assert.deepEqual(formatearMontoEnVivo(undefined), { texto: '', caret: 0 });
+});
+
+test('formatearMontoEnVivo: quita ceros a la izquierda pero respeta el 0 solo', () => {
+  assert.equal(formatearMontoEnVivo('017', 3).texto, '17');
+  assert.equal(formatearMontoEnVivo('0', 1).texto, '0');
+  assert.equal(formatearMontoEnVivo('000', 3).texto, '0');
+});
+
+test('formatearMontoEnVivo: tope de dígitos para no aceptar absurdos', () => {
+  const largo = '9'.repeat(MAX_DIGITOS_MONTO + 5);
+  const r = formatearMontoEnVivo(largo, largo.length);
+  assert.equal(r.texto.replace(/\D/g, '').length, MAX_DIGITOS_MONTO);
+});
+
+test('formatearMontoEnVivo: el caret fuera de rango no rompe', () => {
+  assert.equal(formatearMontoEnVivo('1700', 999).caret, 5);
+  assert.equal(formatearMontoEnVivo('1700', -5).caret, 0);
+});
+
+test('formatearMontoEnVivo: lo formateado sigue siendo parseable a entero COP', () => {
+  const { texto } = formatearMontoEnVivo('17000000', 8);
+  assert.equal(parseCOP(texto), 17000000);
+  assert.ok(Number.isInteger(parseCOP(texto)));
+});
+
+/* ---------------- máscara en vivo: borrarDigitoAtras ---------------- */
+
+test('borrarDigitoAtras: sobre un separador borra el DÍGITO anterior', () => {
+  // "1.700" con el cursor tras el punto (índice 2): debe irse el 1, no el punto.
+  assert.deepEqual(borrarDigitoAtras('1.700', 2), { texto: '700', caret: 0 });
+});
+
+test('borrarDigitoAtras: un solo toque basta (no se traba en el punto)', () => {
+  // Retrocesos seguidos desde el final de "17.000.000".
+  let estado = { texto: '17.000.000', caret: 10 };
+  const vistos = [];
+  for (let i = 0; i < 4; i++) {
+    estado = borrarDigitoAtras(estado.texto, estado.caret);
+    vistos.push(estado.texto);
+  }
+  assert.deepEqual(vistos, ['1.700.000', '170.000', '17.000', '1.700']);
+});
+
+test('borrarDigitoAtras: borra el dígito correcto en medio del número', () => {
+  // "175.000.000" con el cursor tras el 5 (índice 3) => se va el 5.
+  assert.deepEqual(borrarDigitoAtras('175.000.000', 3), { texto: '17.000.000', caret: 2 });
+});
+
+test('borrarDigitoAtras: al inicio no hay nada que borrar', () => {
+  assert.deepEqual(borrarDigitoAtras('1.700', 0), { texto: '1.700', caret: 0 });
+});
+
+test('borrarDigitoAtras: borrar el último dígito deja el campo vacío', () => {
+  assert.deepEqual(borrarDigitoAtras('7', 1), { texto: '', caret: 0 });
 });

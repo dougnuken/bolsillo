@@ -92,7 +92,7 @@ export async function abrirNegocios({ onSaved } = {}) {
           </label>
           <label class="field">
             <span class="field__label">Ingreso mensual</span>
-            <input class="field__input" id="neg-monto" type="text" inputmode="numeric" autocomplete="off"
+            <input class="field__input" id="neg-monto" type="text" data-monto inputmode="numeric" autocomplete="off"
               placeholder="1.500.000" value="${esc(ing ? formatCOP(ing.monto).replace('$', '') : '')}" />
           </label>
           <label class="field">

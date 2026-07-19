@@ -10,6 +10,7 @@
 import { getAll, put, getConfig, saveConfig } from '../db.js';
 import { crearIngreso, crearRecurrente, actualizar } from '../model.js';
 import { parseCOP, formatCOP } from '../money.js';
+import { bindMontosVivos } from '../money-input.js';
 import { catalogo } from '../categories.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
@@ -118,7 +119,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
         <p class="ob__text">Tu sueldo de empleado es la base del semáforo. Es el único dato imprescindible.</p>
         <label class="field">
           <span class="field__label">Sueldo mensual</span>
-          <input class="field__input ob__input" id="ob-sueldo" type="text" inputmode="numeric"
+          <input class="field__input ob__input" id="ob-sueldo" type="text" data-monto inputmode="numeric"
             autocomplete="off" placeholder="3.000.000" value="${esc(valor)}" />
         </label>
         <label class="field">
@@ -208,7 +209,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
            <div class="field field--split">
              <label class="field__col">
                <span class="field__label">Monto</span>
-               <input class="field__input" id="ob-fijo-monto" type="text" inputmode="numeric" placeholder="1.800.000" autocomplete="off" />
+               <input class="field__input" id="ob-fijo-monto" type="text" data-monto inputmode="numeric" placeholder="1.800.000" autocomplete="off" />
              </label>
              <label class="field__col">
                <span class="field__label">Día</span>
@@ -366,6 +367,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
 
     raiz.querySelectorAll('[data-act="saltar"]').forEach((b) => b.addEventListener('click', terminar));
 
+    // Máscara de miles: cubre el sueldo (paso 1) y el gasto fijo (paso 3).
+    bindMontosVivos(cont);
     if (typeof bind === 'function') bind(cont);
   }
 
