@@ -199,7 +199,7 @@
   padding-left: max(0px, env(safe-area-inset-left));
   padding-right: max(0px, env(safe-area-inset-right));
   display: grid;
-  grid-template-columns: 1fr 1fr var(--sp-9) 1fr 1fr;
+  grid-template-columns: 1fr var(--sp-9) 1fr; /* Hoy | hueco del FAB | Movimientos */
   align-items: stretch;
   background: var(--glass-nav);
   -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.4);
@@ -622,8 +622,35 @@
 }
 .field__err:empty { display: none; }
 .field--split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
-.field__col { display: block; }
+/* min-width:0 evita que un hijo ancho (p. ej. <input type="date"> en iOS)
+   reviente su columna 1fr y se solape con la vecina. */
+.field__col { display: block; min-width: 0; }
+.field__col .field__input { width: 100%; }
 .field__col .field__label { margin-bottom: var(--sp-2); }
+
+/* Disparador de fecha: se ve como un input pero abre la hoja de fecha. */
+.date-trigger {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 var(--sp-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--fs-input); /* >=16px: evita zoom iOS */
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.date-trigger:hover { border-color: var(--line-accent); }
+.date-trigger:active { transform: scale(0.99); }
+.date-trigger__val { font-weight: var(--fw-medium); }
+.date-trigger__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-3); }
+.date-trigger__ic svg { width: 18px; height: 18px; }
 
 /* switch (toggle gasto fijo) */
 .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
@@ -753,6 +780,47 @@
 .ov-item__ic svg { width: 20px; height: 20px; }
 .ov-item--danger { color: var(--semaforo-rojo); }
 .ov-item--danger .ov-item__ic { color: var(--semaforo-rojo); }
+
+/* ---- Hoja de fecha (fecha-sheet) ---- */
+.date-opt { justify-content: flex-start; }
+.date-opt__title { flex: 0 0 auto; font-weight: var(--fw-semibold); }
+.date-opt__sub { margin-left: auto; color: var(--text-3); font-size: var(--fs-sm); }
+.date-opt__check {
+  flex: 0 0 auto;
+  width: 22px; height: 22px;
+  margin-left: var(--sp-2);
+  display: grid; place-items: center;
+  color: var(--accent);
+  opacity: 0;
+}
+.date-opt__check svg { width: 20px; height: 20px; }
+.date-opt.is-sel { background: var(--accent-soft); }
+.date-opt.is-sel .date-opt__title,
+.date-opt.is-sel .date-opt__sub { color: var(--accent); }
+.date-opt.is-sel .date-opt__check { opacity: 1; }
+
+.date-sep { height: 1px; background: var(--line-2); margin: var(--sp-3) 0; }
+
+/* La fila "Elegir otra fecha" lleva un <input type="date"> transparente
+   ENCIMA: tocar la fila abre la rueda nativa de iOS. */
+.date-otra { position: relative; }
+.date-otra .ov-item__label { flex: 1 1 auto; }
+.date-otra__val { color: var(--text-3); font-size: var(--fs-sm); }
+.date-otra__input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  margin: 0; padding: 0; border: 0;
+  opacity: 0;
+  -webkit-appearance: none; appearance: none;
+  cursor: pointer;
+}
+.date-actual {
+  margin-top: var(--sp-3);
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.date-actual::first-letter { text-transform: uppercase; }
 
 /* ============================================================
    Movimientos — filtros + lista agrupada

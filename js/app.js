@@ -6,10 +6,11 @@
 
 import dashboard from './views/dashboard.js';
 import movimientos from './views/movimientos.js';
-import creditos from './views/creditos.js';
-import asesor from './views/asesor.js';
 import ajustes from './views/ajustes.js';
 import registrar from './views/registrar.js';
+// Ocultas en el piloto (se re-agregan a ROUTES + tab bar cuando estén listas):
+// import creditos from './views/creditos.js';  // CRUD real vive en Ajustes → Créditos
+// import asesor from './views/asesor.js';       // chat IA, llega en otra tanda
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
 import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
@@ -20,9 +21,9 @@ const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
 const ROUTES = {
   hoy: dashboard,
   movimientos,
-  creditos,
-  asesor,
   ajustes,
+  // creditos, asesor: ocultas en el piloto. Sin entrada aquí, sus hashes
+  // (#/creditos, #/asesor) caen a DEFAULT_ROUTE en routeFromHash() → nunca rompen.
 };
 
 const DEFAULT_ROUTE = 'hoy';

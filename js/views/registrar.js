@@ -1,6 +1,9 @@
 /* ============================================================
    Bolsillo · Registrar (bottom-sheet del FAB)
-   T3: Teclado numérico propio + Texto libre. Foto/PDF = "pronto".
+   Piloto: Teclado numérico propio + Texto libre. Foto/PDF ocultos
+   hasta que estén listos (se re-muestran reañadiendo sus botones).
+   La fecha se elige con una hoja inferior (fecha-sheet), no con el
+   input de calendario nativo suelto.
    Guarda con crearMovimiento/actualizar, valida, toast, borrador
    autosave (localStorage, debounce) y modo edición.
    Sin estilos inline (CSP style-src 'self').
@@ -14,6 +17,8 @@ import { formatCOP } from '../money.js';
 import { catalogo, categoriaPorId } from '../categories.js';
 import { parseTextoLibre } from '../categorize.js';
 import { toast } from '../toast.js';
+import { hoyISO, etiquetaFecha, esISOValida } from '../fechas.js';
+import { abrirFecha } from './fecha-sheet.js';
 
 const DRAFT_KEY = 'bolsillo:draft:registrar';
 const MAX_DIGITOS = 12;
@@ -30,12 +35,12 @@ const IC = {
   bang: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>',
   chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
 };
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
 ));
-const hoyISO = () => new Date().toISOString().slice(0, 10);
 
 /* ---- estado ---- */
 function fresh() {
@@ -117,16 +122,8 @@ function renderMetodos() {
         <span class="capture-opt__name">Texto libre</span>
         <span class="capture-opt__desc">"Pagué 50k de mercado"</span>
       </button>
-      <button class="capture-opt is-soon" type="button" disabled aria-disabled="true">
-        <span class="capture-opt__icon">${IC.photo}</span>
-        <span class="capture-opt__name">Foto</span>
-        <span class="capture-opt__badge">Pronto</span>
-      </button>
-      <button class="capture-opt is-soon" type="button" disabled aria-disabled="true">
-        <span class="capture-opt__icon">${IC.pdf}</span>
-        <span class="capture-opt__name">PDF</span>
-        <span class="capture-opt__badge">Pronto</span>
-      </button>
+      <!-- Foto y PDF ocultos en el piloto (aún placeholders). Para re-mostrar:
+           reañade sus botones .capture-opt.is-soon con IC.photo / IC.pdf. -->
     </div>`;
 }
 
@@ -173,16 +170,17 @@ function detallesHTML() {
         <span class="field__label">Cuenta</span>
         ${cuentaSelector()}
       </div>
-      <div class="field field--split">
-        <label class="field__col">
-          <span class="field__label">Fecha</span>
-          <input type="date" class="field__input" id="reg-fecha" value="${esc(STATE.fecha)}" max="${hoyISO()}" />
-        </label>
-        <label class="field__col">
-          <span class="field__label">Comercio</span>
-          <input type="text" class="field__input" id="reg-comercio" value="${esc(STATE.comercio)}" placeholder="Opcional" autocomplete="off" />
-        </label>
+      <div class="field">
+        <span class="field__label">Fecha</span>
+        <button type="button" class="date-trigger" data-act="fecha" aria-label="Elegir fecha del gasto">
+          <span class="date-trigger__val" id="reg-fecha-val">${esc(etiquetaFecha(STATE.fecha))}</span>
+          <span class="date-trigger__ic">${IC.cal}</span>
+        </button>
       </div>
+      <label class="field">
+        <span class="field__label">Comercio</span>
+        <input type="text" class="field__input" id="reg-comercio" value="${esc(STATE.comercio)}" placeholder="Opcional" autocomplete="off" />
+      </label>
       <label class="field toggle-row">
         <span class="field__label">Gasto fijo (no cuenta como hormiga)</span>
         <span class="switch${STATE.esFijo ? ' is-on' : ''}" role="switch" aria-checked="${STATE.esFijo}" tabindex="0" data-act="fijo"><span class="switch__dot"></span></span>
@@ -249,6 +247,12 @@ function syncCategoria() {
   });
   syncMonto();
 }
+/* Actualiza solo la etiqueta del disparador de fecha (sin repintar:
+   conserva scroll y foco tras cerrar la hoja). */
+function syncFecha() {
+  const val = sheetRef.querySelector('#reg-fecha-val');
+  if (val) val.textContent = etiquetaFecha(STATE.fecha);
+}
 
 function bind() {
   sheetRef.querySelectorAll('[data-act]').forEach((el) => {
@@ -260,6 +264,7 @@ function bind() {
     else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
     else if (act === 'detalles') el.addEventListener('click', () => { STATE.detalles = !STATE.detalles; paint(); });
     else if (act === 'guardar') el.addEventListener('click', guardar);
+    else if (act === 'fecha') el.addEventListener('click', elegirFecha);
     else if (act === 'cuenta-new') el.addEventListener('click', () => { STATE.agregandoCuenta = true; STATE.detalles = true; paint(); const i = sheetRef.querySelector('#reg-nueva-cuenta'); if (i) i.focus(); });
     else if (act === 'cuenta-add') el.addEventListener('click', agregarCuenta);
     else if (act === 'fijo') {
@@ -315,9 +320,6 @@ function bind() {
   const comercio = sheetRef.querySelector('#reg-comercio');
   if (comercio) comercio.addEventListener('input', () => { STATE.comercio = comercio.value; scheduleSave(); });
 
-  const fecha = sheetRef.querySelector('#reg-fecha');
-  if (fecha) fecha.addEventListener('change', () => { STATE.fecha = fecha.value || hoyISO(); scheduleSave(); });
-
   const notas = sheetRef.querySelector('#reg-notas');
   if (notas) notas.addEventListener('input', () => { STATE.notas = notas.value; scheduleSave(); });
 
@@ -334,6 +336,16 @@ function interpretarTexto(valor) {
   syncCategoria();
   const ci = sheetRef.querySelector('#reg-comercio');
   if (ci) ci.value = STATE.comercio;
+  scheduleSave();
+}
+
+/* Abre la hoja inferior de fecha (Hoy/Ayer/Antier + nativo). Guarda la
+   fecha REAL elegida; si se cierra sin elegir, no toca nada. */
+async function elegirFecha() {
+  const iso = await abrirFecha({ fecha: STATE.fecha });
+  if (!esISOValida(iso)) return; // cerró sin elegir
+  STATE.fecha = iso;
+  syncFecha();
   scheduleSave();
 }
 
