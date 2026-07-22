@@ -49,9 +49,9 @@ test('construirCatalogo: sin argumentos no lanza', () => {
 });
 
 test('construirCatalogo: un renombre cambia la etiqueta pero NO el id', () => {
-  const cat = construirCatalogo({ categoriasRenombradas: { colegio: 'Sofía' } });
+  const cat = construirCatalogo({ categoriasRenombradas: { colegio: 'Educación niña' } });
   const c = cat.find((x) => x.id === 'colegio');
-  assert.equal(c.label, 'Sofía');
+  assert.equal(c.label, 'Educación niña');
   assert.equal(c.id, 'colegio'); // id estable: los movimientos lo guardan
   assert.equal(cat.length, TOTAL);
 });
