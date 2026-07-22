@@ -10,7 +10,7 @@
 import { getAll, put, del, getConfig } from '../db.js';
 import { crearRecurrente, actualizar } from '../model.js';
 import { parseCOP, formatCOP } from '../money.js';
-import { catalogo, categoriaPorId } from '../categories.js';
+import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { confirmar } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
@@ -89,7 +89,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
       const saltado = !!(exc && exc.saltar === true);
       const montoMes = exc && Number.isInteger(exc.monto) ? exc.monto : null;
 
-      const cats = catalogo().map((c) => `
+      const cats = catalogoVisible().map((c) => `
         <option value="${esc(c.id)}"${rec && rec.categoria === c.id ? ' selected' : ''}>${esc(c.label)}</option>`).join('');
       const cuentasOpt = cuentas.map((c) => `
         <option value="${esc(c)}"${rec && rec.cuenta === c ? ' selected' : ''}>${esc(c)}</option>`).join('');

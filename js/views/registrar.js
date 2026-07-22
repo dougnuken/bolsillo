@@ -14,7 +14,7 @@ import {
   crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga,
 } from '../model.js';
 import { formatCOP } from '../money.js';
-import { catalogo, categoriaPorId } from '../categories.js';
+import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { parseTextoLibre } from '../categorize.js';
 import { toast } from '../toast.js';
 import { hoyISO, etiquetaFecha, esISOValida } from '../fechas.js';
@@ -160,7 +160,7 @@ function keypadHTML() {
 
 function chipsCategoria() {
   return `<div class="cat-grid" role="listbox" aria-label="Categoría">${
-    catalogo().map((c) => `
+    catalogoVisible().map((c) => `
       <button type="button" class="cat-chip ${c.cls}${STATE.categoriaId === c.id ? ' is-sel' : ''}"
         role="option" aria-selected="${STATE.categoriaId === c.id}" data-cat="${c.id}">
         <span class="cat-chip__ic">${c.icon}</span>
@@ -194,9 +194,23 @@ function fuenteSelector() {
   return `<div class="acct-row">${opts}</div>`;
 }
 
+/* Campo "Detalle" prominente (el sub libre de Doug: uniformes, gasolina,
+   dieta huevos…). Persiste en el campo `comercio` del movimiento por
+   retrocompat; solo cambia la etiqueta de cara al usuario. Solo en gastos. */
+function detalleHTML() {
+  if (esIngreso()) return '';
+  return `
+    <label class="field reg-detalle">
+      <span class="field__label field__label--section">Detalle · ¿en qué?</span>
+      <input type="text" class="field__input" id="reg-detalle" value="${esc(STATE.comercio)}"
+        placeholder="uniformes, gasolina, dieta…" autocomplete="off" inputmode="text" />
+      <span class="reg-detalle__hint">Opcional. Ayuda a recordar en qué se fue.</span>
+    </label>`;
+}
+
 function detallesHTML() {
   const ingreso = esIngreso();
-  const resumen = ingreso ? ' · cuenta, fecha…' : ' · cuenta, fecha, comercio…';
+  const resumen = ' · cuenta, fecha…';
   return `
     <button type="button" class="detalles-toggle${STATE.detalles ? ' is-open' : ''}" data-act="detalles">
       <span>Detalles${!STATE.detalles ? resumen : ''}</span>
@@ -216,10 +230,6 @@ function detallesHTML() {
         </button>
       </div>
       ${ingreso ? '' : `
-      <label class="field">
-        <span class="field__label">Comercio</span>
-        <input type="text" class="field__input" id="reg-comercio" value="${esc(STATE.comercio)}" placeholder="Opcional" autocomplete="off" />
-      </label>
       <label class="field toggle-row">
         <span class="field__label">Gasto fijo (no cuenta como hormiga)</span>
         <span class="switch${STATE.esFijo ? ' is-on' : ''}" role="switch" aria-checked="${STATE.esFijo}" tabindex="0" data-act="fijo"><span class="switch__dot"></span></span>
@@ -266,6 +276,7 @@ function renderForm() {
     </button>
     ${STATE.keypad ? keypadHTML() : ''}
     ${seccion}
+    ${detalleHTML()}
     ${detallesHTML()}
     <button type="button" class="btn btn--primary btn--block btn--save" data-act="guardar" ${puedeGuardar ? '' : 'disabled'}>
       ${guardarTxt}
@@ -407,8 +418,8 @@ function bind() {
   const texto = sheetRef.querySelector('#reg-texto');
   if (texto) texto.addEventListener('input', () => interpretarTexto(texto.value));
 
-  const comercio = sheetRef.querySelector('#reg-comercio');
-  if (comercio) comercio.addEventListener('input', () => { STATE.comercio = comercio.value; scheduleSave(); });
+  const detalle = sheetRef.querySelector('#reg-detalle');
+  if (detalle) detalle.addEventListener('input', () => { STATE.comercio = detalle.value; scheduleSave(); });
 
   const notas = sheetRef.querySelector('#reg-notas');
   if (notas) notas.addEventListener('input', () => { STATE.notas = notas.value; scheduleSave(); });
@@ -424,7 +435,7 @@ function interpretarTexto(valor) {
   if (categoriaId) STATE.categoriaId = categoriaId;
   STATE.comercio = comercio || '';
   syncCategoria();
-  const ci = sheetRef.querySelector('#reg-comercio');
+  const ci = sheetRef.querySelector('#reg-detalle');
   if (ci) ci.value = STATE.comercio;
   scheduleSave();
 }

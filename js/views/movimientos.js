@@ -8,7 +8,7 @@
 import { getAll, del, put, getConfig, saveConfig } from '../db.js';
 import { actualizar, derivarEsHormiga } from '../model.js';
 import { formatCOP } from '../money.js';
-import { catalogo, categoriaPorId } from '../categories.js';
+import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { aprender } from '../categorize.js';
 import { confirmar, menu } from '../overlay.js';
 import { toast } from '../toast.js';
@@ -92,8 +92,11 @@ function chipsFiltro(movs) {
 
 function filaMov(m) {
   const c = categoriaPorId(m.categoria);
-  const titulo = m.comercio && m.comercio.trim() ? m.comercio : c.label;
-  const metas = [esc(m.cuenta)];
+  const detalle = m.comercio && m.comercio.trim() ? m.comercio.trim() : '';
+  // El detalle manda como título; la categoría acompaña en la meta. Sin
+  // detalle, el título ES la categoría (captura rápida sin sub).
+  const titulo = detalle || c.label;
+  const metas = detalle ? [esc(c.label), esc(m.cuenta)] : [esc(m.cuenta)];
   const badge = FUENTE_LABEL[m.fuente] && m.fuente !== 'manual'
     ? `<span class="src-badge">${esc(FUENTE_LABEL[m.fuente])}</span>` : '';
   const hormiga = m.esHormiga ? '<span class="hormiga-dot" title="Gasto hormiga"></span>' : '';
@@ -245,7 +248,7 @@ export default {
     async function recategorizar(m, cfg) {
       const elegido = await menu({
         title: 'Cambiar categoría',
-        items: catalogo().map((c) => ({ value: c.id, label: c.label, icon: c.icon })),
+        items: catalogoVisible().map((c) => ({ value: c.id, label: c.label, icon: c.icon })),
       });
       if (!elegido || elegido === m.categoria) return;
       try {

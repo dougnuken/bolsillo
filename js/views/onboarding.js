@@ -11,7 +11,7 @@ import { getAll, put, getConfig, saveConfig } from '../db.js';
 import { crearIngreso, crearRecurrente, actualizar } from '../model.js';
 import { parseCOP, formatCOP } from '../money.js';
 import { bindMontosVivos } from '../money-input.js';
-import { catalogo } from '../categories.js';
+import { catalogoVisible } from '../categories.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
@@ -198,7 +198,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
           <span class="ob__chip ob__chip--dato">${esc(f.nombre)} · <span class="num">${esc(formatCOP(f.monto))}</span></span>`).join('')}</div>`
       : '';
 
-    const cats = catalogo().map((c) => `<option value="${esc(c.id)}"${c.id === 'vivienda' ? ' selected' : ''}>${esc(c.label)}</option>`).join('');
+    const cats = catalogoVisible().map((c) => `<option value="${esc(c.id)}"${c.id === 'vivienda' ? ' selected' : ''}>${esc(c.label)}</option>`).join('');
 
     const form = st.agregandoFijo
       ? `<div class="ob__form">
@@ -226,8 +226,9 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
 
     return {
       html: `
-        <h1 class="ob__title">¿Qué pagas todos los meses?</h1>
-        <p class="ob__text">Arriendo, colegio, seguros. Bolsillo los descuenta antes de calcular lo que te queda para el día a día. Puedes hacerlo después.</p>
+        <h1 class="ob__title">¿Qué pagas <em>igual</em> cada mes?</h1>
+        <p class="ob__text">Solo lo fijo y de monto exacto: arriendo, colegio, seguros, suscripciones. Bolsillo lo descuenta antes de calcular lo que te queda para el día a día.</p>
+        <p class="ob__text ob__text--sm">Lo que varía (gasolina, servicios, mercado) no va aquí: eso lo registras en el momento con su categoría. Este paso es opcional, puedes saltarlo.</p>
         ${lista}
         ${form}
         <div class="ob__actions">
