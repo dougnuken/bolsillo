@@ -6,6 +6,7 @@ import {
   crearCredito,
   crearIngreso,
   validarMovimiento,
+  validarRecurrente,
   validarCredito,
   validarIngreso,
   actualizar,
@@ -210,6 +211,59 @@ test('ingresoNecesitaMigracion: solo los slots viejos', () => {
   assert.equal(ingresoNecesitaMigracion({ fuente: 'negocio2' }), true);
   assert.equal(ingresoNecesitaMigracion({ fuente: 'negocio' }), false);
   assert.equal(ingresoNecesitaMigracion({ fuente: 'empleo' }), false);
+});
+
+/* ---------------- recurrente: valor variable (esVariable) ---------------- */
+
+const recExacto = { nombre: 'Arriendo', monto: 1_200_000, diaDelMes: 5, cuenta: 'Bancolombia', modo: 'auto' };
+
+test('crearRecurrente exacto: esVariable false por defecto y monto obligatorio', () => {
+  const r = crearRecurrente(recExacto);
+  assert.equal(r.esVariable, false);
+  assert.equal(r.monto, 1_200_000);
+  assert.equal(r.montoEstimado, null);
+});
+
+test('crearRecurrente exacto: SIN monto sigue fallando (retrocompat estricta)', () => {
+  assert.throws(() => crearRecurrente({ nombre: 'Arriendo', diaDelMes: 5, cuenta: 'Bancolombia' }), /Recurrente inválido/);
+});
+
+test('crearRecurrente variable: se guarda SIN monto (antes no dejaba)', () => {
+  const r = crearRecurrente({ nombre: 'Luz', esVariable: true, diaDelMes: 10, cuenta: 'Bancolombia' });
+  assert.equal(r.esVariable, true);
+  assert.equal(r.monto, null); // no reserva un estimado inventado
+  assert.equal(r.montoEstimado, null);
+  assert.ok(Object.isFrozen(r));
+});
+
+test('crearRecurrente variable: acepta montoEstimado OPCIONAL como referencia', () => {
+  const r = crearRecurrente({ nombre: 'Gasolina', esVariable: true, diaDelMes: 15, cuenta: 'Nequi', montoEstimado: 300_000 });
+  assert.equal(r.esVariable, true);
+  assert.equal(r.monto, null);
+  assert.equal(r.montoEstimado, 300_000);
+});
+
+test('validarRecurrente variable: NO exige monto>0; sí rechaza estimado basura', () => {
+  const okSinMonto = validarRecurrente({
+    nombre: 'Agua', esVariable: true, monto: null, montoEstimado: null,
+    diaDelMes: 8, cuenta: 'Bancolombia', modo: 'confirmar', activo: true, excepciones: {},
+  });
+  assert.equal(okSinMonto.ok, true);
+  const malEstimado = validarRecurrente({
+    nombre: 'Agua', esVariable: true, monto: null, montoEstimado: 1500.5,
+    diaDelMes: 8, cuenta: 'Bancolombia', modo: 'confirmar', activo: true, excepciones: {},
+  });
+  assert.equal(malEstimado.ok, false);
+});
+
+test('validarRecurrente: un recurrente viejo SIN esVariable se valida como exacto', () => {
+  const viejo = {
+    nombre: 'Arriendo', monto: 1_200_000, diaDelMes: 5,
+    cuenta: 'Bancolombia', modo: 'confirmar', activo: true, excepciones: {},
+  };
+  assert.equal(validarRecurrente(viejo).ok, true); // undefined esVariable → exacto
+  // y sin monto un viejo-exacto sí falla:
+  assert.equal(validarRecurrente({ ...viejo, monto: null }).ok, false);
 });
 
 /* ---------------- crédito: activo (retrocompat) ---------------- */

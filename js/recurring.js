@@ -33,6 +33,27 @@ function yaMaterializado(movimientos, recId, prefijo) {
 }
 
 /**
+ * SOLICITUD de un fijo de VALOR VARIABLE: no es un movimiento (no tiene monto),
+ * es una petición para que la UI le pregunte a el usuario "¿cuánto fue este mes?".
+ * Lleva todo lo necesario para construir el movimiento cuando teclee el valor
+ * real, más `montoEstimado` como sugerencia. Se distingue por `pediMonto:true`.
+ */
+function solicitudVariable(rec, fecha) {
+  return Object.freeze({
+    pediMonto: true,
+    recurrenteId: rec.id,
+    comercio: rec.nombre || '',
+    categoria: rec.categoria || '',
+    cuenta: rec.cuenta,
+    fecha,
+    tipo: 'gasto',
+    esFijo: true,
+    fuente: 'recurrente',
+    montoEstimado: Number.isInteger(rec.montoEstimado) ? rec.montoEstimado : null,
+  });
+}
+
+/**
  * Calcula los NUEVOS movimientos a crear para (anio, mes).
  * Idempotente: nunca duplica lo ya materializado.
  *
@@ -42,6 +63,9 @@ function yaMaterializado(movimientos, recId, prefijo) {
  *  - diaDelMes > días del mes → se usa el último día (clamp).
  *  - excepciones["YYYY-MM"] = {saltar:true} → no se materializa.
  *  - excepciones["YYYY-MM"] = {monto:X}    → se usa X en vez del base.
+ *  - esVariable:true → NUNCA se inventa monto: SIEMPRE va a `porConfirmar` como
+ *    solicitud (pediMonto:true), aunque su modo fuera 'auto'. Su valor no se
+ *    conoce hasta que el usuario lo teclee.
  *  - modo 'auto' → lista `auto` (crear directo).
  *  - modo 'confirmar' → lista `porConfirmar` (la UI decide).
  *
@@ -74,8 +98,14 @@ export function materializarMes(recurrentes, movimientosExistentes, anio, mes, n
     // Aún no llega la fecha del recurrente en este mes → no materializar.
     if (fecha > hoyISO) continue;
 
-    // Ya existe → idempotencia.
+    // Ya existe → idempotencia (aplica igual a exactos y variables).
     if (yaMaterializado(movimientosExistentes, rec.id, prefijo)) continue;
+
+    // Valor variable: no se conoce el monto → siempre se pregunta (nunca auto).
+    if (rec.esVariable === true) {
+      porConfirmar.push(solicitudVariable(rec, fecha));
+      continue;
+    }
 
     const monto = excepcion && Number.isInteger(excepcion.monto) ? excepcion.monto : rec.monto;
 

@@ -140,10 +140,28 @@ export function derivarEsHormiga(mov = {}, config = configDefault()) {
 /* ============================================================
    RECURRENTE
    ============================================================ */
+/**
+ * Un recurrente es el "checklist mensual" de un gasto que se paga sí o sí.
+ *
+ * Dos formas:
+ *  · esVariable:false (EXACTO, default) → `monto` obligatorio, como siempre
+ *    (arriendo, colegio, seguros). Se materializa con su monto.
+ *  · esVariable:true (VALOR VARIABLE) → el valor cambia mes a mes (luz, agua,
+ *    gasolina, celular…). `monto` puede ser null; se permite `montoEstimado`
+ *    OPCIONAL como referencia ("¿cuánto suele ser?"). NUNCA se inventa un monto:
+ *    cada mes se le pregunta a el usuario el valor real (ver recurring.js).
+ *
+ * RETROCOMPAT: un recurrente viejo sin `esVariable` se trata como EXACTO.
+ */
 export function crearRecurrente(datos = {}, { now = new Date() } = {}) {
+  const esVariable = datos.esVariable === true;
   const base = {
     nombre: typeof datos.nombre === 'string' ? datos.nombre.trim() : '',
-    monto: montoEntero(datos.monto),
+    esVariable,
+    // exacto: monto obligatorio. variable: puede quedar en null (no se reserva).
+    monto: esVariable ? montoOpcional(datos.monto) : montoEntero(datos.monto),
+    // variable: referencia opcional "¿cuánto suele ser?". exacto: null.
+    montoEstimado: esVariable ? montoOpcional(datos.montoEstimado) : null,
     diaDelMes: datos.diaDelMes,
     categoria: typeof datos.categoria === 'string' ? datos.categoria : '',
     cuenta: typeof datos.cuenta === 'string' ? datos.cuenta.trim() : '',
@@ -160,7 +178,21 @@ export function validarRecurrente(obj = {}) {
   const errores = [];
   if (!obj || typeof obj !== 'object') return { ok: false, errores: ['El recurrente no es un objeto.'] };
   if (!esTextoNoVacio(obj.nombre)) errores.push('El nombre es obligatorio.');
-  if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El monto debe ser un entero de pesos mayor a 0.');
+  // Retrocompat: un recurrente viejo sin `esVariable` (undefined) pasa como
+  // exacto; solo se rechaza si viene presente y no es booleano.
+  if (obj.esVariable != null && typeof obj.esVariable !== 'boolean') errores.push('esVariable debe ser booleano.');
+  if (obj.esVariable === true) {
+    // Variable: el monto es OPCIONAL (referencia). Si viene, debe ser entero > 0.
+    if (obj.monto != null && (!Number.isInteger(obj.monto) || obj.monto <= 0)) {
+      errores.push('El monto debe ser un entero de pesos mayor a 0, o quedar vacío.');
+    }
+    if (obj.montoEstimado != null && (!Number.isInteger(obj.montoEstimado) || obj.montoEstimado <= 0)) {
+      errores.push('El estimado debe ser un entero de pesos mayor a 0, o quedar vacío.');
+    }
+  } else {
+    // Exacto: monto obligatorio (como siempre).
+    if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El monto debe ser un entero de pesos mayor a 0.');
+  }
   if (!esDiaDelMes(obj.diaDelMes)) errores.push('El día del mes debe estar entre 1 y 31.');
   if (!esTextoNoVacio(obj.cuenta)) errores.push('La cuenta es obligatoria.');
   if (!MODOS_RECURRENTE.includes(obj.modo)) errores.push(`Modo inválido: "${obj.modo}". Use auto o confirmar.`);

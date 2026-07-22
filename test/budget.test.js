@@ -246,6 +246,44 @@ test('recurrente con excepción monto usa ese monto en el compromiso', () => {
 });
 
 /* ============================================================
+   recurrente de VALOR VARIABLE: pendiente NO reserva; solo pesa al registrarse
+   ============================================================ */
+test('fijo variable pendiente NO reserva su estimado (no cambia fijosDelMes)', () => {
+  // Arrange: un variable con estimado 300k y un exacto pendiente de 800k.
+  const variable = recurrente({ nombre: 'Luz', esVariable: true, monto: null, montoEstimado: 300_000, diaDelMes: 25 });
+  const exacto = recurrente({ nombre: 'Arriendo', monto: 800_000, diaDelMes: 25 });
+  // Act: solo el variable
+  const soloVar = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [variable], hoy: '2026-04-10' });
+  // y el exacto de control
+  const soloExacto = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [exacto], hoy: '2026-04-10' });
+  // Assert: el variable no aporta nada; el exacto sí (como hoy)
+  assert.equal(soloVar.fijosDelMes, 0);
+  assert.equal(soloVar.baseVariable, 3_000_000);
+  assert.equal(soloExacto.fijosDelMes, 800_000);
+});
+
+test('fijo variable NO altera la suma: variable+exacto = solo el exacto', () => {
+  // Arrange
+  const variable = recurrente({ nombre: 'Gasolina', esVariable: true, monto: null, montoEstimado: 400_000, diaDelMes: 20 });
+  const exacto = recurrente({ nombre: 'Arriendo', monto: 800_000, diaDelMes: 25 });
+  // Act
+  const conAmbos = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [variable, exacto], hoy: '2026-04-10' });
+  // Assert: el variable no suma; queda solo el exacto
+  assert.equal(conAmbos.fijosDelMes, 800_000);
+});
+
+test('fijo variable YA registrado (su valor real) SÍ pesa vía movimiento esFijo', () => {
+  // Arrange: el variable de la luz, con su valor real del mes ya materializado.
+  const variable = recurrente({ nombre: 'Luz', esVariable: true, monto: null, montoEstimado: 300_000, diaDelMes: 5 });
+  const movReal = fijo('2026-04-05', 275_000, { recurrenteId: variable.id, categoria: 'servicios' });
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [movReal], recurrentes: [variable], hoy: '2026-04-10' });
+  // Assert: pesa el valor REAL (275k), una sola vez (no el estimado, no doble)
+  assert.equal(e.fijosDelMes, 275_000);
+  assert.equal(e.baseVariable, 2_725_000);
+});
+
+/* ============================================================
    umbral configurable mueve la frontera ámbar/rojo
    ============================================================ */
 test('umbral configurable: razon ~1.3 es rojo con 1.25 pero ámbar con 1.5', () => {

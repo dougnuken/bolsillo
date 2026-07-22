@@ -121,8 +121,9 @@ function desglosarCategorias(variables, variableGastado, config) {
 /**
  * Fijos comprometidos del mes SIN doble conteo. Tres fuentes:
  *  (A) movimientos con esFijo===true del mes (materializados o a mano), MÁS
- *  (B) recurrentes activos aún NO materializados este mes (compromiso pendiente),
- *      respetando excepciones["YYYY-MM"] (saltar→no cuenta, monto→ese monto), MÁS
+ *  (B) recurrentes EXACTOS activos aún NO materializados este mes (compromiso
+ *      pendiente), respetando excepciones["YYYY-MM"] (saltar→no cuenta,
+ *      monto→ese monto). Los de VALOR VARIABLE NO reservan (se excluyen), MÁS
  *  (C) cuotas de créditos activos: cada crédito aporta su cuota UNA vez. Si ya
  *      hay un movimiento ligado a ese crédito este mes (creditoId), su pago real
  *      manda: los esFijo ya están en (A) y los pago_credito/no-fijo se suman
@@ -155,6 +156,10 @@ function calcularFijos(movimientos, recurrentes, creditos, prefijo) {
   let fijosPendientes = 0;
   for (const rec of recurrentes) {
     if (!rec || rec.activo !== true) continue;
+    // Un fijo de VALOR VARIABLE (luz, agua, gasolina…) NO reserva su estimado:
+    // solo pesa cuando el usuario registra su valor real del mes (ahí entra
+    // como movimiento esFijo en la parte A). Los exactos siguen igual.
+    if (rec.esVariable === true) continue;
     if (recIdsMaterializados.has(rec.id)) continue; // ya contado en (A): no duplicar
     const exc = rec.excepciones && rec.excepciones[prefijo];
     if (exc && exc.saltar === true) continue; // saltado este mes: no compromete

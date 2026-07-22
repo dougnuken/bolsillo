@@ -91,3 +91,62 @@ test('no materializa recurrentes inactivos', () => {
   assert.equal(auto.length, 0);
   assert.equal(porConfirmar.length, 0);
 });
+
+/* ---------------- VALOR VARIABLE: siempre pide monto ---------------- */
+
+function recVar(over = {}) {
+  return crearRecurrente({
+    nombre: 'Luz', esVariable: true, monto: null, montoEstimado: 300000,
+    diaDelMes: 5, categoria: 'servicios', cuenta: 'Bancolombia', modo: 'auto', ...over,
+  });
+}
+
+test('variable: SIEMPRE va a porConfirmar como solicitud (nunca a auto, aunque modo=auto)', () => {
+  const rec = recVar();
+  const { auto, porConfirmar } = materializarMes([rec], [], 2026, 3, NOW_MAR);
+  assert.equal(auto.length, 0); // no se materializa solo, aunque su modo sea 'auto'
+  assert.equal(porConfirmar.length, 1);
+  const sol = porConfirmar[0];
+  assert.equal(sol.pediMonto, true); // marca que la UI debe pedir el monto
+  assert.equal(sol.recurrenteId, rec.id); // vínculo al recurrente que la originó
+  assert.equal(sol.montoEstimado, 300000); // sugerencia
+  assert.equal(sol.comercio, 'Luz');
+  assert.equal(sol.esFijo, true);
+  assert.equal(sol.fuente, 'recurrente');
+  assert.equal(sol.fecha, '2026-03-05');
+  assert.equal(sol.monto, undefined); // no inventa un monto
+});
+
+test('variable sin estimado: la solicitud lleva montoEstimado null', () => {
+  const { porConfirmar } = materializarMes([recVar({ montoEstimado: null })], [], 2026, 3, NOW_MAR);
+  assert.equal(porConfirmar.length, 1);
+  assert.equal(porConfirmar[0].montoEstimado, null);
+});
+
+test('variable: idempotente, si ya hay movimiento del mes NO vuelve a pedir', () => {
+  const rec = recVar();
+  const yaReal = crearMovimiento({
+    fecha: '2026-03-05', monto: 275000, cuenta: 'Bancolombia',
+    fuente: 'recurrente', esFijo: true, recurrenteId: rec.id,
+  });
+  const { auto, porConfirmar } = materializarMes([rec], [yaReal], 2026, 3, NOW_MAR);
+  assert.equal(auto.length, 0);
+  assert.equal(porConfirmar.length, 0); // ya registrado este mes
+});
+
+test('variable: no pide antes de que llegue su día del mes', () => {
+  const rec = recVar({ diaDelMes: 25 }); // hoy es día 15
+  const { porConfirmar } = materializarMes([rec], [], 2026, 3, NOW_MAR);
+  assert.equal(porConfirmar.length, 0);
+});
+
+test('variable + exacto conviven: cada uno en su carril', () => {
+  const variable = recVar({ nombre: 'Agua' });
+  const exacto = recu({ nombre: 'Arriendo', modo: 'auto' });
+  const { auto, porConfirmar } = materializarMes([variable, exacto], [], 2026, 3, NOW_MAR);
+  assert.equal(auto.length, 1); // el exacto auto se materializa
+  assert.equal(auto[0].comercio, 'Arriendo');
+  assert.equal(porConfirmar.length, 1); // el variable pide monto
+  assert.equal(porConfirmar[0].pediMonto, true);
+  assert.equal(porConfirmar[0].comercio, 'Agua');
+});
