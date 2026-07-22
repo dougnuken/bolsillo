@@ -164,7 +164,7 @@ export async function abrirCategorias({ onSaved } = {}) {
           const propias = Array.isArray(config.categoriasPersonalizadas) ? config.categoriasPersonalizadas : [];
           const id = idPersonalizada(nombre, catalogo().map((c) => c.id));
           try {
-            // Las nuevas nacen como categoría-persona (lo más común para Doug);
+            // Las nuevas nacen como categoría-persona (lo más común para el usuario);
             // el ícono y color se afinan al tocarla.
             await saveConfig({
               categoriasPersonalizadas: [...propias, { id, label: nombre }],

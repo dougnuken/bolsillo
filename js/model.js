@@ -10,8 +10,8 @@
 export const TIPOS_MOVIMIENTO = Object.freeze(['gasto', 'ingreso', 'pago_credito', 'transferencia']);
 export const FUENTES_MOVIMIENTO = Object.freeze(['manual', 'foto', 'pdf', 'recurrente']);
 /* Fuentes de ingreso: `empleo` es especial (sueldo, base del semáforo, única,
-   no se borra) y `negocio` es genérica (cantidad y nombre libres: Tierra
-   Querida, DC Medical, arriendo…). Las viejas `negocio1`/`negocio2` se
+   no se borra) y `negocio` es genérica (cantidad y nombre libres: un
+   negocio, otro, un arriendo…). Las viejas `negocio1`/`negocio2` se
    migran a `negocio` con nombre legible (ver migrarIngresos). */
 export const FUENTES_INGRESO = Object.freeze(['empleo', 'negocio']);
 /* Slots viejos que la migración convierte a `negocio` con nombre por defecto. */

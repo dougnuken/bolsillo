@@ -194,7 +194,7 @@ function fuenteSelector() {
   return `<div class="acct-row">${opts}</div>`;
 }
 
-/* Campo "Detalle" prominente (el sub libre de Doug: uniformes, gasolina,
+/* Campo "Detalle" prominente (el sub libre de el usuario: uniformes, gasolina,
    dieta huevos…). Persiste en el campo `comercio` del movimiento por
    retrocompat; solo cambia la etiqueta de cara al usuario. Solo en gastos. */
 function detalleHTML() {

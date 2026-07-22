@@ -1,7 +1,7 @@
 /* ============================================================
    Bolsillo · categories.js
    Catálogo de categorías de gasto, centrado en las categorías que
-   el usuario define (Doug categoriza por persona/propósito).
+   el usuario define (el usuario categoriza por persona/propósito).
 
    Los DEFAULTS que se envían aquí son NEUTROS y genéricos
    ("Persona 1", "Yo", "Hogar", "Supermercado"…): los nombres reales
@@ -68,10 +68,10 @@ export function iconoDe(key) {
 /* --- catálogo por defecto (NEUTRO, centrado en persona) ---
    Cada entrada: id (estable), label (neutro), icono (clave) y tint (clave).
    Los ids "vivienda/mercado/transporte/colegio/seguros/…" se conservan de la
-   versión previa para que los movimientos ya registrados por Doug SIGAN
+   versión previa para que los movimientos ya registrados por el usuario SIGAN
    resolviendo; solo su etiqueta por defecto cambió a un genérico neutro. */
 const DEFAULTS = [
-  // Personas (Doug clasifica por persona/propósito, no por tipo genérico).
+  // Personas (el usuario clasifica por persona/propósito, no por tipo genérico).
   { id: 'persona1', label: 'Persona 1', icono: 'persona', tint: 'persona1' },
   { id: 'persona2', label: 'Persona 2', icono: 'persona', tint: 'persona2' },
   { id: 'persona3', label: 'Persona 3', icono: 'persona', tint: 'persona3' },

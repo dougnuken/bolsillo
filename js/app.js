@@ -200,7 +200,7 @@ async function initData() {
 }
 
 /* Migra solo las fuentes viejas (idempotente): no reescribe empleo ni las ya
-   nuevas, así una recarga no vuelve a tocar los datos reales de Doug. */
+   nuevas, así una recarga no vuelve a tocar los datos reales de el usuario. */
 async function migrarIngresosSiHace() {
   try {
     const ingresos = await getAll('ingresos');

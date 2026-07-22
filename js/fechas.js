@@ -2,7 +2,7 @@
    Bolsillo · fechas.js
    Helpers de fecha PUROS para la UI (sin DOM, sin db).
 
-   Regla: la fecha de un gasto es la del CALENDARIO DE DOUG, no la
+   Regla: la fecha de un gasto es la del CALENDARIO DEL USUARIO, no la
    del meridiano de Greenwich. `new Date().toISOString()` devuelve
    UTC: en Colombia (UTC-5), a las 7 de la noche del 19 ya dice 20.
    Por eso aquí se arma el 'YYYY-MM-DD' con los getters LOCALES.

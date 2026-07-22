@@ -1,7 +1,7 @@
 /* ============================================================
    Bolsillo · views/cfg-ingresos.js
    Fuentes de ingreso de NEGOCIO (cantidad y nombre libres):
-   Tierra Querida, DC Medical, arriendo del apartamento…
+   un negocio, otro negocio, el arriendo de un inmueble…
 
    Cada fuente puede tener:
     · nombre libre (obligatorio),
@@ -74,7 +74,7 @@ export async function abrirNegocios({ onSaved } = {}) {
             accion: 'editar',
           });
         }).join('')
-        : vacioCfg('Aún no registras negocios. Agrega Tierra Querida, DC Medical, el arriendo…');
+        : vacioCfg('Aún no registras negocios. Agrega tus negocios, un arriendo u otros ingresos…');
 
       const html = `
         ${cabecera('Ingresos de negocios')}
@@ -109,7 +109,7 @@ export async function abrirNegocios({ onSaved } = {}) {
           <label class="field">
             <span class="field__label">Nombre del negocio</span>
             <input class="field__input" id="neg-nombre" type="text" autocomplete="off"
-              placeholder="Tierra Querida" value="${esc(ing ? ing.nombre || '' : '')}" />
+              placeholder="Ej. mi negocio" value="${esc(ing ? ing.nombre || '' : '')}" />
           </label>
 
           <label class="field">

@@ -1,7 +1,7 @@
 /* ============================================================
    Bolsillo · views/cfg-creditos.js
    CRUD de créditos. Un crédito es UN PRODUCTO de una entidad, no
-   "un banco": AV Villas puede tener libre inversión + tarjeta +
+   "un banco": una misma entidad puede tener libre inversión + tarjeta +
    vehículo a la vez. Por eso la lista va AGRUPADA por entidad.
 
    Solo se piden 3 datos: entidad, producto y la cuota de este mes.
@@ -163,7 +163,7 @@ export async function abrirCreditos({ onSaved } = {}) {
           <label class="field">
             <span class="field__label">Entidad</span>
             <input class="field__input" id="cre-entidad" type="text" autocomplete="off"
-              placeholder="AV Villas" value="${esc(cre ? cre.entidad : '')}" />
+              placeholder="Ej. Bancolombia" value="${esc(cre ? cre.entidad : '')}" />
             ${huecoError('cre-entidad')}
           </label>
 

@@ -205,7 +205,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
   const variables = movs.filter((m) => m.tipo === 'gasto' && m.esFijo === false && enMes(m, prefijo));
   const variableGastado = redondear(variables.reduce((s, m) => s + m.monto, 0));
 
-  // Ingresos RECIBIDOS del mes: solo lo que Doug registró que entró (los
+  // Ingresos RECIBIDOS del mes: solo lo que el usuario registró que entró (los
   // negocios varían; el "esperado" es referencia, no entra al cálculo).
   const ingresosRecibidos = redondear(
     movs.filter((m) => m.tipo === 'ingreso' && enMes(m, prefijo)).reduce((s, m) => s + m.monto, 0),
