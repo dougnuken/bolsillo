@@ -56,6 +56,10 @@
 
   /* ---- Tints de categoría (identidad, NO estado; desaturados para dark) ----
      El fondo translúcido se deriva con color-mix; aquí solo el color base. */
+  --cat-persona1: #F2A0A6;      /* categorías-persona (identidad, neutras) */
+  --cat-persona2: #7FB2EA;
+  --cat-persona3: #C0A2F0;
+  --cat-yo: #66CBB0;
   --cat-vivienda: #8AA6FF;
   --cat-servicios: #63C2D6;
   --cat-mercado: #8FCF7A;

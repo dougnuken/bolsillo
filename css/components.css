@@ -377,6 +377,10 @@
 /* ============================================================
    Tints de categoría — cada clase fija --tint (usada por chips/iconos)
    ============================================================ */
+.cat--persona1 { --tint: var(--cat-persona1); }
+.cat--persona2 { --tint: var(--cat-persona2); }
+.cat--persona3 { --tint: var(--cat-persona3); }
+.cat--yo { --tint: var(--cat-yo); }
 .cat--vivienda { --tint: var(--cat-vivienda); }
 .cat--servicios { --tint: var(--cat-servicios); }
 .cat--mercado { --tint: var(--cat-mercado); }
@@ -459,6 +463,11 @@
 /* ---- texto libre ---- */
 .free-text { margin: var(--sp-2) 0 var(--sp-4); }
 .free-text__hint { font-size: var(--fs-xs); color: var(--text-3); margin-top: var(--sp-2); }
+
+/* Campo "Detalle" del registro (sub libre: uniformes, gasolina, dieta…). */
+.reg-detalle { display: block; }
+.reg-detalle .field__input { margin-top: var(--sp-1); }
+.reg-detalle__hint { display: block; font-size: var(--fs-xs); color: var(--text-3); margin-top: var(--sp-2); }
 
 /* ---- display de monto ---- */
 .amt {

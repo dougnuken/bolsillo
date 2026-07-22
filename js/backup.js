@@ -94,6 +94,7 @@ export function fusionarConfig(local, importada) {
     // un presupuesto de una categoría que solo existe local no se pierde.
     presupuestos: { ...(base.presupuestos || {}), ...(entrante.presupuestos || {}) },
     categoriasRenombradas: { ...(base.categoriasRenombradas || {}), ...(entrante.categoriasRenombradas || {}) },
+    categoriasEstilo: { ...(base.categoriasEstilo || {}), ...(entrante.categoriasEstilo || {}) },
     categoriasAprendidas: { ...(base.categoriasAprendidas || {}), ...(entrante.categoriasAprendidas || {}) },
   };
 }

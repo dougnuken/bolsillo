@@ -11,6 +11,7 @@ import {
   actualizar,
   derivarEsHormiga,
   configDefault,
+  crearConfig,
   tasaEAaMV,
   migrarIngresos,
   ingresoNecesitaMigracion,
@@ -334,4 +335,36 @@ test('configDefault: singleton con id fijo y apiKey null', () => {
   assert.equal(c.apiKey, null);
   assert.equal(c.umbralHormiga, 20000);
   assert.ok(Object.isFrozen(c));
+});
+
+test('configDefault: trae las nuevas llaves de categorías vacías', () => {
+  const c = configDefault();
+  assert.deepEqual(c.categoriasEstilo, {});
+  assert.deepEqual(c.categoriasOcultas, []);
+  assert.deepEqual(c.categoriasOrden, []);
+});
+
+test('crearConfig: categoriasEstilo se fusiona sobre lo existente', () => {
+  const c = crearConfig({
+    categoriasEstilo: { persona1: { icono: 'corazon', tint: 'salud' } },
+  });
+  assert.deepEqual(c.categoriasEstilo.persona1, { icono: 'corazon', tint: 'salud' });
+  assert.ok(Object.isFrozen(c.categoriasEstilo));
+});
+
+test('crearConfig: categoriasOcultas y categoriasOrden se reemplazan (no mutan el input)', () => {
+  const ocultas = ['negocios', 'comisiones'];
+  const orden = ['yo', 'persona1'];
+  const c = crearConfig({ categoriasOcultas: ocultas, categoriasOrden: orden });
+  assert.deepEqual(c.categoriasOcultas, ['negocios', 'comisiones']);
+  assert.deepEqual(c.categoriasOrden, ['yo', 'persona1']);
+  assert.notEqual(c.categoriasOcultas, ocultas); // copia, no la misma referencia
+  assert.ok(Object.isFrozen(c.categoriasOrden));
+});
+
+test('crearConfig: sin las nuevas llaves quedan como arreglos/objeto vacíos', () => {
+  const c = crearConfig({ tema: 'dark' });
+  assert.deepEqual(c.categoriasEstilo, {});
+  assert.deepEqual(c.categoriasOcultas, []);
+  assert.deepEqual(c.categoriasOrden, []);
 });

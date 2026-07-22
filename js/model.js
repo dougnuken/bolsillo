@@ -354,6 +354,12 @@ export function configDefault() {
     categoriasPersonalizadas: Object.freeze([]),
     // Renombres de las categorías canónicas: {categoriaId: 'Nuevo nombre'}.
     categoriasRenombradas: Object.freeze({}),
+    // Ícono/tint elegido por categoría (canónica o propia): {id: {icono, tint}}.
+    categoriasEstilo: Object.freeze({}),
+    // Categorías ocultas del selector de captura (siguen resolviendo): [id].
+    categoriasOcultas: Object.freeze([]),
+    // Orden personalizado del catálogo: [id, id, …].
+    categoriasOrden: Object.freeze([]),
     apiKey: null,
     modelos: Object.freeze({ vision: 'claude-haiku-4-5', extractos: 'claude-sonnet-4-5' }),
     tema: 'dark',
@@ -383,6 +389,11 @@ export function crearConfig(datos = {}) {
         : d.categoriasPersonalizadas.slice(),
     ),
     categoriasRenombradas: Object.freeze({ ...d.categoriasRenombradas, ...(datos.categoriasRenombradas || {}) }),
+    // categoriasEstilo: merge sobre lo existente (el llamante pasa el mapa completo).
+    categoriasEstilo: Object.freeze({ ...d.categoriasEstilo, ...(datos.categoriasEstilo || {}) }),
+    // categoriasOcultas / categoriasOrden: reemplazo (el llamante pasa el arreglo completo).
+    categoriasOcultas: Object.freeze(Array.isArray(datos.categoriasOcultas) ? datos.categoriasOcultas.slice() : d.categoriasOcultas.slice()),
+    categoriasOrden: Object.freeze(Array.isArray(datos.categoriasOrden) ? datos.categoriasOrden.slice() : d.categoriasOrden.slice()),
     onboardingCompletado: datos.onboardingCompletado === true,
   });
 }
