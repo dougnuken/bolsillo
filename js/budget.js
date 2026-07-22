@@ -119,20 +119,35 @@ function desglosarCategorias(variables, variableGastado, config) {
 }
 
 /**
- * Fijos comprometidos del mes SIN doble conteo:
- *  (A) movimientos con esFijo===true del mes, MÁS
+ * Fijos comprometidos del mes SIN doble conteo. Tres fuentes:
+ *  (A) movimientos con esFijo===true del mes (materializados o a mano), MÁS
  *  (B) recurrentes activos aún NO materializados este mes (compromiso pendiente),
- *      respetando excepciones["YYYY-MM"] (saltar→no cuenta, monto→ese monto).
+ *      respetando excepciones["YYYY-MM"] (saltar→no cuenta, monto→ese monto), MÁS
+ *  (C) cuotas de créditos activos: cada crédito aporta su cuota UNA vez. Si ya
+ *      hay un movimiento ligado a ese crédito este mes (creditoId), su pago real
+ *      manda: los esFijo ya están en (A) y los pago_credito/no-fijo se suman
+ *      aquí; en ambos casos NO se agrega también la cuota abstracta.
+ *
+ * @returns {{fijos:number, creditos:number}} total de fijos y su porción de créditos
  */
-function calcularFijos(movimientos, recurrentes, prefijo) {
-  // (A) fijos ya registrados (materializados o capturados a mano).
+function calcularFijos(movimientos, recurrentes, creditos, prefijo) {
+  // (A) fijos ya registrados (materializados o capturados a mano) +
+  //     índice de movimientos ligados a un crédito este mes.
   let fijosMaterializados = 0;
   const recIdsMaterializados = new Set();
+  const movsPorCredito = new Map(); // creditoId → { hay:true, noFijo:number }
   for (const m of movimientos) {
     if (!enMes(m, prefijo)) continue;
     if (m.esFijo === true) {
       fijosMaterializados += m.monto;
       if (m.recurrenteId) recIdsMaterializados.add(m.recurrenteId);
+    }
+    if (m.creditoId) {
+      const acc = movsPorCredito.get(m.creditoId) || { hay: true, noFijo: 0 };
+      // Un esFijo con creditoId ya está en (A); solo acumulamos aquí lo NO-fijo
+      // (p. ej. un pago_credito) para no perderlo ni duplicarlo.
+      if (m.esFijo !== true) acc.noFijo += m.monto;
+      movsPorCredito.set(m.creditoId, acc);
     }
   }
 
@@ -147,7 +162,21 @@ function calcularFijos(movimientos, recurrentes, prefijo) {
     if (esEntero(monto)) fijosPendientes += monto;
   }
 
-  return redondear(fijosMaterializados + fijosPendientes);
+  // (C) cuotas de créditos activos, sin doble conteo.
+  let cuotasCredito = 0;
+  for (const c of creditos) {
+    if (!c || c.activo === false) continue; // inactivo (undefined = activo, retrocompat)
+    if (!esEntero(c.cuotaMensual) || c.cuotaMensual <= 0) continue; // sin cuota → no rompe
+    const mov = movsPorCredito.get(c.id);
+    // Si ya hay movimiento(s) ligados: cuenta su pago real (solo la parte no-fija,
+    // porque la esFija ya entró en (A)); si no, la cuota abstracta comprometida.
+    cuotasCredito += mov ? mov.noFijo : c.cuotaMensual;
+  }
+
+  return {
+    fijos: redondear(fijosMaterializados + fijosPendientes + cuotasCredito),
+    creditos: redondear(cuotasCredito),
+  };
 }
 
 /**
@@ -157,13 +186,15 @@ function calcularFijos(movimientos, recurrentes, prefijo) {
  * @param {number|null} args.ingresoEmpleo  sueldo mensual (entero de pesos)
  * @param {object[]}    args.movimientos    movimientos del usuario
  * @param {object[]}    args.recurrentes    gastos fijos definidos
+ * @param {object[]}    args.creditos       créditos del usuario (sus cuotas pesan)
  * @param {Date|string} args.hoy            fecha de referencia (inyectable)
  * @param {object}      args.config         config (umbrales, presupuestos)
  * @returns {Readonly<object>} estado congelado con color + números del mes
  */
-export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = [], hoy, config = {} } = {}) {
+export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = [], creditos = [], hoy, config = {} } = {}) {
   const movs = Array.isArray(movimientos) ? movimientos.filter(Boolean) : [];
   const recs = Array.isArray(recurrentes) ? recurrentes.filter(Boolean) : [];
+  const creds = Array.isArray(creditos) ? creditos.filter(Boolean) : [];
 
   const { dia, prefijo } = partes(hoy);
   const diasMes = diasEnMes(hoy);
@@ -174,7 +205,13 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
   const variables = movs.filter((m) => m.tipo === 'gasto' && m.esFijo === false && enMes(m, prefijo));
   const variableGastado = redondear(variables.reduce((s, m) => s + m.monto, 0));
 
-  const fijosDelMes = calcularFijos(movs, recs, prefijo);
+  // Ingresos RECIBIDOS del mes: solo lo que Doug registró que entró (los
+  // negocios varían; el "esperado" es referencia, no entra al cálculo).
+  const ingresosRecibidos = redondear(
+    movs.filter((m) => m.tipo === 'ingreso' && enMes(m, prefijo)).reduce((s, m) => s + m.monto, 0),
+  );
+
+  const { fijos: fijosDelMes, creditos: fijosCreditos } = calcularFijos(movs, recs, creds, prefijo);
   const totalHormiga = redondear(
     movs.filter((m) => m.esHormiga === true && enMes(m, prefijo)).reduce((s, m) => s + m.monto, 0),
   );
@@ -189,7 +226,9 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     diasRestantes,
     avance,
     variableGastado,
+    ingresosRecibidos,
     fijosDelMes,
+    fijosCreditos,
     totalHormiga,
     porCategoria,
     proyeccionVariable,
@@ -197,6 +236,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
   };
 
   // --- Sin sueldo configurado: nada de NaN ni divisiones por cero ---
+  // La base del semáforo sigue siendo el SUELDO: sin él no hay ritmo que medir.
   const ingreso = esEntero(ingresoEmpleo) ? ingresoEmpleo : (Number.isFinite(ingresoEmpleo) ? Math.round(ingresoEmpleo) : 0);
   if (!(ingreso > 0)) {
     return Object.freeze({
@@ -206,6 +246,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
       etiqueta: ETIQUETAS['sin-config'],
       mensaje: MENSAJES['sin-config'],
       ingresoEmpleo: 0,
+      plataDelMes: ingresosRecibidos,
       baseVariable: null,
       ritmo: null,
       razon: null,
@@ -216,8 +257,10 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     });
   }
 
-  const baseVariable = ingreso - fijosDelMes;
-  const porcentajeIngreso = variableGastado / ingreso;
+  // Plata del mes = sueldo (base fija) + lo que efectivamente entró de negocios.
+  const plataDelMes = ingreso + ingresosRecibidos;
+  const baseVariable = plataDelMes - fijosDelMes;
+  const porcentajeIngreso = plataDelMes > 0 ? variableGastado / plataDelMes : 0;
 
   // --- Los fijos igualan o superan el sueldo: rojo, sin dividir por cero ---
   if (baseVariable <= 0) {
@@ -229,6 +272,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
       etiqueta: ETIQUETAS.rojo,
       mensaje: MENSAJES.fijosSuperan,
       ingresoEmpleo: ingreso,
+      plataDelMes,
       baseVariable,
       ritmo: null,
       razon: null,
@@ -258,6 +302,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     etiqueta: ETIQUETAS[color],
     mensaje: MENSAJES[color],
     ingresoEmpleo: ingreso,
+    plataDelMes,
     baseVariable,
     ritmo,
     razon,
@@ -266,4 +311,65 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     disponiblePorDia: redondear(disponibleRestante / diasRestantes),
     fijosSuperanIngreso: false,
   });
+}
+
+const esTextoNoVacio = (v) => typeof v === 'string' && v.trim() !== '';
+
+/** Nombre legible de un crédito. PURA. (Retrocompat: producto o `tipo` viejo.) */
+function etiquetaCredito(c) {
+  const producto = esTextoNoVacio(c.producto) ? c.producto.trim()
+    : (esTextoNoVacio(c.tipo) ? c.tipo.trim() : 'Crédito');
+  const entidad = esTextoNoVacio(c.entidad) ? c.entidad.trim() : '';
+  return entidad ? `${entidad} · ${producto}` : producto;
+}
+
+/**
+ * Resumen por fuente de negocio para el dashboard: cuánto entró este mes vs.
+ * la cuota del crédito que cubre. Responde de un vistazo si el negocio se
+ * paga solo o si el sueldo está tapando el hueco. PURA y de solo lectura.
+ *
+ * @param {object} args
+ * @param {object[]} args.fuentes      fuentes de ingreso (se ignora `empleo`)
+ * @param {object[]} args.movimientos  movimientos (tipo:'ingreso' con ingresoId)
+ * @param {object[]} args.creditos     créditos (para leer la cuota vinculada)
+ * @param {Date|string} args.hoy       fecha de referencia (inyectable)
+ * @returns {Readonly<object>[]} una fila por fuente de negocio
+ */
+export function resumenNegocios({ fuentes = [], movimientos = [], creditos = [], hoy } = {}) {
+  const { prefijo } = partes(hoy);
+  const negocios = (Array.isArray(fuentes) ? fuentes : []).filter((f) => f && f.fuente !== 'empleo');
+  if (!negocios.length) return Object.freeze([]);
+
+  // Recibido este mes por fuente (suma de ingresos con ese ingresoId).
+  const recibidoPorFuente = new Map();
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'ingreso' || !enMes(m, prefijo) || !m.ingresoId) continue;
+    recibidoPorFuente.set(m.ingresoId, (recibidoPorFuente.get(m.ingresoId) || 0) + m.monto);
+  }
+  const creditoPorId = new Map((Array.isArray(creditos) ? creditos : []).filter(Boolean).map((c) => [c.id, c]));
+
+  const filas = negocios.map((f) => {
+    const recibido = redondear(recibidoPorFuente.get(f.id) || 0);
+    const credito = f.creditoId ? creditoPorId.get(f.creditoId) : null;
+    const cuota = credito && esEntero(credito.cuotaMensual) && credito.cuotaMensual > 0 ? credito.cuotaMensual : null;
+    const cobertura = cuota != null ? recibido / cuota : null;
+    let color = null;
+    if (cobertura != null) {
+      if (cobertura >= 1) color = 'verde';
+      else if (cobertura >= 0.6) color = 'ambar';
+      else color = 'rojo';
+    }
+    return Object.freeze({
+      id: f.id,
+      nombre: esTextoNoVacio(f.nombre) ? f.nombre.trim() : 'Negocio',
+      esperado: esEntero(f.montoEsperado) && f.montoEsperado > 0 ? f.montoEsperado : null,
+      recibido,
+      creditoId: f.creditoId || null,
+      creditoLabel: credito ? etiquetaCredito(credito) : null,
+      cuota,
+      cobertura,
+      color,
+    });
+  });
+  return Object.freeze(filas);
 }

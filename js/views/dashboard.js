@@ -9,7 +9,7 @@
    ============================================================ */
 
 import { getAll, getConfig } from '../db.js';
-import { calcularEstado } from '../budget.js';
+import { calcularEstado, resumenNegocios } from '../budget.js';
 import { formatCOP } from '../money.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
@@ -122,13 +122,58 @@ function statRowHTML(e) {
 }
 
 function fijosCardHTML(e) {
+  const hint = e.fijosCreditos > 0
+    ? `Incluye <span class="num">${formatCOP(e.fijosCreditos)}</span> de créditos`
+    : 'No entran al ritmo variable';
   return `
     <div class="card fijos-card">
       <div>
         <span class="fijos-card__label">Fijos del mes</span>
-        <span class="fijos-card__hint">No entran al ritmo variable</span>
+        <span class="fijos-card__hint">${hint}</span>
       </div>
       <span class="fijos-card__val num">${formatCOP(e.fijosDelMes)}</span>
+    </div>`;
+}
+
+/* ---- "Tus negocios": ¿cubren sus créditos o los tapa el sueldo? ---- */
+function negociosHTML(negocios) {
+  if (!negocios.length) return '';
+  const filas = negocios.map((n) => {
+    const recibido = `<span class="negocio__in num">${formatCOP(n.recibido, { signo: true })}</span>`;
+    const esperado = n.esperado != null
+      ? `<span class="negocio__esp">esperado <span class="num">${formatCOP(n.esperado)}</span></span>` : '';
+
+    let cobertura = '';
+    if (n.cuota != null) {
+      const p = Math.max(0, Math.min(100, Math.round((n.cobertura || 0) * 100)));
+      cobertura = `
+        <div class="negocio__cov">
+          <div class="negocio__cov-head">
+            <span class="negocio__cred">${esc(n.creditoLabel)}</span>
+            <span class="pill pill--${n.color} negocio__pct"><span class="pill__dot"></span>${p}%</span>
+          </div>
+          <span class="negocio__track"><span class="negocio__fill negocio__fill--${n.color}" data-w="${p}"></span></span>
+          <span class="negocio__cov-sub"><span class="num">${formatCOP(n.recibido)}</span> de <span class="num">${formatCOP(n.cuota)}</span> de cuota</span>
+        </div>`;
+    } else {
+      cobertura = '<span class="negocio__nocred">Sin crédito vinculado</span>';
+    }
+
+    return `
+      <div class="card negocio">
+        <div class="negocio__top">
+          <span class="negocio__name">${esc(n.nombre)}</span>
+          ${recibido}
+        </div>
+        ${esperado}
+        ${cobertura}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="negocios">
+      <div class="section-head"><span class="section-head__title">Tus negocios</span></div>
+      <div class="negocio-list">${filas}</div>
     </div>`;
 }
 
@@ -166,10 +211,9 @@ function hormigaHTML(e) {
     </div>`;
 }
 
-function contenidoHTML(e) {
-  return gaugeCardHTML(e) + statRowHTML(e) + fijosCardHTML(e) + categoriasHTML(e) + hormigaHTML(e)
-    // (Próximas cuotas de crédito → T8; ingresos de negocios → T5.)
-    + '';
+function contenidoHTML(e, negocios) {
+  return gaugeCardHTML(e) + statRowHTML(e) + fijosCardHTML(e)
+    + negociosHTML(negocios) + categoriasHTML(e) + hormigaHTML(e);
 }
 
 /* ---- animaciones (solo transform/opacity/stroke-dashoffset/width) ---- */
@@ -201,7 +245,7 @@ function animarAnillo(body, e) {
 }
 
 function aplicarBarras(body) {
-  body.querySelectorAll('.catbar__fill').forEach((fill) => {
+  body.querySelectorAll('.catbar__fill, .negocio__fill').forEach((fill) => {
     const w = fill.dataset.w || '0';
     if (prefersReduced) { fill.style.width = w + '%'; return; }
     requestAnimationFrame(() => { fill.style.width = w + '%'; });
@@ -214,15 +258,19 @@ async function pintar(root) {
   if (!body) return;
 
   let estado;
+  let negocios = [];
   try {
-    const [ingresos, movimientos, recurrentes, config] = await Promise.all([
-      getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getConfig(),
+    const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
+      getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
     ]);
     const empleo = ingresos.find((i) => i && i.fuente === 'empleo');
+    const fuentes = ingresos.filter((i) => i && i.fuente !== 'empleo');
+    const hoy = new Date();
     estado = calcularEstado({
       ingresoEmpleo: empleo ? empleo.monto : 0,
-      movimientos, recurrentes, hoy: new Date(), config,
+      movimientos, recurrentes, creditos, hoy, config,
     });
+    negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
   } catch (err) {
     console.warn('[Bolsillo] no se pudo calcular el estado de Hoy:', err);
     body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus datos. Reintenta.</p>';
@@ -238,7 +286,7 @@ async function pintar(root) {
     return;
   }
 
-  body.innerHTML = contenidoHTML(estado);
+  body.innerHTML = contenidoHTML(estado, negocios);
   animarAnillo(body, estado);
   aplicarBarras(body);
 }

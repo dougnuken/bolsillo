@@ -14,6 +14,7 @@ import registrar from './views/registrar.js';
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
 import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
+import { migrarIngresos, ingresoNecesitaMigracion } from './model.js';
 import { aplicarPersonalizacion } from './categories.js';
 
 const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
@@ -173,6 +174,10 @@ async function initData() {
     cfg = await saveConfig({ cuentas: CUENTAS_SEMILLA });
   }
 
+  // Migración retrocompatible de fuentes de ingreso (negocio1/negocio2 → negocio
+  // con nombre legible). Idempotente: solo escribe si hay slots viejos.
+  await migrarIngresosSiHace();
+
   // El catálogo de categorías refleja los renombres y las categorías propias.
   const personalizado = (cfg.categoriasPersonalizadas || []).length > 0
     || Object.keys(cfg.categoriasRenombradas || {}).length > 0;
@@ -192,6 +197,23 @@ async function initData() {
   }
 
   await correrRecurrentes();
+}
+
+/* Migra solo las fuentes viejas (idempotente): no reescribe empleo ni las ya
+   nuevas, así una recarga no vuelve a tocar los datos reales de Doug. */
+async function migrarIngresosSiHace() {
+  try {
+    const ingresos = await getAll('ingresos');
+    const pendientes = ingresos.filter(ingresoNecesitaMigracion);
+    if (!pendientes.length) return;
+    const migrados = migrarIngresos(pendientes);
+    await bulkPut('ingresos', migrados);
+    console.info(`[Bolsillo] migradas ${migrados.length} fuente(s) de ingreso a la forma nueva.`);
+    // La vista de Hoy pudo pintarse antes de migrar: repíntala con los datos nuevos.
+    refreshActive(currentRoute);
+  } catch (err) {
+    console.warn('[Bolsillo] no se pudo migrar ingresos:', err);
+  }
 }
 
 async function correrRecurrentes() {

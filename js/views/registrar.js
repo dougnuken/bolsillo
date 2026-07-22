@@ -9,7 +9,7 @@
    Sin estilos inline (CSP style-src 'self').
    ============================================================ */
 
-import { get, put, getConfig, saveConfig } from '../db.js';
+import { get, put, getConfig, saveConfig, getAll } from '../db.js';
 import {
   crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga,
 } from '../model.js';
@@ -45,8 +45,8 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
 /* ---- estado ---- */
 function fresh() {
   return {
-    screen: 'metodos', modo: 'teclado', editId: null,
-    montoStr: '', categoriaId: '', cuenta: '', fecha: hoyISO(),
+    screen: 'metodos', modo: 'teclado', tipo: 'gasto', editId: null,
+    montoStr: '', categoriaId: '', ingresoId: '', cuenta: '', fecha: hoyISO(),
     comercio: '', esFijo: false, notas: '', fuente: 'manual',
     detalles: false, keypad: true, agregandoCuenta: false,
   };
@@ -54,18 +54,30 @@ function fresh() {
 let STATE = fresh();
 let cfg = null;
 let draftPend = null;
+let fuentes = []; // fuentes de ingreso de negocio (para el modo Ingreso)
 
 let sheetRef = null, openRef = null, closeRef = null, onSavedRef = null;
 
 const montoActual = () => (parseInt(STATE.montoStr || '0', 10) || 0);
 const cuentas = () => (cfg && Array.isArray(cfg.cuentas) ? cfg.cuentas : []);
+const esIngreso = () => STATE.tipo === 'ingreso';
+
+/** Carga las fuentes de negocio (para elegir a cuál se abona un ingreso). */
+async function cargarFuentes() {
+  try {
+    const todos = await getAll('ingresos');
+    fuentes = todos.filter((i) => i && i.fuente !== 'empleo');
+  } catch { fuentes = []; }
+}
+const fuenteActual = () => fuentes.find((f) => f.id === STATE.ingresoId) || null;
+const nombreFuente = (f) => (f && f.nombre && f.nombre.trim() ? f.nombre.trim() : 'Negocio');
 
 /* ---- borrador ---- */
 function hasContent() {
   return montoActual() > 0 || !!STATE.categoriaId || !!STATE.comercio.trim();
 }
 function saveDraft() {
-  if (STATE.editId) return;
+  if (STATE.editId || esIngreso()) return; // el borrador es solo para gastos
   if (!hasContent()) { clearDraft(); return; }
   const d = {
     modo: STATE.modo, montoStr: STATE.montoStr, categoriaId: STATE.categoriaId,
@@ -93,6 +105,16 @@ function cabecera(titulo, conBack) {
     <h2 class="sheet__title">${esc(titulo)}</h2>`;
 }
 
+/* Segmented Gasto/Ingreso: elección clara arriba del sheet. */
+function segmentedHTML() {
+  const on = (t) => (STATE.tipo === t ? ' is-on' : '');
+  return `
+    <div class="seg" role="tablist" aria-label="Tipo de movimiento">
+      <button type="button" class="seg__opt${on('gasto')}" role="tab" aria-selected="${STATE.tipo === 'gasto'}" data-tipo="gasto">Gasto</button>
+      <button type="button" class="seg__opt seg__opt--in${on('ingreso')}" role="tab" aria-selected="${STATE.tipo === 'ingreso'}" data-tipo="ingreso">Ingreso</button>
+    </div>`;
+}
+
 function renderMetodos() {
   const draftBar = draftPend ? `
     <div class="draft-bar" role="status">
@@ -109,6 +131,7 @@ function renderMetodos() {
 
   return `
     ${cabecera('Registrar', false)}
+    ${segmentedHTML()}
     <p class="sheet__sub">¿Cómo quieres capturar tu gasto?</p>
     ${draftBar}
     <div class="capture-grid">
@@ -158,25 +181,41 @@ function cuentaSelector() {
   return `<div class="acct-row">${opts}${nueva}</div>`;
 }
 
+/* Selector de fuente de negocio (modo Ingreso). Sin fuentes → aviso + atajo. */
+function fuenteSelector() {
+  if (!fuentes.length) {
+    return `
+      <div class="acct-empty">
+        <p class="acct-empty__txt">Aún no tienes negocios. Créalos en <strong>Ajustes → Ingresos de negocios</strong> para registrar lo que entra.</p>
+      </div>`;
+  }
+  const opts = fuentes.map((f) => `
+    <button type="button" class="acct-chip${STATE.ingresoId === f.id ? ' is-sel' : ''}" data-fuente="${esc(f.id)}">${esc(nombreFuente(f))}</button>`).join('');
+  return `<div class="acct-row">${opts}</div>`;
+}
+
 function detallesHTML() {
+  const ingreso = esIngreso();
+  const resumen = ingreso ? ' · cuenta, fecha…' : ' · cuenta, fecha, comercio…';
   return `
     <button type="button" class="detalles-toggle${STATE.detalles ? ' is-open' : ''}" data-act="detalles">
-      <span>Detalles${!STATE.detalles ? ' · cuenta, fecha, comercio…' : ''}</span>
+      <span>Detalles${!STATE.detalles ? resumen : ''}</span>
       <span class="detalles-toggle__chev">${IC.chev}</span>
     </button>
     ${STATE.detalles ? `
     <div class="detalles">
       <div class="field">
-        <span class="field__label">Cuenta</span>
+        <span class="field__label">Cuenta${ingreso ? ' donde entró' : ''}</span>
         ${cuentaSelector()}
       </div>
       <div class="field">
         <span class="field__label">Fecha</span>
-        <button type="button" class="date-trigger" data-act="fecha" aria-label="Elegir fecha del gasto">
+        <button type="button" class="date-trigger" data-act="fecha" aria-label="Elegir fecha del movimiento">
           <span class="date-trigger__val" id="reg-fecha-val">${esc(etiquetaFecha(STATE.fecha))}</span>
           <span class="date-trigger__ic">${IC.cal}</span>
         </button>
       </div>
+      ${ingreso ? '' : `
       <label class="field">
         <span class="field__label">Comercio</span>
         <input type="text" class="field__input" id="reg-comercio" value="${esc(STATE.comercio)}" placeholder="Opcional" autocomplete="off" />
@@ -184,7 +223,7 @@ function detallesHTML() {
       <label class="field toggle-row">
         <span class="field__label">Gasto fijo (no cuenta como hormiga)</span>
         <span class="switch${STATE.esFijo ? ' is-on' : ''}" role="switch" aria-checked="${STATE.esFijo}" tabindex="0" data-act="fijo"><span class="switch__dot"></span></span>
-      </label>
+      </label>`}
       <label class="field">
         <span class="field__label">Notas</span>
         <textarea class="field__input field__textarea" id="reg-notas" rows="2" placeholder="Opcional">${esc(STATE.notas)}</textarea>
@@ -194,27 +233,42 @@ function detallesHTML() {
 
 function renderForm() {
   const monto = montoActual();
-  const puedeGuardar = monto > 0 && !!STATE.categoriaId;
-  const textInput = STATE.modo === 'texto' ? `
+  const ingreso = esIngreso();
+  const puedeGuardar = monto > 0 && (ingreso ? !!STATE.ingresoId : !!STATE.categoriaId);
+
+  // El segmented se muestra al crear; al editar se conserva el tipo del movimiento.
+  const seg = STATE.editId ? '' : segmentedHTML();
+
+  const textInput = (!ingreso && STATE.modo === 'texto') ? `
     <div class="free-text">
       <input type="text" class="field__input free-text__input" id="reg-texto"
         placeholder="Pagué 15.000 en taxi" autocomplete="off" inputmode="text" />
       <p class="free-text__hint">Escribe en lenguaje natural y lo interpretamos.</p>
     </div>` : '';
 
+  const titulo = STATE.editId
+    ? (ingreso ? 'Editar ingreso' : 'Editar movimiento')
+    : (ingreso ? 'Nuevo ingreso' : 'Nuevo gasto');
+
+  const seccion = ingreso
+    ? `<p class="field__label field__label--section">¿De qué negocio?</p>${fuenteSelector()}`
+    : `<p class="field__label field__label--section">Categoría</p>${chipsCategoria()}`;
+
+  const guardarTxt = STATE.editId ? 'Guardar cambios' : (ingreso ? 'Guardar ingreso' : 'Guardar gasto');
+
   return `
-    ${cabecera(STATE.editId ? 'Editar movimiento' : 'Nuevo gasto', true)}
+    ${cabecera(titulo, true)}
+    ${seg}
     ${textInput}
-    <button type="button" class="amt${STATE.keypad ? ' is-active' : ''}" data-act="amt-toggle" aria-label="Monto">
-      <span class="amt__cur">$</span>
+    <button type="button" class="amt amt--${ingreso ? 'in' : 'out'}${STATE.keypad ? ' is-active' : ''}" data-act="amt-toggle" aria-label="Monto">
+      <span class="amt__cur">${ingreso ? '+$' : '$'}</span>
       <span class="amt__value num" id="reg-amt">${monto ? formatCOP(monto).replace('$', '') : '0'}</span>
     </button>
     ${STATE.keypad ? keypadHTML() : ''}
-    <p class="field__label field__label--section">Categoría</p>
-    ${chipsCategoria()}
+    ${seccion}
     ${detallesHTML()}
     <button type="button" class="btn btn--primary btn--block btn--save" data-act="guardar" ${puedeGuardar ? '' : 'disabled'}>
-      ${STATE.editId ? 'Guardar cambios' : 'Guardar gasto'}
+      ${guardarTxt}
     </button>`;
 }
 
@@ -233,11 +287,14 @@ function paint() {
 }
 
 /* actualizaciones puntuales sin repintar (preservan foco/caret) */
+function puedeGuardarAhora() {
+  return montoActual() > 0 && (esIngreso() ? !!STATE.ingresoId : !!STATE.categoriaId);
+}
 function syncMonto() {
   const amt = sheetRef.querySelector('#reg-amt');
   if (amt) { const m = montoActual(); amt.textContent = m ? formatCOP(m).replace('$', '') : '0'; }
   const save = sheetRef.querySelector('[data-act="guardar"]');
-  if (save) save.disabled = !(montoActual() > 0 && !!STATE.categoriaId);
+  if (save) save.disabled = !puedeGuardarAhora();
 }
 function syncCategoria() {
   sheetRef.querySelectorAll('.cat-chip').forEach((ch) => {
@@ -246,6 +303,22 @@ function syncCategoria() {
     ch.setAttribute('aria-selected', String(sel));
   });
   syncMonto();
+}
+/* Cambia de tipo (gasto/ingreso). Conserva el monto tecleado. */
+function cambiarTipo(t) {
+  if (t === STATE.tipo && STATE.screen === 'form') return;
+  STATE.tipo = t;
+  if (STATE.screen === 'metodos') {
+    if (t === 'ingreso') {
+      STATE.screen = 'form';
+      STATE.keypad = true;
+      if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+      if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+    }
+  } else if (t === 'ingreso' && !STATE.ingresoId && fuentes.length === 1) {
+    STATE.ingresoId = fuentes[0].id;
+  }
+  paint();
 }
 /* Actualiza solo la etiqueta del disparador de fecha (sin repintar:
    conserva scroll y foco tras cerrar la hoja). */
@@ -258,7 +331,7 @@ function bind() {
   sheetRef.querySelectorAll('[data-act]').forEach((el) => {
     const act = el.dataset.act;
     if (act === 'close') el.addEventListener('click', cerrar);
-    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; draftPend = null; paint(); });
+    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; STATE.tipo = 'gasto'; draftPend = null; paint(); });
     else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
     else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
     else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
@@ -274,14 +347,31 @@ function bind() {
     }
   });
 
+  // segmented Gasto/Ingreso
+  sheetRef.querySelectorAll('[data-tipo]').forEach((b) => {
+    b.addEventListener('click', () => cambiarTipo(b.dataset.tipo));
+  });
+
   // métodos
   sheetRef.querySelectorAll('[data-metodo]').forEach((b) => {
     b.addEventListener('click', () => {
       STATE.modo = b.dataset.metodo;
+      STATE.tipo = 'gasto';
       STATE.screen = 'form';
       STATE.keypad = STATE.modo === 'teclado';
       if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
       paint();
+    });
+  });
+
+  // fuente de ingreso (modo Ingreso)
+  sheetRef.querySelectorAll('[data-fuente]').forEach((b) => {
+    b.addEventListener('click', () => {
+      STATE.ingresoId = STATE.ingresoId === b.dataset.fuente ? '' : b.dataset.fuente;
+      sheetRef.querySelectorAll('[data-fuente]').forEach((x) => {
+        x.classList.toggle('is-sel', x.dataset.fuente === STATE.ingresoId);
+      });
+      syncMonto();
     });
   });
 
@@ -376,7 +466,10 @@ async function agregarCuenta() {
 
 async function guardar() {
   const monto = montoActual();
-  if (monto <= 0 || !STATE.categoriaId) return;
+  if (monto <= 0) return;
+  const ingreso = esIngreso();
+  if (ingreso && !STATE.ingresoId) { toast('Elige de qué negocio entró', { icono: false }); return; }
+  if (!ingreso && !STATE.categoriaId) return;
   const cuenta = STATE.cuenta || cuentas()[0] || '';
   if (!cuenta) { toast('Agrega una cuenta primero', { icono: false }); return; }
 
@@ -384,17 +477,33 @@ async function guardar() {
     if (STATE.editId) {
       const orig = await get('movimientos', STATE.editId);
       if (!orig) throw new Error('no se encontró el movimiento');
-      const cambios = {
-        monto, categoria: STATE.categoriaId, cuenta,
-        fecha: STATE.fecha, comercio: STATE.comercio.trim(),
-        esFijo: STATE.esFijo, notas: STATE.notas.trim(),
-      };
-      const esHormiga = derivarEsHormiga({ ...orig, ...cambios }, cfg || undefined);
-      const actualizado = actualizar(orig, { ...cambios, esHormiga });
+      const cambios = ingreso
+        ? {
+          monto, cuenta, fecha: STATE.fecha, notas: STATE.notas.trim(),
+          ingresoId: STATE.ingresoId, comercio: nombreFuente(fuenteActual()),
+          esHormiga: false,
+        }
+        : (() => {
+          const c = {
+            monto, categoria: STATE.categoriaId, cuenta,
+            fecha: STATE.fecha, comercio: STATE.comercio.trim(),
+            esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+          };
+          return { ...c, esHormiga: derivarEsHormiga({ ...orig, ...c }, cfg || undefined) };
+        })();
+      const actualizado = actualizar(orig, cambios);
       const v = validarMovimiento(actualizado);
       if (!v.ok) throw new Error(v.errores.join(' '));
       await put('movimientos', actualizado);
       toast('Cambios guardados');
+    } else if (ingreso) {
+      const mov = crearMovimiento({
+        monto, tipo: 'ingreso', cuenta, fecha: STATE.fecha, fuente: 'manual',
+        ingresoId: STATE.ingresoId, comercio: nombreFuente(fuenteActual()),
+        notas: STATE.notas.trim(),
+      }, { config: cfg || undefined });
+      await put('movimientos', mov);
+      toast('Ingreso registrado');
     } else {
       const mov = crearMovimiento({
         monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
@@ -417,11 +526,14 @@ async function guardar() {
    ============================================================ */
 async function abrir(mov = null) {
   try { cfg = await getConfig(); } catch { cfg = null; }
+  await cargarFuentes();
   if (mov) {
+    const esIn = mov.tipo === 'ingreso';
     STATE = {
-      ...fresh(), screen: 'form', modo: 'teclado', editId: mov.id,
+      ...fresh(), screen: 'form', modo: 'teclado', tipo: esIn ? 'ingreso' : 'gasto', editId: mov.id,
       montoStr: mov.monto ? String(mov.monto) : '',
-      categoriaId: mov.categoria || '', cuenta: mov.cuenta || (cuentas()[0] || ''),
+      categoriaId: mov.categoria || '', ingresoId: mov.ingresoId || '',
+      cuenta: mov.cuenta || (cuentas()[0] || ''),
       fecha: (mov.fecha || hoyISO()).slice(0, 10), comercio: mov.comercio || '',
       esFijo: !!mov.esFijo, notas: mov.notas || '', fuente: mov.fuente || 'manual',
       detalles: true, keypad: true, agregandoCuenta: false,
@@ -450,6 +562,7 @@ export default {
     closeRef = close;
     onSavedRef = onSaved;
     getConfig().then((c) => { cfg = c; }).catch(() => { cfg = null; });
+    cargarFuentes();
     bind();
   },
   abrir,

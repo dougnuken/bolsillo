@@ -9,7 +9,13 @@
 /* ---- enums / constantes ---- */
 export const TIPOS_MOVIMIENTO = Object.freeze(['gasto', 'ingreso', 'pago_credito', 'transferencia']);
 export const FUENTES_MOVIMIENTO = Object.freeze(['manual', 'foto', 'pdf', 'recurrente']);
-export const FUENTES_INGRESO = Object.freeze(['empleo', 'negocio1', 'negocio2']);
+/* Fuentes de ingreso: `empleo` es especial (sueldo, base del semáforo, única,
+   no se borra) y `negocio` es genérica (cantidad y nombre libres: Tierra
+   Querida, DC Medical, arriendo…). Las viejas `negocio1`/`negocio2` se
+   migran a `negocio` con nombre legible (ver migrarIngresos). */
+export const FUENTES_INGRESO = Object.freeze(['empleo', 'negocio']);
+/* Slots viejos que la migración convierte a `negocio` con nombre por defecto. */
+export const SLOTS_NEGOCIO_LEGADO = Object.freeze({ negocio1: 'Negocio 1', negocio2: 'Negocio 2' });
 export const MODOS_RECURRENTE = Object.freeze(['auto', 'confirmar']);
 export const UMBRAL_HORMIGA_DEFAULT = 20_000;
 export const CONFIG_ID = 'config';
@@ -88,6 +94,10 @@ export function crearMovimiento(datos = {}, { now = new Date(), config } = {}) {
     dedupKey: datos.dedupKey ?? null,
     // Vínculo al recurrente que lo materializó (null si es manual/foto/pdf).
     recurrenteId: datos.recurrenteId ?? null,
+    // Vínculo a la fuente de ingreso (solo movimientos tipo:'ingreso').
+    ingresoId: datos.ingresoId ?? null,
+    // Vínculo al crédito que este movimiento paga (pago_credito o fijo).
+    creditoId: datos.creditoId ?? null,
   };
   base.esHormiga = derivarEsHormiga(base, config ?? configDefault());
 
@@ -206,6 +216,9 @@ export function crearCredito(datos = {}, { now = new Date() } = {}) {
     tasaEA,
     tasaMV,
     diaPago: diaOpcional(datos.diaPago),
+    // Un crédito activo pesa en los fijos del mes (su cuota). Default true;
+    // los créditos viejos (sin el campo) se tratan como activos en budget.js.
+    activo: datos.activo !== false,
     desgloses: Array.isArray(datos.desgloses) ? datos.desgloses.map(normalizarDesglose) : [],
   };
   const v = validarCredito(base);
@@ -229,20 +242,34 @@ export function validarCredito(obj = {}) {
   if (obj.diaPago != null && !esDiaDelMes(obj.diaPago)) {
     errores.push('El día de pago debe estar entre 1 y 31, o quedar vacío.');
   }
+  // Retrocompat: un crédito viejo sin `activo` (undefined) pasa; solo se
+  // rechaza si viene presente y no es booleano.
+  if (obj.activo != null && typeof obj.activo !== 'boolean') errores.push('activo debe ser booleano.');
   if (!Array.isArray(obj.desgloses)) errores.push('desgloses debe ser un arreglo.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }
 
 /* ============================================================
-   INGRESO
+   INGRESO (fuente de ingreso)
+   Dos formas sobre la misma llave:
+    · empleo  → `monto` es el SUELDO (base del semáforo, obligatorio).
+    · negocio → `nombre` libre + `montoEsperado` OPCIONAL (referencia, varía
+                mes a mes) + `creditoId` OPCIONAL (crédito que cubre). No usa
+                `monto`: lo que cuenta al semáforo son los ingresos RECIBIDOS
+                (movimientos tipo:'ingreso'), no el esperado.
    ============================================================ */
 export function crearIngreso(datos = {}, { now = new Date() } = {}) {
+  const esEmpleo = datos.fuente === 'empleo';
   const base = {
     fuente: datos.fuente,
-    monto: montoEntero(datos.monto),
-    diaDelMes: datos.diaDelMes,
-    // Etiqueta editable (solo para negocios; el empleo no la necesita).
     nombre: typeof datos.nombre === 'string' ? datos.nombre.trim() : '',
+    diaDelMes: datos.diaDelMes,
+    // empleo: el sueldo (obligatorio). negocio: no aplica → null.
+    monto: esEmpleo ? montoEntero(datos.monto) : null,
+    // negocio: referencia opcional del mes ("en teoría entra X"). empleo: null.
+    montoEsperado: esEmpleo ? null : montoOpcional(datos.montoEsperado),
+    // negocio: crédito que este ingreso cubre (opcional). empleo: null.
+    creditoId: esEmpleo ? null : (esTextoNoVacio(datos.creditoId) ? datos.creditoId.trim() : null),
   };
   const v = validarIngreso(base);
   if (!v.ok) throw new Error('Ingreso inválido: ' + v.errores.join(' '));
@@ -252,11 +279,61 @@ export function crearIngreso(datos = {}, { now = new Date() } = {}) {
 export function validarIngreso(obj = {}) {
   const errores = [];
   if (!obj || typeof obj !== 'object') return { ok: false, errores: ['El ingreso no es un objeto.'] };
-  if (!FUENTES_INGRESO.includes(obj.fuente)) errores.push(`Fuente inválida: "${obj.fuente}". Use uno de: ${FUENTES_INGRESO.join(', ')}.`);
-  if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El monto debe ser un entero de pesos mayor a 0.');
+  if (!FUENTES_INGRESO.includes(obj.fuente)) {
+    errores.push(`Fuente inválida: "${obj.fuente}". Use uno de: ${FUENTES_INGRESO.join(', ')}.`);
+  } else if (obj.fuente === 'empleo') {
+    if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El sueldo debe ser un entero de pesos mayor a 0.');
+  } else { // negocio
+    if (!esTextoNoVacio(obj.nombre)) errores.push('El nombre del ingreso es obligatorio.');
+    if (obj.montoEsperado != null && (!Number.isInteger(obj.montoEsperado) || obj.montoEsperado <= 0)) {
+      errores.push('El monto esperado debe ser un entero de pesos mayor a 0, o quedar vacío.');
+    }
+    if (obj.creditoId != null && typeof obj.creditoId !== 'string') errores.push('El crédito vinculado no es válido.');
+  }
   if (!esDiaDelMes(obj.diaDelMes)) errores.push('El día del mes debe estar entre 1 y 31.');
   if (obj.nombre != null && typeof obj.nombre !== 'string') errores.push('El nombre debe ser texto.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
+}
+
+/**
+ * MIGRACIÓN retrocompatible de fuentes de ingreso.
+ * Convierte las viejas `negocio1`/`negocio2` a la forma nueva `negocio`:
+ *  - `nombre`  ← el que tuviera, o "Negocio 1"/"Negocio 2" por defecto.
+ *  - `montoEsperado` ← su viejo `monto` (que era el ingreso esperado).
+ *  - `monto` pasa a null; se agregan `creditoId:null` si faltaba.
+ * Conserva id, creadoEn y diaDelMes. NO toca empleo ni las ya migradas.
+ * IDEMPOTENTE: correrla de nuevo no cambia nada (ya no hay slots viejos).
+ * PURA: no toca db; devuelve objetos nuevos y congelados.
+ *
+ * @param {object[]} ingresos
+ * @param {{now?:Date}} [opts]
+ * @returns {Readonly<object>[]} lista migrada (mismo largo, mismos ids)
+ */
+export function migrarIngresos(ingresos = [], { now = new Date() } = {}) {
+  if (!Array.isArray(ingresos)) return [];
+  return ingresos.map((ing) => migrarUnIngreso(ing, now));
+}
+
+/** ¿Este registro es una fuente vieja que hay que migrar? PURA. */
+export function ingresoNecesitaMigracion(ing) {
+  return !!ing && (ing.fuente === 'negocio1' || ing.fuente === 'negocio2');
+}
+
+function migrarUnIngreso(ing, now) {
+  if (!ingresoNecesitaMigracion(ing)) return ing; // empleo / negocio ya nuevo / basura
+  const nombre = esTextoNoVacio(ing.nombre) ? ing.nombre.trim() : SLOTS_NEGOCIO_LEGADO[ing.fuente];
+  const montoEsperado = Number.isInteger(ing.montoEsperado)
+    ? ing.montoEsperado
+    : (Number.isInteger(ing.monto) ? ing.monto : null);
+  return Object.freeze({
+    ...ing,
+    fuente: 'negocio',
+    nombre,
+    monto: null,
+    montoEsperado,
+    creditoId: esTextoNoVacio(ing.creditoId) ? ing.creditoId.trim() : null,
+    actualizadoEn: nowISO(now),
+  });
 }
 
 /* ============================================================

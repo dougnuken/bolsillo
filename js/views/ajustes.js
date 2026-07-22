@@ -61,8 +61,10 @@ function subSueldo(empleo) {
 }
 function subNegocios(negocios) {
   if (!negocios.length) return 'Ninguno registrado';
-  const total = negocios.reduce((s, n) => s + n.monto, 0);
-  return `${negocios.length} negocio${negocios.length > 1 ? 's' : ''} · ${formatCOP(total)}/mes`;
+  const conEsperado = negocios.filter((n) => Number.isInteger(n.montoEsperado));
+  const total = conEsperado.reduce((s, n) => s + n.montoEsperado, 0);
+  const base = `${negocios.length} negocio${negocios.length > 1 ? 's' : ''}`;
+  return conEsperado.length ? `${base} · esperado ${formatCOP(total)}/mes` : base;
 }
 function subFijos(recs) {
   const activos = recs.filter((r) => r.activo);
@@ -72,8 +74,8 @@ function subFijos(recs) {
 }
 function subCreditos(creds) {
   if (!creds.length) return 'Ninguno registrado';
-  const saldo = creds.reduce((s, c) => s + c.saldo, 0);
-  return `${creds.length} crédito${creds.length > 1 ? 's' : ''} · saldo ${formatCOP(saldo)}`;
+  const cuota = creds.reduce((s, c) => s + (Number.isInteger(c.cuotaMensual) ? c.cuotaMensual : 0), 0);
+  return `${creds.length} crédito${creds.length > 1 ? 's' : ''} · cuota ${formatCOP(cuota)}/mes`;
 }
 function subPresupuestos(config) {
   const n = Object.keys(config.presupuestos || {}).length;

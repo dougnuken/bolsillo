@@ -7,10 +7,13 @@ import {
   crearIngreso,
   validarMovimiento,
   validarCredito,
+  validarIngreso,
   actualizar,
   derivarEsHormiga,
   configDefault,
   tasaEAaMV,
+  migrarIngresos,
+  ingresoNecesitaMigracion,
 } from '../js/model.js';
 
 const movBase = {
@@ -118,6 +121,117 @@ test('crearIngreso / crearRecurrente / crearCredito congelan y validan', () => {
 
 test('crearIngreso: rechaza fuente inválida (fail-fast)', () => {
   assert.throws(() => crearIngreso({ fuente: 'loteria', monto: 100, diaDelMes: 1 }), /Ingreso inválido/);
+});
+
+/* ---------------- ingresos con nombre propio (fuentes) ---------------- */
+
+test('crearIngreso empleo: el sueldo va en monto; sin montoEsperado ni crédito', () => {
+  const emp = crearIngreso({ fuente: 'empleo', monto: 17_000_000, diaDelMes: 30 });
+  assert.equal(emp.fuente, 'empleo');
+  assert.equal(emp.monto, 17_000_000);
+  assert.equal(emp.montoEsperado, null);
+  assert.equal(emp.creditoId, null);
+});
+
+test('crearIngreso negocio: nombre libre, montoEsperado opcional y crédito vinculado', () => {
+  const neg = crearIngreso({ fuente: 'negocio', nombre: 'Tierra Querida', diaDelMes: 15, montoEsperado: 1_500_000, creditoId: 'cred-1' });
+  assert.equal(neg.fuente, 'negocio');
+  assert.equal(neg.nombre, 'Tierra Querida');
+  assert.equal(neg.montoEsperado, 1_500_000);
+  assert.equal(neg.creditoId, 'cred-1');
+  assert.equal(neg.monto, null); // el negocio no usa monto; cuenta lo recibido
+});
+
+test('crearIngreso negocio: montoEsperado y crédito son OPCIONALES (quedan null)', () => {
+  const neg = crearIngreso({ fuente: 'negocio', nombre: 'Arriendo apto', diaDelMes: 1 });
+  assert.equal(neg.montoEsperado, null);
+  assert.equal(neg.creditoId, null);
+});
+
+test('crearIngreso negocio: exige nombre (fail-fast)', () => {
+  assert.throws(() => crearIngreso({ fuente: 'negocio', diaDelMes: 15 }), /nombre del ingreso es obligatorio/i);
+});
+
+test('validarIngreso negocio: rechaza montoEsperado no entero', () => {
+  const r = validarIngreso({ fuente: 'negocio', nombre: 'X', diaDelMes: 5, montoEsperado: 1500.5, creditoId: null });
+  assert.equal(r.ok, false);
+});
+
+/* ---------------- MIGRACIÓN retrocompatible negocio1/negocio2 ---------------- */
+
+test('migrarIngresos: un negocio1 viejo migra a negocio SIN perder el monto (→ montoEsperado)', () => {
+  // Arrange: registro viejo tal cual quedó en IndexedDB antes de esta tanda.
+  const viejo = {
+    id: 'ing-1', fuente: 'negocio1', monto: 1_500_000, diaDelMes: 15, nombre: '',
+    creadoEn: '2026-01-01T00:00:00.000Z', actualizadoEn: '2026-01-01T00:00:00.000Z',
+  };
+  // Act
+  const [m] = migrarIngresos([viejo], { now: new Date('2026-07-22T00:00:00Z') });
+  // Assert: nada se pierde, todo queda en la forma nueva.
+  assert.equal(m.fuente, 'negocio');
+  assert.equal(m.nombre, 'Negocio 1'); // nombre por defecto legible
+  assert.equal(m.montoEsperado, 1_500_000); // el viejo monto se conserva como esperado
+  assert.equal(m.monto, null);
+  assert.equal(m.creditoId, null);
+  assert.equal(m.id, 'ing-1'); // mismo id: no se pierde el registro
+  assert.equal(m.creadoEn, '2026-01-01T00:00:00.000Z'); // se conserva
+  assert.ok(Object.isFrozen(m));
+});
+
+test('migrarIngresos: respeta un nombre ya puesto y migra negocio2 con su etiqueta', () => {
+  const conNombre = { id: 'a', fuente: 'negocio1', monto: 800_000, diaDelMes: 5, nombre: 'DC Medical' };
+  const sinNombre = { id: 'b', fuente: 'negocio2', monto: 400_000, diaDelMes: 10, nombre: '' };
+  const [a, b] = migrarIngresos([conNombre, sinNombre]);
+  assert.equal(a.nombre, 'DC Medical');
+  assert.equal(b.nombre, 'Negocio 2');
+});
+
+test('migrarIngresos: es IDEMPOTENTE (correrla dos veces no cambia nada)', () => {
+  const viejo = { id: 'ing-1', fuente: 'negocio1', monto: 1_500_000, diaDelMes: 15, nombre: '' };
+  const now = new Date('2026-07-22T00:00:00Z');
+  const uno = migrarIngresos([viejo], { now });
+  const dos = migrarIngresos(uno, { now });
+  // La segunda pasada ve una fuente ya nueva y la deja intacta (misma referencia).
+  assert.equal(dos[0], uno[0]);
+  assert.deepEqual(dos[0], uno[0]);
+});
+
+test('migrarIngresos: NO toca empleo ni las fuentes ya nuevas', () => {
+  const empleo = crearIngreso({ fuente: 'empleo', monto: 17_000_000, diaDelMes: 30 });
+  const negocioNuevo = crearIngreso({ fuente: 'negocio', nombre: 'Tierra Querida', diaDelMes: 15 });
+  const [e, n] = migrarIngresos([empleo, negocioNuevo]);
+  assert.equal(e, empleo); // misma referencia: no se tocó
+  assert.equal(n, negocioNuevo);
+});
+
+test('ingresoNecesitaMigracion: solo los slots viejos', () => {
+  assert.equal(ingresoNecesitaMigracion({ fuente: 'negocio1' }), true);
+  assert.equal(ingresoNecesitaMigracion({ fuente: 'negocio2' }), true);
+  assert.equal(ingresoNecesitaMigracion({ fuente: 'negocio' }), false);
+  assert.equal(ingresoNecesitaMigracion({ fuente: 'empleo' }), false);
+});
+
+/* ---------------- crédito: activo (retrocompat) ---------------- */
+
+test('crearCredito: nace activo por defecto y puede marcarse inactivo', () => {
+  assert.equal(crearCredito(creditoMinimo).activo, true);
+  assert.equal(crearCredito({ ...creditoMinimo, activo: false }).activo, false);
+});
+
+test('validarCredito: un crédito viejo SIN campo activo sigue siendo válido', () => {
+  const viejo = {
+    entidad: 'AV Villas', producto: 'Libre inversión', tipo: 'Libre inversión',
+    saldo: null, cuotaMensual: 850_000, tasaEA: null, tasaMV: null, diaPago: null, desgloses: [],
+  };
+  assert.equal(validarCredito(viejo).ok, true);
+});
+
+test('crearMovimiento: preserva ingresoId y creditoId (vínculos), null por defecto', () => {
+  const suelto = crearMovimiento({ ...movBase, tipo: 'gasto' });
+  assert.equal(suelto.ingresoId, null);
+  assert.equal(suelto.creditoId, null);
+  const ingreso = crearMovimiento({ monto: 500_000, tipo: 'ingreso', cuenta: 'Nequi', fecha: '2026-07-01', ingresoId: 'f-1' });
+  assert.equal(ingreso.ingresoId, 'f-1');
 });
 
 test('tasaEAaMV: 24% EA equivale a ~1,81% MV', () => {

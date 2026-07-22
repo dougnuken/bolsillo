@@ -472,6 +472,64 @@
 }
 
 /* ============================================================
+   "Tus negocios" — cobertura de créditos por fuente de ingreso
+   ============================================================ */
+.negocios { margin-top: var(--sp-5); }
+.negocio-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.negocio { padding: var(--sp-4) var(--sp-4); }
+.negocio__top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3);
+}
+.negocio__name {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.negocio__in {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h3);
+  color: var(--semaforo-verde);
+  flex: 0 0 auto;
+}
+.negocio__esp { display: block; font-size: var(--fs-xs); color: var(--text-3); margin-top: 2px; }
+.negocio__nocred { display: block; font-size: var(--fs-xs); color: var(--text-3); margin-top: var(--sp-2); }
+
+.negocio__cov { margin-top: var(--sp-3); }
+.negocio__cov-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.negocio__cred {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.negocio__pct { flex: 0 0 auto; font-size: var(--fs-xs); }
+.negocio__track {
+  display: block;
+  height: 6px;
+  margin-top: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  overflow: hidden;
+}
+.negocio__fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  transition: width var(--dur-slow) var(--ease);
+}
+.negocio__fill--verde { background: var(--semaforo-verde); }
+.negocio__fill--ambar { background: var(--semaforo-ambar); }
+.negocio__fill--rojo  { background: var(--semaforo-rojo); }
+@media (prefers-reduced-motion: reduce) { .negocio__fill { transition: none; } }
+.negocio__cov-sub { display: block; font-size: var(--fs-xs); color: var(--text-3); margin-top: var(--sp-2); }
+.negocio__cov-sub .num { color: var(--text-2); }
+
+/* ============================================================
    Sheet de sueldo (bottom-sheet mínimo)
    ============================================================ */
 .sueldo-head {

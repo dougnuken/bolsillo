@@ -7,8 +7,8 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calcularEstado, diasEnMes } from '../js/budget.js';
-import { crearMovimiento, crearRecurrente } from '../js/model.js';
+import { calcularEstado, diasEnMes, resumenNegocios } from '../js/budget.js';
+import { crearMovimiento, crearRecurrente, crearCredito, crearIngreso } from '../js/model.js';
 
 /* ---- factories de apoyo ---- */
 function gasto(fecha, monto, over = {}) {
@@ -17,11 +17,17 @@ function gasto(fecha, monto, over = {}) {
 function fijo(fecha, monto, over = {}) {
   return crearMovimiento({ fecha, monto, tipo: 'gasto', cuenta: 'Efectivo', esFijo: true, ...over });
 }
+function ingresoMov(fecha, monto, over = {}) {
+  return crearMovimiento({ fecha, monto, tipo: 'ingreso', cuenta: 'Nequi', ...over });
+}
 function recurrente(over = {}) {
   return crearRecurrente({
     nombre: 'Arriendo', monto: 1_200_000, diaDelMes: 5,
     categoria: 'vivienda', cuenta: 'Bancolombia', modo: 'confirmar', ...over,
   });
+}
+function credito(over = {}) {
+  return crearCredito({ entidad: 'AV Villas', producto: 'Libre inversión', cuotaMensual: 850_000, ...over });
 }
 const cerca = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
 
@@ -338,4 +344,177 @@ test('ingresos, pagos y transferencias no cuentan como gasto variable', () => {
   const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], hoy: '2026-04-10' });
   // Assert
   assert.equal(e.variableGastado, 200_000);
+});
+
+/* ============================================================
+   LA MATEMÁTICA DEL DINERO DE DOUG
+   El semáforo cuenta la REALIDAD: las cuotas de crédito pesan en fijos y
+   solo la plata de negocios REGISTRADA como recibida suma a la bolsa.
+   ============================================================ */
+
+test('créditos sin ingresos de negocio: las cuotas pesan COMPLETAS en fijos', () => {
+  // Arrange: sueldo 17M, dos créditos AV Villas (850k + 320k), nada más.
+  const creditos = [
+    credito({ producto: 'Libre inversión', cuotaMensual: 850_000 }),
+    credito({ producto: 'Tarjeta Visa', cuotaMensual: 320_000 }),
+  ];
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 17_000_000, movimientos: [], recurrentes: [], creditos, hoy: '2026-04-05' });
+  // Assert
+  assert.equal(e.fijosDelMes, 1_170_000);
+  assert.equal(e.fijosCreditos, 1_170_000);
+  assert.equal(e.plataDelMes, 17_000_000);
+  assert.equal(e.baseVariable, 15_830_000); // 17M − 1.17M
+});
+
+test('las cuotas de crédito bajan el Disponible frente a ignorarlas (bug original)', () => {
+  // Arrange
+  const creditos = [credito({ cuotaMensual: 850_000 }), credito({ producto: 'Visa', cuotaMensual: 320_000 })];
+  const comun = { ingresoEmpleo: 17_000_000, movimientos: [], recurrentes: [], hoy: '2026-04-05' };
+  // Act
+  const conCreditos = calcularEstado({ ...comun, creditos });
+  const sinCreditos = calcularEstado({ ...comun, creditos: [] });
+  // Assert: exactamente 1.170.000 menos de bolsa por incluir las cuotas.
+  assert.equal(sinCreditos.baseVariable - conCreditos.baseVariable, 1_170_000);
+});
+
+test('cobertura parcial: el negocio trae menos que la cuota → el faltante reduce la bolsa', () => {
+  // Arrange: crédito cuota 850k; el negocio solo trajo 500k este mes.
+  const c = credito({ cuotaMensual: 850_000 });
+  const movs = [ingresoMov('2026-04-04', 500_000)];
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(e.ingresosRecibidos, 500_000);
+  assert.equal(e.fijosDelMes, 850_000);
+  assert.equal(e.plataDelMes, 3_500_000); // 3M + 500k recibido
+  assert.equal(e.baseVariable, 2_650_000); // 3.5M − 850k
+  // El faltante (350k) sale de la bolsa vs. no tener crédito ni ingreso (3M).
+  const baseline = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [], creditos: [], hoy: '2026-04-10' });
+  assert.equal(baseline.baseVariable - e.baseVariable, 350_000);
+});
+
+test('cobertura EXACTA: entra justo la cuota → baseVariable NO cambia vs. sin crédito ni ingreso', () => {
+  // Arrange: crédito cuota 850k; el negocio trajo exactamente 850k.
+  const c = credito({ cuotaMensual: 850_000 });
+  const movs = [ingresoMov('2026-04-04', 850_000)];
+  // Act
+  const conAmbos = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  const baseline = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [], creditos: [], hoy: '2026-04-10' });
+  // Assert: la plata entra y sale, la bolsa no se mueve.
+  assert.equal(conAmbos.baseVariable, baseline.baseVariable);
+  assert.equal(conAmbos.baseVariable, 3_000_000);
+});
+
+test('excedente: el negocio trae MÁS que la cuota → el excedente SÍ suma a la bolsa', () => {
+  // Arrange: crédito cuota 850k; el negocio trajo 1.000.000.
+  const c = credito({ cuotaMensual: 850_000 });
+  const movs = [ingresoMov('2026-04-04', 1_000_000)];
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  const baseline = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [], creditos: [], hoy: '2026-04-10' });
+  // Assert: +150.000 de bolsa (1.000.000 − 850.000 de cuota).
+  assert.equal(e.baseVariable, 3_150_000);
+  assert.equal(e.baseVariable - baseline.baseVariable, 150_000);
+});
+
+test('sin doble conteo: pago_credito ligado al crédito NO se cuenta también como cuota abstracta', () => {
+  // Arrange: crédito cuota 850k + un pago_credito de 850k con creditoId este mes.
+  const c = credito({ cuotaMensual: 850_000 });
+  const pago = crearMovimiento({ fecha: '2026-04-05', monto: 850_000, tipo: 'pago_credito', cuenta: 'Bancolombia', creditoId: c.id });
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [pago], recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  // Assert: 850k UNA vez, no 1.700.000.
+  assert.equal(e.fijosDelMes, 850_000);
+  assert.equal(e.fijosCreditos, 850_000);
+});
+
+test('sin doble conteo: gasto esFijo con creditoId ya cuenta como fijo (no se suma la cuota)', () => {
+  // Arrange: crédito cuota 850k + un gasto fijo de 850k con creditoId.
+  const c = credito({ cuotaMensual: 850_000 });
+  const movFijo = fijo('2026-04-05', 850_000, { categoria: 'creditos', creditoId: c.id });
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [movFijo], recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  // Assert: 850k UNA vez.
+  assert.equal(e.fijosDelMes, 850_000);
+});
+
+test('crédito INACTIVO no pesa en los fijos', () => {
+  // Arrange
+  const c = credito({ cuotaMensual: 850_000, activo: false });
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(e.fijosDelMes, 0);
+  assert.equal(e.fijosCreditos, 0);
+  assert.equal(e.baseVariable, 3_000_000);
+});
+
+test('crédito sin cuota (0) no rompe ni suma', () => {
+  // Arrange
+  const c = credito({ cuotaMensual: 0 });
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: [], recurrentes: [], creditos: [c], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(e.fijosDelMes, 0);
+  assert.ok(!Number.isNaN(e.baseVariable));
+});
+
+test('el ingreso de negocio de OTRO mes no infla la plata del mes actual', () => {
+  // Arrange
+  const movs = [ingresoMov('2026-03-28', 900_000), ingresoMov('2026-04-04', 300_000)];
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], creditos: [], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(e.ingresosRecibidos, 300_000);
+  assert.equal(e.plataDelMes, 3_300_000);
+});
+
+/* ============================================================
+   resumenNegocios: ¿los negocios cubren sus créditos?
+   ============================================================ */
+
+test('resumenNegocios: cobertura, color y crédito vinculado por fuente', () => {
+  // Arrange: dos negocios, uno cubre su cuota justo (verde), otro va corto (rojo).
+  const cTierra = credito({ entidad: 'AV Villas', producto: 'Libre inversión', cuotaMensual: 850_000 });
+  const cDC = credito({ entidad: 'Bancolombia', producto: 'Tarjeta', cuotaMensual: 320_000 });
+  const fTierra = crearIngreso({ fuente: 'negocio', nombre: 'Tierra Querida', diaDelMes: 15, creditoId: cTierra.id });
+  const fDC = crearIngreso({ fuente: 'negocio', nombre: 'DC Medical', diaDelMes: 20, creditoId: cDC.id, montoEsperado: 400_000 });
+  const movs = [
+    ingresoMov('2026-04-05', 850_000, { ingresoId: fTierra.id }),
+    ingresoMov('2026-04-06', 100_000, { ingresoId: fDC.id }),
+  ];
+  // Act
+  const filas = resumenNegocios({ fuentes: [fTierra, fDC], movimientos: movs, creditos: [cTierra, cDC], hoy: '2026-04-10' });
+  // Assert
+  const tierra = filas.find((f) => f.nombre === 'Tierra Querida');
+  assert.equal(tierra.recibido, 850_000);
+  assert.equal(tierra.cuota, 850_000);
+  assert.ok(cerca(tierra.cobertura, 1));
+  assert.equal(tierra.color, 'verde');
+  assert.equal(tierra.creditoLabel, 'AV Villas · Libre inversión');
+
+  const dc = filas.find((f) => f.nombre === 'DC Medical');
+  assert.equal(dc.recibido, 100_000);
+  assert.equal(dc.esperado, 400_000);
+  assert.ok(cerca(dc.cobertura, 100_000 / 320_000));
+  assert.equal(dc.color, 'rojo'); // 0,31 < 0,6
+});
+
+test('resumenNegocios: negocio sin crédito vinculado → sin cobertura, sin romper', () => {
+  // Arrange
+  const f = crearIngreso({ fuente: 'negocio', nombre: 'Arriendo apto', diaDelMes: 1 });
+  const movs = [ingresoMov('2026-04-03', 700_000, { ingresoId: f.id })];
+  // Act
+  const [fila] = resumenNegocios({ fuentes: [f], movimientos: movs, creditos: [], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(fila.recibido, 700_000);
+  assert.equal(fila.cuota, null);
+  assert.equal(fila.cobertura, null);
+  assert.equal(fila.color, null);
+  assert.equal(fila.creditoLabel, null);
+});
+
+test('resumenNegocios: sin fuentes de negocio devuelve lista vacía', () => {
+  assert.deepEqual(resumenNegocios({ fuentes: [], movimientos: [], creditos: [], hoy: '2026-04-10' }), []);
 });
