@@ -50,6 +50,7 @@ function fresh() {
     montoStr: '', categoriaId: '', ingresoId: '', cuenta: '', fecha: hoyISO(),
     comercio: '', esFijo: false, notas: '', fuente: 'manual',
     detalles: false, keypad: true, agregandoCuenta: false,
+    metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto? (solo gasto)
   };
 }
 let STATE = fresh();
@@ -341,15 +342,17 @@ function syncCategoria() {
 function cambiarTipo(t) {
   if (t === STATE.tipo && STATE.screen === 'form') return;
   STATE.tipo = t;
-  if (STATE.screen === 'metodos') {
-    if (t === 'ingreso') {
-      STATE.screen = 'form';
-      STATE.keypad = true;
-      if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
-      if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
-    }
-  } else if (t === 'ingreso' && !STATE.ingresoId && fuentes.length === 1) {
-    STATE.ingresoId = fuentes[0].id;
+  if (t === 'ingreso') {
+    // Ingreso no tiene selección de método de captura → directo al formulario.
+    STATE.screen = 'form';
+    STATE.keypad = true;
+    if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+    if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+  } else {
+    // Gasto: si ya eligió método (teclado/texto/foto) vuelve al formulario; si no,
+    // regresa a la selección de método (no debe saltársela al alternar el segmented).
+    STATE.screen = STATE.metodoElegido ? 'form' : 'metodos';
+    STATE.keypad = STATE.metodoElegido && STATE.modo === 'teclado';
   }
   paint();
 }
@@ -364,7 +367,7 @@ function bind() {
   sheetRef.querySelectorAll('[data-act]').forEach((el) => {
     const act = el.dataset.act;
     if (act === 'close') el.addEventListener('click', cerrar);
-    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; STATE.tipo = 'gasto'; draftPend = null; paint(); });
+    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; draftPend = null; paint(); });
     else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
     else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
     else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
@@ -393,6 +396,7 @@ function bind() {
       STATE.modo = metodo;
       STATE.tipo = 'gasto';
       STATE.fuente = 'manual';
+      STATE.metodoElegido = true;
       STATE.screen = 'form';
       STATE.keypad = metodo === 'teclado';
       if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
@@ -552,6 +556,7 @@ async function onFotoElegida(e) {
     STATE.screen = 'form';
     STATE.keypad = true;
     STATE.fuente = 'manual';
+    STATE.metodoElegido = true;
     paint();
     return;
   }
@@ -559,6 +564,7 @@ async function onFotoElegida(e) {
   if (r.monto) STATE.montoStr = String(r.monto);
   if (r.categoriaId) STATE.categoriaId = r.categoriaId;
   STATE.comercio = r.comercio || '';
+  STATE.metodoElegido = true;
   STATE.screen = 'form';
   STATE.keypad = !r.monto; // si no leyó monto, abre el teclado para escribirlo
   scheduleSave();
@@ -578,7 +584,7 @@ async function elegirFecha() {
 
 function retomarDraft() {
   if (!draftPend) return;
-  STATE = { ...fresh(), ...draftPend, screen: 'form', editId: null };
+  STATE = { ...fresh(), ...draftPend, screen: 'form', editId: null, metodoElegido: true };
   STATE.keypad = STATE.modo !== 'texto';
   if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
   draftPend = null;
@@ -673,7 +679,7 @@ async function abrir(mov = null) {
       cuenta: mov.cuenta || (cuentas()[0] || ''),
       fecha: (mov.fecha || hoyISO()).slice(0, 10), comercio: mov.comercio || '',
       esFijo: !!mov.esFijo, notas: mov.notas || '', fuente: mov.fuente || 'manual',
-      detalles: true, keypad: true, agregandoCuenta: false,
+      detalles: true, keypad: true, agregandoCuenta: false, metodoElegido: true,
     };
     draftPend = null;
   } else {

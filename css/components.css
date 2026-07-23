@@ -652,8 +652,11 @@
 .field--split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 /* min-width:0 evita que un hijo ancho (p. ej. <input type="date"> en iOS)
    reviente su columna 1fr y se solape con la vecina. */
-.field__col { display: block; min-width: 0; }
-.field__col .field__input { width: 100%; }
+/* Columnas de un split: flex vertical con el input anclado abajo. Así ambas
+   columnas alinean sus inputs aunque un label ocupe 2 líneas (el grid ya las
+   hace de igual alto con align-items:stretch). */
+.field__col { display: flex; flex-direction: column; min-width: 0; }
+.field__col .field__input { width: 100%; margin-top: auto; }
 .field__col .field__label { margin-bottom: var(--sp-2); }
 
 /* Disparador de fecha: se ve como un input pero abre la hoja de fecha. */
