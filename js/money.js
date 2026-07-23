@@ -99,6 +99,25 @@ export function formatCOP(n, { signo = false, compacto = false } = {}) {
   return signStr + '$' + nfGrupo.format(abs);
 }
 
+/**
+ * Formatea el monto de un MOVIMIENTO con su signo según el tipo:
+ *  - 'ingreso'            → positivo con '+'  ("+$50.000")
+ *  - cualquier otro       → negativo con '−'  ("−$50.000")
+ *    (gasto, pago: ambos salen de la cuenta).
+ * El monto se guarda en positivo: aquí se toma su valor absoluto y se le
+ * asigna el signo por tipo. PURA. Entrada no numérica => "".
+ *
+ * @param {number} monto entero de pesos (se usa |monto|)
+ * @param {string} tipo  'ingreso' | 'gasto' | 'pago' | …
+ * @returns {string}
+ */
+export function formatMovimiento(monto, tipo) {
+  if (monto == null || !Number.isFinite(monto)) return '';
+  const abs = Math.abs(monto);
+  const firmado = tipo === 'ingreso' ? abs : -abs;
+  return formatCOP(firmado, { signo: true });
+}
+
 /* ============================================================
    Máscara de miles EN VIVO (mientras se escribe)
    Núcleo PURO: no toca el DOM. El cableado del input vive en

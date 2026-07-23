@@ -25,6 +25,16 @@ import { abrirFecha } from './fecha-sheet.js';
 const DRAFT_KEY = 'bolsillo:draft:registrar';
 const MAX_DIGITOS = 12;
 
+/* ---- dictado por voz (SpeechRecognition) ----
+   En el iPhone de Doug este motor fue INESTABLE: por eso timeout + fallback
+   son obligatorios. Donde funciona = dictado de un toque; donde no, cae al
+   teclado sin trabarse jamás. */
+const VOZ_TIMEOUT_MS = 8000;   // sin cierre en 8s → forzamos el fin
+const VOZ_RED_MS = 1200;       // red de seguridad si stop() no dispara onend
+let recog = null;              // instancia activa de SpeechRecognition
+let recogTimer = null;         // timeout duro
+let recogHandled = false;      // single-flight: el resultado se procesa una sola vez
+
 /* ---- iconos ---- */
 const IC = {
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
@@ -54,6 +64,7 @@ function fresh() {
     detalles: false, keypad: true, agregandoCuenta: false,
     metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
     vozTexto: '', vozConfianzaBaja: false, // captura por voz (se resalta si la IA dudó)
+    vozEscuchando: false, // dictado por micrófono en curso (SpeechRecognition)
   };
 }
 let STATE = fresh();
@@ -107,7 +118,7 @@ function cabecera(titulo, conBack) {
     <div class="sheet__grip" aria-hidden="true"></div>
     ${conBack ? `<button class="icon-btn sheet__back" data-act="back" type="button" aria-label="Volver">${IC.back}</button>` : ''}
     <button class="icon-btn sheet__close" data-act="close" type="button" aria-label="Cerrar">${IC.close}</button>
-    <h2 class="sheet__title">${esc(titulo)}</h2>`;
+    <h2 class="sheet__title${conBack ? ' sheet__title--back' : ''}">${esc(titulo)}</h2>`;
 }
 
 /* Segmented Gasto/Ingreso: elección clara arriba del sheet. */
@@ -182,20 +193,48 @@ function renderCargando() {
     </div>`;
 }
 
-/* Hoja de dictado: el usuario TOCA el campo para abrir el teclado del sistema y
-   usar su 🎤. En iOS el teclado NO se abre con focus programático, así que el
-   textarea es un objetivo de toque prominente y el copy pide tocarlo. */
+/* Hoja de dictado. Dos estados:
+   · ESCUCHANDO: micrófono en vivo (SpeechRecognition) con salida SIEMPRE
+     visible (Terminar / Cancelar) para que nunca quede pegado.
+   · IDLE: CTA "Tomar dictado" (si el navegador lo soporta) + fallback de
+     teclado (el textarea + "Interpretar con IA"). En iOS el teclado no abre
+     con focus programático, por eso el campo es un objetivo de toque claro. */
 function renderVoz() {
+  if (STATE.vozEscuchando) {
+    return `
+      ${cabecera('Decir el gasto', true)}
+      <div class="voz-listen" role="status" aria-live="polite">
+        <span class="voz-listen__wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+        <p class="voz-listen__title">Escuchando…</p>
+        <p class="voz-listen__sub">Di el gasto: "cincuenta mil en el mercado, varios".</p>
+      </div>
+      <button type="button" class="btn btn--primary btn--block" data-act="voz-terminar">Terminar y leer</button>
+      <button type="button" class="btn btn--ghost btn--block voz-listen__cancel" data-act="voz-cancelar">Cancelar</button>`;
+  }
+
   const tieneTexto = !!(STATE.vozTexto && STATE.vozTexto.trim());
+  const cta = soportaVoz() ? `
+    <button type="button" class="voz-cta" data-act="voz-dictar">
+      <span class="voz-cta__ic">${IC.mic}</span>
+      <span class="voz-cta__body">
+        <span class="voz-cta__name">Tomar dictado</span>
+        <span class="voz-cta__desc">Habla y la IA lo registra sola</span>
+      </span>
+    </button>` : '';
+  const hint = soportaVoz()
+    ? '¿Prefieres escribir? Hazlo aquí (o toca el 🎤 del teclado de tu celular).'
+    : 'Toca el campo y luego el 🎤 del teclado de tu celular para dictar (o escribe).';
+
   return `
     ${cabecera('Decir el gasto', true)}
     <p class="sheet__sub">Dícalo tal como lo dirías; la IA saca el monto, la categoría y el detalle.</p>
+    ${cta}
     <label class="voz-field">
       <textarea class="field__input voz-field__input" id="reg-voz" rows="3"
         placeholder="Ej.: cincuenta mil en el mercado, varios"
         autocomplete="off" autocapitalize="sentences" inputmode="text">${esc(STATE.vozTexto)}</textarea>
     </label>
-    <p class="voz-hint">Toca el campo y luego el 🎤 del teclado de tu celular para dictar (o escribe).</p>
+    <p class="voz-hint">${hint}</p>
     <button type="button" class="btn btn--primary btn--block voz-go" data-act="voz-interpretar" ${tieneTexto ? '' : 'disabled'}>
       Interpretar con IA
     </button>`;
@@ -370,9 +409,10 @@ function paint() {
     const ti = sheetRef.querySelector('#reg-texto');
     if (ti) setTimeout(() => ti.focus(), 60);
   }
-  if (STATE.screen === 'voz') {
+  if (STATE.screen === 'voz' && !STATE.vozEscuchando && !soportaVoz()) {
+    // Solo cuando NO hay dictado por voz: enfoca el campo para abrir el teclado
+    // (y su 🎤). Si el navegador soporta voz, dejamos ver primero el CTA.
     const va = sheetRef.querySelector('#reg-voz');
-    // Auto-enfoca para abrir el teclado (y su 🎤) apenas se entra a la hoja.
     if (va) setTimeout(() => { va.focus(); const n = va.value.length; try { va.setSelectionRange(n, n); } catch { /* noop */ } }, 60);
   }
 }
@@ -424,8 +464,11 @@ function bind() {
   sheetRef.querySelectorAll('[data-act]').forEach((el) => {
     const act = el.dataset.act;
     if (act === 'close') el.addEventListener('click', cerrar);
-    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; STATE.vozConfianzaBaja = false; draftPend = null; paint(); });
+    else if (act === 'back') el.addEventListener('click', () => { detenerReconocimiento(); STATE.vozEscuchando = false; STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; STATE.vozConfianzaBaja = false; draftPend = null; paint(); });
     else if (act === 'voz-interpretar') el.addEventListener('click', interpretarVozDictada);
+    else if (act === 'voz-dictar') el.addEventListener('click', iniciarDictado);
+    else if (act === 'voz-terminar') el.addEventListener('click', terminarDictado);
+    else if (act === 'voz-cancelar') el.addEventListener('click', cancelarDictado);
     else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
     else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
     else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
@@ -641,8 +684,133 @@ async function onFotoElegida(e) {
    entrada (texto dictado en vez de imagen). Guarda con fuente:'voz'.
    ============================================================ */
 
+/** ¿El navegador ofrece dictado por voz? PURA (lee solo capacidades). */
+function soportaVoz() {
+  return typeof window !== 'undefined'
+    && typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
+}
+
+/** ¿Hay clave de Anthropic configurada? */
+function tieneClave() {
+  return !!(cfg && typeof cfg.apiKey === 'string' && cfg.apiKey.trim() !== '');
+}
+
+/** Detiene y limpia cualquier reconocimiento en curso (sin repintar). Blinda
+ *  contra callbacks tardíos marcando el resultado como ya manejado. */
+function detenerReconocimiento() {
+  recogHandled = true;
+  clearTimeout(recogTimer); recogTimer = null;
+  if (recog) { try { recog.abort(); } catch { /* noop */ } recog = null; }
+}
+
+/** Cae al teclado sin trabarse: sale del estado escuchando, repinta la hoja de
+ *  dictado (con el texto que hubiera) y enfoca el campo. Mensaje opcional. */
+function fallbackTeclado(mensaje) {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
+  paint();
+  const ta = sheetRef && sheetRef.querySelector('#reg-voz');
+  if (ta) setTimeout(() => { try { ta.focus(); } catch { /* noop */ } }, 60);
+  if (mensaje) toast(mensaje, { icono: false, ms: 3200 });
+}
+
+/** Procesa el fin del dictado UNA sola vez (single-flight). Con texto →
+ *  auto-interpreta y auto-avanza; vacío → cae al teclado. */
+function manejarFin(texto, msgSiVacio) {
+  if (recogHandled) return;
+  recogHandled = true;
+  clearTimeout(recogTimer); recogTimer = null;
+  recog = null;
+  const limpio = (texto || '').trim();
+  STATE.vozEscuchando = false;
+
+  if (!limpio) { fallbackTeclado(msgSiVacio || 'No te escuché. Escríbelo aquí o vuelve a intentar.'); return; }
+
+  STATE.vozTexto = limpio;
+  if (!tieneClave()) {
+    // Sin clave: guía a Ajustes (como hoy) y deja el texto listo en el campo.
+    paint();
+    toast('Para interpretar por voz, configura tu clave en Ajustes → Conexión con IA', { icono: false, ms: 4200 });
+    return;
+  }
+  // Un toque: interpreta y salta a la tarjeta de revisión sin pasos extra.
+  interpretarVozDictada();
+}
+
+/** Arranca el dictado por micrófono. Cualquier fallo cae al teclado. */
+function iniciarDictado() {
+  const Ctor = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!Ctor) { fallbackTeclado('Tu navegador no permite dictado por voz. Escríbelo aquí.'); return; }
+
+  detenerReconocimiento();
+  recogHandled = false;
+
+  let r;
+  try { r = new Ctor(); } catch { fallbackTeclado('No se pudo iniciar el dictado. Escríbelo aquí.'); return; }
+  recog = r;
+  r.lang = 'es-CO';
+  r.continuous = false;
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+
+  let capturado = '';
+  r.onresult = (e) => {
+    try {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) capturado += e.results[i][0].transcript;
+      }
+    } catch { /* noop */ }
+  };
+  r.onnomatch = () => manejarFin(capturado, 'No te entendí. Escríbelo aquí o intenta de nuevo.');
+  r.onerror = (e) => {
+    const err = e && e.error;
+    if (err === 'aborted') { manejarFin(capturado, null); return; } // cancelar/timeout
+    const msg = (err === 'not-allowed' || err === 'service-not-allowed')
+      ? 'Sin permiso de micrófono. Escríbelo aquí o actívalo en el navegador.'
+      : (err === 'no-speech')
+        ? 'No te escuché. Escríbelo aquí o vuelve a intentar.'
+        : 'El dictado falló. Escríbelo aquí.';
+    manejarFin(capturado, msg);
+  };
+  r.onend = () => manejarFin(capturado, null);
+
+  try { r.start(); } catch { fallbackTeclado('No se pudo iniciar el dictado. Escríbelo aquí.'); return; }
+
+  STATE.vozEscuchando = true;
+  paint();
+
+  // Timeout DURO: sin cierre en 8s, forzamos stop; si stop() tampoco dispara
+  // onend (bug de iOS), la red de seguridad cierra a mano. Nunca queda pegado.
+  recogTimer = setTimeout(() => {
+    if (recogHandled) return;
+    try { if (recog) recog.stop(); } catch { /* noop */ }
+    setTimeout(() => {
+      if (recogHandled) return;
+      manejarFin(capturado, capturado.trim() ? null : 'No te escuché a tiempo. Escríbelo aquí.');
+    }, VOZ_RED_MS);
+  }, VOZ_TIMEOUT_MS);
+}
+
+/** Botón "Terminar y leer": finaliza y usa lo que se haya escuchado. */
+function terminarDictado() {
+  clearTimeout(recogTimer); recogTimer = null;
+  if (recog) {
+    try { recog.stop(); } catch { manejarFin('', null); }
+    // Si stop() no dispara onend, cerramos igual tras un momento.
+    setTimeout(() => { if (!recogHandled) manejarFin('', 'No te escuché. Escríbelo aquí.'); }, VOZ_RED_MS);
+  } else { manejarFin('', null); }
+}
+
+/** Botón "Cancelar": aborta sin toast y vuelve al estado idle de la hoja. */
+function cancelarDictado() {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
+  paint();
+}
+
 /** Abre la hoja de dictado (campo de texto). La clave se valida al interpretar. */
 function abrirVoz() {
+  detenerReconocimiento();
   STATE.modo = 'voz';
   STATE.tipo = 'gasto';
   STATE.fuente = 'voz';
@@ -650,6 +818,7 @@ function abrirVoz() {
   STATE.screen = 'voz';
   STATE.keypad = false;
   STATE.vozConfianzaBaja = false;
+  STATE.vozEscuchando = false;
   if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
   paint();
 }
@@ -848,6 +1017,8 @@ async function abrir(mov = null) {
 }
 
 function cerrar() {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
   if (!STATE.editId && hasContent()) saveDraft();
   if (closeRef) closeRef();
 }

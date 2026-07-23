@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  parseCOP, formatCOP, formatearMontoEnVivo, borrarDigitoAtras, MAX_DIGITOS_MONTO,
+  parseCOP, formatCOP, formatMovimiento, formatearMontoEnVivo, borrarDigitoAtras, MAX_DIGITOS_MONTO,
 } from '../js/money.js';
 
 /* ---------------- parseCOP ---------------- */
@@ -89,6 +89,35 @@ test('formatCOP: entrada no numérica devuelve cadena vacía', () => {
   assert.equal(formatCOP(null), '');
   assert.equal(formatCOP(undefined), '');
   assert.equal(formatCOP(NaN), '');
+});
+
+/* ---------------- formatMovimiento (signo por tipo) ---------------- */
+
+test('formatMovimiento: gasto sale con − aunque el monto se guarde positivo', () => {
+  assert.equal(formatMovimiento(50000, 'gasto'), '−$50.000');
+});
+
+test('formatMovimiento: ingreso sale con + verde (positivo)', () => {
+  assert.equal(formatMovimiento(50000, 'ingreso'), '+$50.000');
+});
+
+test('formatMovimiento: pago también sale negativo (sale de la cuenta)', () => {
+  assert.equal(formatMovimiento(120000, 'pago'), '−$120.000');
+});
+
+test('formatMovimiento: usa el valor absoluto (nunca doble signo)', () => {
+  assert.equal(formatMovimiento(-50000, 'gasto'), '−$50.000');
+  assert.equal(formatMovimiento(-50000, 'ingreso'), '+$50.000');
+});
+
+test('formatMovimiento: tipo desconocido se trata como salida (−)', () => {
+  assert.equal(formatMovimiento(9000, 'loquesea'), '−$9.000');
+});
+
+test('formatMovimiento: entrada no numérica devuelve cadena vacía', () => {
+  assert.equal(formatMovimiento(null, 'gasto'), '');
+  assert.equal(formatMovimiento(undefined, 'ingreso'), '');
+  assert.equal(formatMovimiento(NaN, 'gasto'), '');
 });
 
 /* ---------------- máscara en vivo: formatearMontoEnVivo ---------------- */

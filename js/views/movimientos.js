@@ -7,7 +7,7 @@
 
 import { getAll, del, put, getConfig, saveConfig } from '../db.js';
 import { actualizar, derivarEsHormiga } from '../model.js';
-import { formatCOP } from '../money.js';
+import { formatCOP, formatMovimiento } from '../money.js';
 import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { aprender } from '../categorize.js';
 import { confirmar, menu } from '../overlay.js';
@@ -100,7 +100,8 @@ function filaMov(m) {
   const badge = FUENTE_LABEL[m.fuente] && m.fuente !== 'manual'
     ? `<span class="src-badge">${esc(FUENTE_LABEL[m.fuente])}</span>` : '';
   const hormiga = m.esHormiga ? '<span class="hormiga-dot" title="Gasto hormiga"></span>' : '';
-  const signo = m.tipo === 'ingreso';
+  // Ingreso: +$ verde. Gasto y pago: −$ (salen de la cuenta).
+  const esIn = m.tipo === 'ingreso';
   return `
     <div class="mov-row" data-id="${esc(m.id)}">
       <button type="button" class="mov-row__main" data-act="edit" data-id="${esc(m.id)}">
@@ -109,7 +110,7 @@ function filaMov(m) {
           <span class="mov-row__title">${esc(titulo)}${hormiga}</span>
           <span class="mov-row__meta">${metas.join(' · ')} ${badge}</span>
         </span>
-        <span class="mov-row__amount num${signo ? ' is-in' : ''}">${formatCOP(m.monto, { signo })}</span>
+        <span class="mov-row__amount num${esIn ? ' is-in' : ''}">${formatMovimiento(m.monto, m.tipo)}</span>
       </button>
       <button type="button" class="mov-row__more icon-btn" data-act="more" data-id="${esc(m.id)}" aria-label="Acciones">${ICON_MORE}</button>
     </div>`;
