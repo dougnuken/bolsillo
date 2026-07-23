@@ -14,6 +14,16 @@
   --bg-2: #FFFFFF;              /* superficie / tarjetas */
   --scrim: rgba(40, 32, 20, 0.32); /* overlay de sheets/modales */
 
+  /* ---- Washes de ambiente (Liquid Glass claro) ----
+     Tinte MUY sutil sobre el canvas para que el vidrio flotante
+     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi blanco. */
+  --wash-coral: rgba(255, 120, 80, 0.10);
+  --wash-mint:  rgba(20, 150, 110, 0.08);
+  --bg-app:
+    radial-gradient(90% 55% at 82% 4%, var(--wash-coral), transparent 60%),
+    radial-gradient(80% 50% at 8% 96%, var(--wash-mint), transparent 60%),
+    var(--bg-0);
+
   /* ---- "Glass" → rellenos neutros claros (compat: mismos nombres) ----
      glass-1 = superficie base de campos/tarjetas (blanco)
      glass-2 = hover sutil cálido
@@ -21,10 +31,12 @@
   --glass-1: #FFFFFF;
   --glass-2: #F4F2EF;
   --glass-3: #ECE9E4;
-  --glass-nav: rgba(255, 255, 255, 0.86);    /* barra inferior translúcida */
+  --glass-nav: rgba(255, 255, 255, 0.60);    /* barra inferior: vidrio flotante */
+  --glass-nav-line: rgba(255, 255, 255, 0.75); /* borde del vidrio flotante */
   --glass-header: rgba(255, 255, 255, 0.82);
   --blur: 14px;                 /* backdrop-filter discreto */
   --blur-strong: 18px;
+  --blur-nav: 26px;             /* esmerilado de la barra flotante */
 
   /* ---- Bordes hairline ---- */
   --line-1: #F0EEEA;            /* soft line */
@@ -42,9 +54,12 @@
   --accent: #FF5A36;
   --accent-strong: #FF5A36;
   --accent-deep: #E8481F;       /* press */
+  --accent-light: #FF7A52;      /* brillo del FAB (highlight superior) */
   --accent-soft: rgba(255, 90, 54, 0.12);
   --accent-glow: rgba(255, 90, 54, 0.30);
-  --accent-grad: #FF5A36;       /* sólido: botones/FAB no llevan degradado */
+  --accent-grad: #FF5A36;       /* sólido: botones (.btn--primary / orb) SIN degradado */
+  /* FAB: degradado sutil aprobado por Doug (Liquid Glass claro) */
+  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
 
   /* ---- Semáforo financiero (light, AA) ----
      El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra.
@@ -133,8 +148,9 @@
   --sh-sm: 0 1px 2px rgba(20, 16, 12, 0.06);
   --sh-card: 0 1px 3px rgba(20, 16, 12, 0.05);
   --sh-sheet: 0 -12px 40px -12px rgba(40, 32, 20, 0.22);
-  --sh-fab: 0 12px 22px -8px rgba(255, 90, 54, 0.55), 0 3px 8px rgba(20, 16, 12, 0.12);
+  --sh-fab: 0 8px 20px -3px rgba(232, 67, 31, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.45);
   --sh-md: 0 8px 30px -8px rgba(40, 32, 20, 0.18);
+  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 10px 28px -8px rgba(60, 45, 35, 0.28); /* barra flotante */
 
   /* ---- Layout ---- */
   --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */

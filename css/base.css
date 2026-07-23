@@ -89,7 +89,7 @@ img { max-width: 100%; display: block; }
   flex-direction: column;
   overflow: hidden;
   overscroll-behavior-y: none;
-  background: var(--bg-0);
+  background: var(--bg-app); /* canvas claro + washes de ambiente */
 }
 
 /* ---- Header (respeta el notch / Dynamic Island) ---- */
@@ -124,8 +124,9 @@ img { max-width: 100%; display: block; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  /* +sp-4: la barra ahora flota (16px sobre el borde inferior) */
   padding: var(--sp-5) max(var(--sp-5), env(safe-area-inset-left))
-           calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-8))
+           calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-4) + var(--sp-8))
            max(var(--sp-5), env(safe-area-inset-right));
   opacity: 0;
   visibility: hidden;

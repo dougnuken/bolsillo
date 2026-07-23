@@ -183,20 +183,22 @@
    Tab bar inferior + FAB
    ============================================================ */
 .tabbar {
+  /* Vidrio flotante tipo iPhone: pill separada ~16px de los bordes */
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  left: max(var(--sp-4), env(safe-area-inset-left));
+  right: max(var(--sp-4), env(safe-area-inset-right));
+  bottom: calc(var(--sp-4) + env(safe-area-inset-bottom));
   z-index: var(--z-nav);
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: max(0px, env(safe-area-inset-left));
-  padding-right: max(0px, env(safe-area-inset-right));
+  height: var(--nav-h);
   display: grid;
   grid-template-columns: 1fr var(--sp-9) 1fr; /* Hoy | hueco del FAB | Movimientos */
   align-items: stretch;
+  border-radius: var(--r-xl);
   background: var(--glass-nav);
-  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.4);
-  backdrop-filter: blur(var(--blur-strong)) saturate(1.4);
-  border-top: 1px solid var(--line-1);
+  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.9);
+  backdrop-filter: blur(var(--blur-nav)) saturate(1.9);
+  border: 1px solid var(--glass-nav-line);
+  box-shadow: var(--sh-nav);
 }
 
 .tab {
@@ -234,17 +236,18 @@
   position: absolute;
   z-index: var(--z-fab);
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) - 30px);
+  /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
+  bottom: calc(env(safe-area-inset-bottom) + var(--sp-4) + var(--nav-h) - 30px);
   transform: translateX(-50%);
   width: 60px;
   height: 60px;
-  border-radius: var(--r-full);
+  border-radius: var(--r-lg); /* cuadrado redondeado (20px) */
   display: grid;
   place-items: center;
   color: var(--text-inverse);
-  background: var(--accent-grad);
+  background: var(--fab-grad);
   box-shadow: var(--sh-fab);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 160, 120, 0.5);
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
   will-change: transform;
 }
@@ -764,7 +767,8 @@
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4));
+  /* despeja la barra flotante (nav-h + 16px de elevación + 16px de aire) */
+  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4) + var(--sp-4));
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;
@@ -977,7 +981,8 @@
   position: absolute;
   left: max(var(--sp-4), env(safe-area-inset-left));
   right: max(var(--sp-4), env(safe-area-inset-right));
-  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4));
+  /* despeja la barra flotante (nav-h + 16px de elevación + 16px de aire) */
+  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4) + var(--sp-4));
   z-index: var(--z-toast);
   display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
   padding: var(--sp-3) var(--sp-4);
