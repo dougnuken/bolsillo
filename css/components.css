@@ -589,7 +589,10 @@
 .acct-new .field__input { flex: 1 1 auto; }
 
 /* ---- campos de formulario ---- */
-.field { margin-top: var(--sp-5); }
+/* display:block es CLAVE: .field se usa en <label> (inline por defecto) y en
+   <div>. Sin block, margin-top NO aplica a los <label> → campos pegados.
+   .toggle-row / .field--split definen su propio display más abajo y ganan. */
+.field { display: block; margin-top: var(--sp-5); }
 .field__input {
   width: 100%;
   min-height: 46px;
