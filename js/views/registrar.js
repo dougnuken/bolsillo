@@ -16,6 +16,7 @@ import {
 import { formatCOP } from '../money.js';
 import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { parseTextoLibre } from '../categorize.js';
+import { analizarRecibo, MODELO_FOTO_DEFAULT } from '../foto-gasto.js';
 import { toast } from '../toast.js';
 import { hoyISO, etiquetaFecha, esISOValida } from '../fechas.js';
 import { abrirFecha } from './fecha-sheet.js';
@@ -145,8 +146,27 @@ function renderMetodos() {
         <span class="capture-opt__name">Texto libre</span>
         <span class="capture-opt__desc">"Pagué 50k de mercado"</span>
       </button>
-      <!-- Foto y PDF ocultos en el piloto (aún placeholders). Para re-mostrar:
-           reañade sus botones .capture-opt.is-soon con IC.photo / IC.pdf. -->
+      <button class="capture-opt capture-opt--wide" type="button" data-metodo="foto">
+        <span class="capture-opt__icon">${IC.photo}</span>
+        <span class="capture-opt__body">
+          <span class="capture-opt__name">Foto del recibo</span>
+          <span class="capture-opt__desc">Tómalo o súbelo y la IA lee el monto por ti</span>
+        </span>
+        <span class="capture-opt__go" aria-hidden="true">${IC.chev}</span>
+      </button>
+      <!-- PDF oculto en el piloto (placeholder). Para re-mostrar: reañade su
+           botón .capture-opt.is-soon con IC.pdf. -->
+    </div>`;
+}
+
+/* Pantalla mientras la IA lee la foto del recibo. */
+function renderCargando() {
+  return `
+    ${cabecera('Leyendo tu recibo', false)}
+    <div class="foto-loading" role="status" aria-live="polite">
+      <span class="foto-loading__spin" aria-hidden="true"></span>
+      <p class="foto-loading__txt">Leyendo tu recibo con IA…</p>
+      <p class="foto-loading__sub">Extraigo el monto, el comercio y la categoría.</p>
     </div>`;
 }
 
@@ -289,7 +309,9 @@ function renderForm() {
 function paint() {
   if (!sheetRef) return;
   sheetRef.scrollTop = 0;
-  sheetRef.innerHTML = STATE.screen === 'form' ? renderForm() : renderMetodos();
+  sheetRef.innerHTML = STATE.screen === 'form' ? renderForm()
+    : STATE.screen === 'foto-cargando' ? renderCargando()
+      : renderMetodos();
   bind();
   if (STATE.screen === 'form' && STATE.modo === 'texto') {
     const ti = sheetRef.querySelector('#reg-texto');
@@ -366,10 +388,13 @@ function bind() {
   // métodos
   sheetRef.querySelectorAll('[data-metodo]').forEach((b) => {
     b.addEventListener('click', () => {
-      STATE.modo = b.dataset.metodo;
+      const metodo = b.dataset.metodo;
+      if (metodo === 'foto') { abrirCamara(); return; }
+      STATE.modo = metodo;
       STATE.tipo = 'gasto';
+      STATE.fuente = 'manual';
       STATE.screen = 'form';
-      STATE.keypad = STATE.modo === 'teclado';
+      STATE.keypad = metodo === 'teclado';
       if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
       paint();
     });
@@ -438,6 +463,107 @@ function interpretarTexto(valor) {
   const ci = sheetRef.querySelector('#reg-detalle');
   if (ci) ci.value = STATE.comercio;
   scheduleSave();
+}
+
+/* ============================================================
+   Foto del recibo → IA (visión) → prellenar el formulario
+   ============================================================ */
+const MAX_LADO_FOTO = 1568; // px, lado más largo (recomendado para visión)
+let fileInput = null;
+
+/** Input de archivo/cámara reutilizable (se crea una sola vez). */
+function ensureFileInput() {
+  if (fileInput) return fileInput;
+  fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.setAttribute('capture', 'environment'); // sugiere la cámara trasera
+  fileInput.hidden = true;
+  fileInput.addEventListener('change', onFotoElegida);
+  document.body.appendChild(fileInput);
+  return fileInput;
+}
+
+/** Redimensiona a <=MAX_LADO_FOTO y recodifica JPEG. Devuelve {base64, mediaType}. */
+function leerImagenRedimensionada(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const escala = Math.min(1, MAX_LADO_FOTO / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * escala));
+      const h = Math.max(1, Math.round(img.height * escala));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('canvas')); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      let dataUrl;
+      try { dataUrl = canvas.toDataURL('image/jpeg', 0.82); }
+      catch (err) { reject(err); return; }
+      const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl);
+      if (!m) { reject(new Error('encode')); return; }
+      resolve({ mediaType: m[1], base64: m[2] });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load')); };
+    img.src = url;
+  });
+}
+
+/** Abre la cámara/galería si hay clave; si no, guía a configurarla. */
+function abrirCamara() {
+  if (!cfg || typeof cfg.apiKey !== 'string' || cfg.apiKey.trim() === '') {
+    toast('Para leer fotos, configura tu clave en Ajustes → Conexión con IA', { icono: false, ms: 4000 });
+    return;
+  }
+  const inp = ensureFileInput();
+  inp.value = ''; // permite volver a elegir el mismo archivo
+  inp.click();
+}
+
+async function onFotoElegida(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  let img;
+  try { img = await leerImagenRedimensionada(file); }
+  catch { toast('No se pudo leer la imagen', { icono: false }); return; }
+
+  // pantalla de carga
+  STATE.modo = 'foto';
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'foto';
+  STATE.screen = 'foto-cargando';
+  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  paint();
+
+  const categorias = catalogoVisible().map((c) => ({ id: c.id, label: c.label }));
+  const modelo = (cfg && cfg.modelos && (cfg.modelos.foto || cfg.modelos.texto)) || MODELO_FOTO_DEFAULT;
+  const r = await analizarRecibo({
+    base64: img.base64, mediaType: img.mediaType,
+    apiKey: cfg.apiKey, modelo, categorias,
+  });
+
+  if (STATE.screen !== 'foto-cargando') return; // el usuario cerró/navegó
+
+  if (r.estado !== 'ok') {
+    toast(r.mensaje || 'No se pudo leer el recibo', { icono: false, ms: 4000 });
+    STATE.screen = 'form';
+    STATE.keypad = true;
+    STATE.fuente = 'manual';
+    paint();
+    return;
+  }
+
+  if (r.monto) STATE.montoStr = String(r.monto);
+  if (r.categoriaId) STATE.categoriaId = r.categoriaId;
+  STATE.comercio = r.comercio || '';
+  STATE.screen = 'form';
+  STATE.keypad = !r.monto; // si no leyó monto, abre el teclado para escribirlo
+  scheduleSave();
+  paint();
+  toast(r.monto ? 'Recibo leído · revisa y guarda' : 'No leí el monto: escríbelo', { icono: !!r.monto, ms: 3400 });
 }
 
 /* Abre la hoja inferior de fecha (Hoy/Ayer/Antier + nativo). Guarda la

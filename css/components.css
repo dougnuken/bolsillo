@@ -336,6 +336,27 @@
 }
 .capture-opt:hover { background: var(--glass-2); border-color: var(--line-accent); }
 .capture-opt:active { transform: scale(0.97); }
+/* Opción "Foto" a lo ancho (horizontal, destacada). */
+.capture-opt--wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: var(--sp-4); }
+.capture-opt--wide .capture-opt__icon { flex: 0 0 auto; }
+.capture-opt__body { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.capture-opt__go { color: var(--text-3); flex: 0 0 auto; }
+.capture-opt__go svg { width: 20px; height: 20px; transform: rotate(-90deg); }
+
+/* Pantalla de carga mientras la IA lee la foto del recibo. */
+.foto-loading {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--sp-2); padding: var(--sp-9) var(--sp-4) var(--sp-8);
+}
+.foto-loading__spin {
+  width: 42px; height: 42px; border-radius: var(--r-full);
+  border: 3px solid var(--line-2); border-top-color: var(--accent);
+  animation: bolsillo-spin 0.8s linear infinite; margin-bottom: var(--sp-3);
+}
+.foto-loading__txt { font-size: var(--fs-h3); font-weight: var(--fw-semibold); color: var(--text-1); }
+.foto-loading__sub { font-size: var(--fs-sm); color: var(--text-2); }
+@keyframes bolsillo-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .foto-loading__spin { animation-duration: 1.8s; } }
 .capture-opt__icon {
   width: 40px; height: 40px;
   display: grid; place-items: center;
