@@ -490,34 +490,6 @@
   line-height: 1.5;
   margin-bottom: var(--sp-4);
 }
-/* Botón de dictado en vivo (mejora progresiva). Pill outline. */
-.voz-live {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-4);
-  margin-bottom: var(--sp-4);
-  border-radius: var(--r-full);
-  background: var(--glass-1);
-  border: 1px solid var(--line-3);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-1);
-  transition: background var(--dur-fast) var(--ease),
-              border-color var(--dur-fast) var(--ease),
-              transform var(--dur-fast) var(--ease);
-}
-.voz-live:active { transform: scale(0.97); }
-.voz-live__ic { display: inline-flex; color: var(--text-2); }
-.voz-live__ic svg { width: 18px; height: 18px; }
-.voz-live.is-live {
-  background: var(--accent-soft);
-  border-color: var(--line-accent);
-  color: var(--accent-deep);
-}
-.voz-live.is-live .voz-live__ic { color: var(--accent); animation: voz-pulse 1.2s var(--ease-in-out) infinite; }
-@keyframes voz-pulse { 50% { transform: scale(1.16); opacity: 0.6; } }
-@media (prefers-reduced-motion: reduce) { .voz-live.is-live .voz-live__ic { animation: none; } }
 .voz-go { margin-top: var(--sp-1); }
 
 /* Aviso de confianza baja en la tarjeta de revisión (ámbar = revisar). */

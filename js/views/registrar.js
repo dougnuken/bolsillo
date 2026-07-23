@@ -182,32 +182,20 @@ function renderCargando() {
     </div>`;
 }
 
-/* ¿El navegador soporta dictado en vivo? (mejora progresiva; en iOS suele
-   NO existir, por eso el campo de texto + 🎤 del teclado es el camino base). */
-function vozEnVivoSoportado() {
-  return typeof window !== 'undefined'
-    && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-}
-
-/* Hoja de dictado: campo de texto auto-enfocado (abre el teclado y su 🎤) +
-   botón opcional de dictado en vivo cuando el navegador lo permite. */
+/* Hoja de dictado: el usuario TOCA el campo para abrir el teclado del sistema y
+   usar su 🎤. En iOS el teclado NO se abre con focus programático, así que el
+   textarea es un objetivo de toque prominente y el copy pide tocarlo. */
 function renderVoz() {
-  const enVivo = vozEnVivoSoportado() ? `
-    <button type="button" class="voz-live" data-act="voz-live" aria-pressed="false">
-      <span class="voz-live__ic">${IC.mic}</span>
-      <span class="voz-live__txt">Dictar en vivo</span>
-    </button>` : '';
   const tieneTexto = !!(STATE.vozTexto && STATE.vozTexto.trim());
   return `
     ${cabecera('Decir el gasto', true)}
     <p class="sheet__sub">Dícalo tal como lo dirías; la IA saca el monto, la categoría y el detalle.</p>
     <label class="voz-field">
       <textarea class="field__input voz-field__input" id="reg-voz" rows="3"
-        placeholder="cincuenta mil en el mercado, varios"
+        placeholder="Ej.: cincuenta mil en el mercado, varios"
         autocomplete="off" autocapitalize="sentences" inputmode="text">${esc(STATE.vozTexto)}</textarea>
     </label>
-    <p class="voz-hint">Toca el 🎤 del teclado de tu celular y habla. En iPhone es lo más confiable.</p>
-    ${enVivo}
+    <p class="voz-hint">Toca el campo y luego el 🎤 del teclado de tu celular para dictar (o escribe).</p>
     <button type="button" class="btn btn--primary btn--block voz-go" data-act="voz-interpretar" ${tieneTexto ? '' : 'disabled'}>
       Interpretar con IA
     </button>`;
@@ -436,9 +424,8 @@ function bind() {
   sheetRef.querySelectorAll('[data-act]').forEach((el) => {
     const act = el.dataset.act;
     if (act === 'close') el.addEventListener('click', cerrar);
-    else if (act === 'back') el.addEventListener('click', () => { detenerDictado(); STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; STATE.vozConfianzaBaja = false; draftPend = null; paint(); });
+    else if (act === 'back') el.addEventListener('click', () => { STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; STATE.vozConfianzaBaja = false; draftPend = null; paint(); });
     else if (act === 'voz-interpretar') el.addEventListener('click', interpretarVozDictada);
-    else if (act === 'voz-live') el.addEventListener('click', toggleDictado);
     else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
     else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
     else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
@@ -653,8 +640,6 @@ async function onFotoElegida(e) {
    Reusa la MISMA tarjeta de revisión del flujo de foto: solo cambia la
    entrada (texto dictado en vez de imagen). Guarda con fuente:'voz'.
    ============================================================ */
-let recog = null;         // instancia de SpeechRecognition (dictado en vivo)
-let recogActivo = false;  // ¿está escuchando ahora mismo?
 
 /** Abre la hoja de dictado (campo de texto). La clave se valida al interpretar. */
 function abrirVoz() {
@@ -673,50 +658,6 @@ function abrirVoz() {
 function syncVozBtn() {
   const btn = sheetRef.querySelector('[data-act="voz-interpretar"]');
   if (btn) btn.disabled = !(STATE.vozTexto && STATE.vozTexto.trim());
-}
-
-/** Refleja el estado del botón de dictado en vivo (sin repintar). */
-function syncDictadoBtn() {
-  const btn = sheetRef.querySelector('[data-act="voz-live"]');
-  if (!btn) return;
-  btn.classList.toggle('is-live', recogActivo);
-  btn.setAttribute('aria-pressed', String(recogActivo));
-  const txt = btn.querySelector('.voz-live__txt');
-  if (txt) txt.textContent = recogActivo ? 'Escuchando… toca para parar' : 'Dictar en vivo';
-}
-
-/** Detiene el dictado en vivo si estaba activo. Idempotente. */
-function detenerDictado() {
-  if (recog) { try { recog.stop(); } catch { /* noop */ } }
-  recogActivo = false;
-}
-
-/** Enciende/apaga el dictado en vivo (mejora progresiva; feature-detect). */
-function toggleDictado() {
-  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Rec) return;
-  if (recogActivo) { detenerDictado(); syncDictadoBtn(); return; }
-
-  const ta = sheetRef.querySelector('#reg-voz');
-  const base = ta ? ta.value.trim() : '';
-  try { recog = new Rec(); } catch { toast('No se pudo iniciar el dictado', { icono: false }); return; }
-  recog.lang = 'es-CO';
-  recog.interimResults = true;
-  recog.continuous = false;
-  recog.onresult = (e) => {
-    let dicho = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) dicho += e.results[i][0].transcript;
-    const campo = sheetRef.querySelector('#reg-voz');
-    if (campo) {
-      campo.value = (base ? base + ' ' : '') + dicho;
-      STATE.vozTexto = campo.value;
-      syncVozBtn();
-    }
-  };
-  recog.onerror = () => { recogActivo = false; syncDictadoBtn(); };
-  recog.onend = () => { recogActivo = false; syncDictadoBtn(); };
-  try { recog.start(); recogActivo = true; syncDictadoBtn(); }
-  catch { recogActivo = false; syncDictadoBtn(); }
 }
 
 /** Vuelca el resultado de la IA en el formulario (misma tarjeta de revisión). */
@@ -741,7 +682,6 @@ function aplicarResultadoVoz(r) {
 
 /** Manda el texto dictado a Claude y prellena la tarjeta de revisión. */
 async function interpretarVozDictada() {
-  detenerDictado();
   const ta = sheetRef.querySelector('#reg-voz');
   const texto = (ta ? ta.value : STATE.vozTexto || '').trim();
   if (!texto) { toast('Escribe o dicta el gasto primero', { icono: false }); return; }
@@ -908,7 +848,6 @@ async function abrir(mov = null) {
 }
 
 function cerrar() {
-  detenerDictado();
   if (!STATE.editId && hasContent()) saveDraft();
   if (closeRef) closeRef();
 }
