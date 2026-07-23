@@ -1,79 +1,93 @@
 /* ============================================================
    Bolsillo · Design tokens
-   Dirección: dark "calma financiera" + acentos glass
+   Dirección: light minimalista "Naranja al frente"
+   Canvas cálido, un solo acento coral (solo acciones/estado activo),
+   el color de semáforo SOLO significa estado.
    Todo el color/espaciado/motion vive aquí. Cero hex fuera
    de este archivo (los .svg de assets son la única excepción).
    ============================================================ */
 
 :root {
-  /* ---- Superficies (dark profundo) ---- */
-  --bg-0: #0B0E14;              /* fondo base de la app */
-  --bg-1: #0E121B;              /* fondo de página / degradado */
-  --bg-2: #121826;              /* elevación sutil */
-  --scrim: rgba(6, 8, 12, 0.62); /* overlay de sheets/modales */
+  /* ---- Superficies (claro y aireado) ---- */
+  --bg-0: #FAF9F7;              /* canvas base de la app */
+  --bg-1: #FAF9F7;              /* fondo de página */
+  --bg-2: #FFFFFF;              /* superficie / tarjetas */
+  --scrim: rgba(40, 32, 20, 0.32); /* overlay de sheets/modales */
 
-  /* ---- Glass: superficies translúcidas ---- */
-  --glass-1: rgba(255, 255, 255, 0.045);
-  --glass-2: rgba(255, 255, 255, 0.065);
-  --glass-3: rgba(255, 255, 255, 0.09);
-  --glass-nav: rgba(14, 18, 27, 0.72);   /* barra inferior */
-  --glass-header: rgba(11, 14, 20, 0.66);
-  --blur: 18px;                 /* backdrop-filter discreto */
-  --blur-strong: 26px;
+  /* ---- "Glass" → rellenos neutros claros (compat: mismos nombres) ----
+     glass-1 = superficie base de campos/tarjetas (blanco)
+     glass-2 = hover sutil cálido
+     glass-3 = pressed / pista más marcada */
+  --glass-1: #FFFFFF;
+  --glass-2: #F4F2EF;
+  --glass-3: #ECE9E4;
+  --glass-nav: rgba(255, 255, 255, 0.86);    /* barra inferior translúcida */
+  --glass-header: rgba(255, 255, 255, 0.82);
+  --blur: 14px;                 /* backdrop-filter discreto */
+  --blur-strong: 18px;
 
-  /* ---- Bordes hairline (baja opacidad) ---- */
-  --line-1: rgba(255, 255, 255, 0.07);
-  --line-2: rgba(255, 255, 255, 0.11);
-  --line-3: rgba(255, 255, 255, 0.16);
-  --line-accent: rgba(124, 208, 224, 0.42);
+  /* ---- Bordes hairline ---- */
+  --line-1: #F0EEEA;            /* soft line */
+  --line-2: #ECE9E4;            /* hairline */
+  --line-3: #E2DED7;            /* borde fuerte */
+  --line-accent: rgba(255, 90, 54, 0.48);  /* foco/seleccionado = coral */
 
   /* ---- Texto ---- */
-  --text-1: #EEF2F7;            /* principal */
-  --text-2: #A6B0C0;            /* secundario */
-  --text-3: #6C7789;            /* terciario / hints */
-  --text-inverse: #071018;      /* sobre acento/coin */
+  --text-1: #17140F;            /* ink principal */
+  --text-2: #736E67;            /* muted secundario (AA sobre canvas) */
+  --text-3: #8C877F;            /* terciario / hints */
+  --text-inverse: #FFFFFF;      /* sobre coral/acento */
 
-  /* ---- Acento de marca: ice/cian desaturado (NO compite con semáforo) ---- */
-  --accent: #7CD0E0;
-  --accent-strong: #9FE4F1;
-  --accent-deep: #3E93A8;
-  --accent-soft: rgba(124, 208, 224, 0.14);
-  --accent-glow: rgba(124, 208, 224, 0.30);
-  --accent-grad: linear-gradient(150deg, #9FE4F1 0%, #6CC4D6 48%, #3E93A8 100%);
+  /* ---- Acento de marca: CORAL (solo acciones / estado activo) ---- */
+  --accent: #FF5A36;
+  --accent-strong: #FF5A36;
+  --accent-deep: #E8481F;       /* press */
+  --accent-soft: rgba(255, 90, 54, 0.12);
+  --accent-glow: rgba(255, 90, 54, 0.30);
+  --accent-grad: #FF5A36;       /* sólido: botones/FAB no llevan degradado */
 
-  /* ---- Semáforo financiero (RESERVADO para estado; AA sobre oscuro) ---- */
-  --semaforo-verde: #4ADE80;
-  --semaforo-verde-bg: rgba(74, 222, 128, 0.13);
-  --semaforo-verde-line: rgba(74, 222, 128, 0.32);
+  /* ---- Semáforo financiero (light, AA) ----
+     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra.
+     El -text es el color legible sobre el tint (para pills). */
+  --semaforo-verde: #157F3B;
+  --semaforo-verde-text: #157F3B;
+  --semaforo-verde-bg: #E7F5EC;
+  --semaforo-verde-line: rgba(21, 127, 59, 0.28);
 
-  --semaforo-ambar: #FBBF3D;
-  --semaforo-ambar-bg: rgba(251, 191, 61, 0.14);
-  --semaforo-ambar-line: rgba(251, 191, 61, 0.34);
+  --semaforo-ambar: #C77E00;
+  --semaforo-ambar-text: #8A5A00;
+  --semaforo-ambar-bg: #FBEFD3;
+  --semaforo-ambar-line: rgba(199, 126, 0, 0.30);
 
-  --semaforo-rojo: #FB7185;
-  --semaforo-rojo-bg: rgba(251, 113, 133, 0.14);
-  --semaforo-rojo-line: rgba(251, 113, 133, 0.34);
+  --semaforo-rojo: #D42A22;
+  --semaforo-rojo-text: #C4231C;
+  --semaforo-rojo-bg: #FCEBE9;
+  --semaforo-rojo-line: rgba(212, 42, 34, 0.28);
 
-  /* ---- Tints de categoría (identidad, NO estado; desaturados para dark) ----
-     El fondo translúcido se deriva con color-mix; aquí solo el color base. */
-  --cat-persona1: #F2A0A6;      /* categorías-persona (identidad, neutras) */
-  --cat-persona2: #7FB2EA;
-  --cat-persona3: #C0A2F0;
-  --cat-yo: #66CBB0;
-  --cat-vivienda: #8AA6FF;
-  --cat-servicios: #63C2D6;
-  --cat-mercado: #8FCF7A;
-  --cat-transporte: #E4A76A;
-  --cat-colegio: #C79BF0;
-  --cat-seguros: #5FC7B0;
-  --cat-salud: #F28FB4;
-  --cat-creditos: #7E9CD8;
-  --cat-comisiones: #A6B0C7;
-  --cat-ocio: #B58CF2;
-  --cat-restaurantes: #E0996F;
-  --cat-hormiga: #D9C173;
-  --cat-negocios: #5CB6C9;
-  --cat-otros: #98A4B8;
+  /* ---- Barras neutras (categoría / cobertura) — NUNCA semáforo ---- */
+  --track: #F0EEEA;                                       /* pista */
+  --bar-ink: var(--text-1);                               /* relleno neutro */
+  --bar-coral: color-mix(in srgb, var(--accent) 30%, #D8D2C8); /* relleno coral-tint */
+
+  /* ---- Tints de categoría (solo editor de color; identidad, NO estado) ---- */
+  --cat-persona1: #E0666E;
+  --cat-persona2: #4E86C9;
+  --cat-persona3: #8E5FD6;
+  --cat-yo: #2FA98C;
+  --cat-vivienda: #5A7BE0;
+  --cat-servicios: #2E9FB8;
+  --cat-mercado: #5FA83F;
+  --cat-transporte: #C77E00;
+  --cat-colegio: #8E5FD6;
+  --cat-seguros: #2FA98C;
+  --cat-salud: #D4568A;
+  --cat-creditos: #4E6FC0;
+  --cat-comisiones: #7A8090;
+  --cat-ocio: #8B54D6;
+  --cat-restaurantes: #C97A3F;
+  --cat-hormiga: #B08A18;
+  --cat-negocios: #2E9BB8;
+  --cat-otros: #7A8090;
 
   /* ---- Tipografía ---- */
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
@@ -115,11 +129,12 @@
   --r-2xl: 34px;
   --r-full: 999px;
 
-  /* ---- Sombras / elevación ---- */
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --sh-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -18px rgba(0, 0, 0, 0.7);
-  --sh-sheet: 0 -8px 40px -12px rgba(0, 0, 0, 0.72);
-  --sh-fab: 0 10px 26px -8px rgba(62, 147, 168, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5);
+  /* ---- Sombras / elevación (claras) ---- */
+  --sh-sm: 0 1px 2px rgba(20, 16, 12, 0.06);
+  --sh-card: 0 1px 3px rgba(20, 16, 12, 0.05);
+  --sh-sheet: 0 -12px 40px -12px rgba(40, 32, 20, 0.22);
+  --sh-fab: 0 12px 22px -8px rgba(255, 90, 54, 0.55), 0 3px 8px rgba(20, 16, 12, 0.12);
+  --sh-md: 0 8px 30px -8px rgba(40, 32, 20, 0.18);
 
   /* ---- Layout ---- */
   --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
@@ -140,5 +155,5 @@
   --z-sheet: 70;
   --z-toast: 90;
 
-  color-scheme: dark;
+  color-scheme: light;
 }

@@ -23,16 +23,17 @@
 
 /* icono-botón del header (>=44px táctil) */
 .icon-btn {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border-radius: var(--r-full);
   color: var(--text-2);
+  background: var(--glass-2);   /* gear neutro en círculo suave */
   transition: color var(--dur-fast) var(--ease),
               background var(--dur-fast) var(--ease);
 }
-.icon-btn:hover { color: var(--text-1); background: var(--glass-2); }
+.icon-btn:hover { color: var(--text-1); background: var(--glass-3); }
 .icon-btn:active { transform: scale(0.94); }
 .icon-btn svg { width: 22px; height: 22px; }
 
@@ -59,9 +60,13 @@
 .btn--primary {
   background: var(--accent-grad);
   color: var(--text-inverse);
+  /* etiqueta blanca sobre coral: >=16px/700 (AA-large) */
+  font-size: var(--fs-body);
   font-weight: var(--fw-bold);
-  box-shadow: 0 8px 20px -10px var(--accent-glow);
+  letter-spacing: -0.01em;
+  box-shadow: 0 12px 24px -10px var(--accent-glow);
 }
+.btn--primary:active { background: var(--accent-deep); }
 /* hover NO oscurece: sube el brillo */
 .btn--primary:hover { filter: brightness(1.06); }
 
@@ -77,27 +82,14 @@
 /* ---- Cards glass ---- */
 .card {
   position: relative;
-  background: var(--glass-1);
-  -webkit-backdrop-filter: blur(var(--blur)) saturate(1.2);
-  backdrop-filter: blur(var(--blur)) saturate(1.2);
-  border: 1px solid var(--line-1);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
   box-shadow: var(--sh-card);
 }
-/* borde gradient hairline superior */
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(180deg, var(--line-3), transparent 60%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
+/* (dirección clara: tarjeta plana con hairline; sin borde gradient) */
+.card::before { content: none; }
 .card__title {
   font-size: var(--fs-h3);
   font-weight: var(--fw-semibold);
@@ -146,9 +138,9 @@
 
 .pill--verde { color: var(--semaforo-verde); background: var(--semaforo-verde-bg); border-color: var(--semaforo-verde-line); }
 .pill--verde .pill__dot { background: var(--semaforo-verde); }
-.pill--ambar { color: var(--semaforo-ambar); background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); }
+.pill--ambar { color: var(--semaforo-ambar-text); background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); }
 .pill--ambar .pill__dot { background: var(--semaforo-ambar); }
-.pill--rojo  { color: var(--semaforo-rojo);  background: var(--semaforo-rojo-bg);  border-color: var(--semaforo-rojo-line); }
+.pill--rojo  { color: var(--semaforo-rojo-text);  background: var(--semaforo-rojo-bg);  border-color: var(--semaforo-rojo-line); }
 .pill--rojo .pill__dot { background: var(--semaforo-rojo); }
 .pill--neutral { color: var(--text-2); background: var(--glass-2); border-color: var(--line-2); }
 .pill--accent { color: var(--accent); background: var(--accent-soft); border-color: var(--line-accent); }
@@ -551,8 +543,8 @@
   width: 36px; height: 36px;
   display: grid; place-items: center;
   border-radius: var(--r-sm);
-  color: var(--tint);
-  background: color-mix(in srgb, var(--tint) 16%, transparent);
+  color: var(--text-1);
+  background: var(--glass-2);
 }
 .cat-chip__ic svg { width: 20px; height: 20px; }
 .cat-chip__label {
@@ -567,8 +559,8 @@
   overflow: hidden;
 }
 .cat-chip.is-sel {
-  background: color-mix(in srgb, var(--tint) 14%, transparent);
-  border-color: color-mix(in srgb, var(--tint) 55%, transparent);
+  background: var(--glass-2);
+  border-color: var(--text-1);
 }
 .cat-chip.is-sel .cat-chip__label { color: var(--text-1); font-weight: var(--fw-semibold); }
 
@@ -891,8 +883,9 @@
   width: 42px; height: 42px; flex: 0 0 auto;
   display: grid; place-items: center;
   border-radius: var(--r-sm);
-  color: var(--tint);
-  background: color-mix(in srgb, var(--tint) 15%, transparent);
+  /* círculo neutro, glifo tinta (sin tinte por categoría) */
+  color: var(--text-1);
+  background: var(--glass-2);
 }
 .mov-row__icon svg { width: 21px; height: 21px; }
 .mov-row__body { flex: 1 1 auto; min-width: 0; }
@@ -955,8 +948,8 @@
   padding: 3px;
   margin: var(--sp-2) 0 var(--sp-4);
   border-radius: var(--r-full);
-  background: var(--glass-1);
-  border: 1px solid var(--line-1);
+  background: var(--glass-2);
+  border: 1px solid transparent;
 }
 .seg__opt {
   min-height: 40px;
@@ -967,7 +960,7 @@
   transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 .seg__opt:active { transform: scale(0.98); }
-.seg__opt.is-on { background: var(--glass-3); color: var(--text-1); }
+.seg__opt.is-on { background: var(--glass-1); color: var(--text-1); box-shadow: 0 1px 2px rgba(20,16,12,0.10); }
 .seg__opt--in.is-on {
   background: var(--semaforo-verde-bg);
   border: 1px solid var(--semaforo-verde-line);
