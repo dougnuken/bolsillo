@@ -1,40 +1,87 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Bolsillo">
   <defs>
-    <linearGradient id="bg" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#FF6C4A"/>
-      <stop offset="100%" stop-color="#EE481C"/>
+    <linearGradient id="tile" x1="0.1585" y1="-0.0915" x2="0.8415" y2="1.0915">
+      <stop offset="0" stop-color="#6A78FF"/>
+      <stop offset="0.52" stop-color="#3A2F9E"/>
+      <stop offset="1" stop-color="#150F3C"/>
     </linearGradient>
-    <linearGradient id="coin" x1="30%" y1="8%" x2="72%" y2="96%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="100%" stop-color="#FFE7DA"/>
+    <linearGradient id="cardA" x1="0.281" y1="-0.102" x2="0.719" y2="1.102">
+      <stop offset="0" stop-color="#78DCFF" stop-opacity="0.50"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.22"/>
     </linearGradient>
-    <linearGradient id="pocket" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#C23A0D"/>
-      <stop offset="100%" stop-color="#9E2F09"/>
+    <linearGradient id="cardB" x1="0.281" y1="-0.102" x2="0.719" y2="1.102">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.26"/>
     </linearGradient>
-    <linearGradient id="seam" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FFC7B2" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#FFD9C9" stop-opacity=".95"/>
-      <stop offset="100%" stop-color="#FFC7B2" stop-opacity="0"/>
+    <linearGradient id="body" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.12"/>
     </linearGradient>
+    <linearGradient id="pocket" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.18"/>
+    </linearGradient>
+    <radialGradient id="coin" cx="0.40" cy="0.34" r="0.72">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FF7A45"/>
+    </radialGradient>
+    <radialGradient id="topLight" cx="0.30" cy="0" r="0.90">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.38"/>
+      <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.40" r="0.78">
+      <stop offset="0.60" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.26"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0.72" y2="0.72">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="52"/>
+    </filter>
+    <filter id="drop" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="44" stdDeviation="36" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+    <clipPath id="tileClip"><rect width="1024" height="1024" rx="232" ry="232"/></clipPath>
   </defs>
 
-  <!-- full-bleed background (maskable-safe) -->
-  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- Tile -->
+  <rect width="1024" height="1024" rx="232" ry="232" fill="url(#tile)"/>
 
-  <!-- coin, peeking above the pocket -->
-  <g>
-    <circle cx="512" cy="428" r="150" fill="url(#coin)"/>
-    <circle cx="512" cy="428" r="150" fill="none" stroke="#8E2A06" stroke-opacity=".16" stroke-width="6"/>
-    <circle cx="512" cy="428" r="104" fill="none" stroke="#D8410F" stroke-opacity=".30" stroke-width="10"/>
-    <path d="M512 372 v112 M470 400 h84 M470 456 h84" stroke="#D8410F" stroke-opacity=".42" stroke-width="14" stroke-linecap="round"/>
+  <g clip-path="url(#tileClip)">
+    <!-- Soft glows -->
+    <circle cx="204" cy="140" r="300" fill="#FFFFFF" fill-opacity="0.40" filter="url(#soft)"/>
+    <circle cx="880" cy="900" r="280" fill="#FF7A45" fill-opacity="0.50" filter="url(#soft)"/>
+
+    <!-- Top light wash -->
+    <rect width="1024" height="1024" fill="url(#topLight)"/>
+
+    <!-- Cards asomando -->
+    <g filter="url(#drop)">
+      <rect x="296" y="112" width="480" height="328" rx="68" fill="url(#cardA)" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="4" transform="rotate(-9 536 276)"/>
+      <rect x="224" y="88" width="520" height="336" rx="68" fill="url(#cardB)" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="4" transform="rotate(4.5 484 256)"/>
+    </g>
+
+    <!-- Cuerpo -->
+    <g filter="url(#drop)">
+      <rect x="160" y="336" width="704" height="480" rx="144" fill="url(#body)" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="4"/>
+    </g>
+    <path d="M320 342 H704" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round" fill="none"/>
+
+    <!-- Bolsillo (radios 104 arriba / 144 abajo) -->
+    <path d="M160 656 A104 104 0 0 1 264 552 H760 A104 104 0 0 1 864 656 V672 A144 144 0 0 1 720 816 H304 A144 144 0 0 1 160 672 Z"
+          fill="url(#pocket)" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="4"/>
+    <path d="M300 558 H724" stroke="#FFFFFF" stroke-opacity="0.82" stroke-width="7" stroke-linecap="round" fill="none"/>
+
+    <!-- Moneda de acento -->
+    <circle cx="512" cy="552" r="72" fill="url(#coin)" stroke="#FFFFFF" stroke-opacity="0.50" stroke-width="4"/>
+
+    <!-- Sheen + viñeta -->
+    <rect width="1024" height="1024" fill="url(#sheen)"/>
+    <rect width="1024" height="1024" fill="url(#vignette)"/>
   </g>
 
-  <!-- pocket front, overlapping lower part of the coin for depth -->
-  <g>
-    <rect x="286" y="486" width="452" height="272" rx="72" fill="url(#pocket)"/>
-    <rect x="286" y="486" width="452" height="272" rx="72" fill="none" stroke="#FF9576" stroke-opacity=".70" stroke-width="7"/>
-    <!-- opening seam / stitch highlight -->
-    <rect x="330" y="536" width="364" height="10" rx="5" fill="url(#seam)"/>
-  </g>
+  <!-- Borde interno -->
+  <rect x="2" y="2" width="1020" height="1020" rx="230" ry="230" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="4"/>
 </svg>
