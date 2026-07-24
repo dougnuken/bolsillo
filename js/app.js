@@ -209,6 +209,8 @@ async function initData() {
 
   // Nombres iniciales de las personas de Doug (idempotente: no pisa renombres tuyos).
   cfg = await sembrarNombresPersona(cfg);
+  // Platino BDO como tarjeta de crédito + cuenta por defecto (idempotente).
+  cfg = await sembrarPlatinoBDO(cfg);
 
   // Primer arranque: guía de inicio antes que nada.
   const ingresos = await getAll('ingresos');
@@ -275,6 +277,20 @@ async function sembrarNombresPersona(cfg) {
   aplicarPersonalizacion(nueva);
   refreshActive(currentRoute);
   return nueva;
+}
+
+/** Siembra "Platino BDO" como tarjeta de crédito y cuenta por defecto.
+    Idempotente: solo agrega/setea lo que falte (no pisa tus cambios). */
+async function sembrarPlatinoBDO(cfg) {
+  const NOMBRE = 'Platino BDO';
+  const cuentas = Array.isArray(cfg.cuentas) ? cfg.cuentas : [];
+  const meta = cfg.cuentasMeta || {};
+  const cambios = {};
+  if (!cuentas.includes(NOMBRE)) cambios.cuentas = [...cuentas, NOMBRE];
+  if (!meta[NOMBRE]) cambios.cuentasMeta = { [NOMBRE]: { tipo: 'credito' } };
+  if (!esTextoNoVacio(cfg.cuentaDefault)) cambios.cuentaDefault = NOMBRE;
+  if (Object.keys(cambios).length === 0) return cfg;
+  return saveConfig(cambios);
 }
 
 /** Alertas de gasto por persona/categoría (ámbar o rojo) del mes actual. */

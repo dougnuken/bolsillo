@@ -760,6 +760,12 @@ body.nav-min .fab {
 .acct-new { display: flex; gap: var(--sp-2); width: 100%; margin-top: var(--sp-2); }
 .acct-new .field__input { flex: 1 1 auto; }
 
+/* ---- ¿A cuántas cuotas? (solo tarjeta de crédito) ---- */
+.cuotas-field { margin-top: var(--sp-4); }
+.cuotas-field .field__label { display: block; margin-bottom: var(--sp-2); }
+.cuotas-chips { margin-top: 0; }
+.cuotas-hint { margin-top: var(--sp-2); font-size: var(--fs-xs); color: var(--text-2); }
+
 /* ---- campos de formulario ---- */
 /* display:block es CLAVE: .field se usa en <label> (inline por defecto) y en
    <div>. Sin block, margin-top NO aplica a los <label> → campos pegados.

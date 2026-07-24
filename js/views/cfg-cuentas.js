@@ -1,6 +1,7 @@
 /* ============================================================
    Bolsillo · views/cfg-cuentas.js
-   CRUD de config.cuentas (Efectivo, Nequi, Bancolombia…).
+   CRUD de config.cuentas (Efectivo, Nequi, Bancolombia, Platino BDO…)
+   + tipo por cuenta (débito/crédito) y cuenta por defecto al registrar.
 
    Al borrar una cuenta EN USO se advierte con el conteo real de
    movimientos: la cuenta desaparece de la lista pero los
@@ -8,12 +9,19 @@
    ============================================================ */
 
 import { getConfig, saveConfig, getAll } from '../db.js';
-import { confirmar } from '../overlay.js';
+import { confirmar, menu } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
 import {
   hojaNav, cabecera, bindCabecera, vacioCfg, botonAgregar, IC,
 } from './cfg-sheet.js';
+
+const CHEV =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+const IC_CARD =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M7 14.5h4"/></svg>';
+const IC_STAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.9 6.7 20.6l1-5.8-4.2-4.1 5.9-.9L12 3.5Z"/></svg>';
 
 /**
  * Abre la hoja de cuentas.
@@ -22,10 +30,14 @@ import {
 export async function abrirCuentas({ onSaved } = {}) {
   let cuentas = [];
   let movimientos = [];
+  let meta = {};
+  let ctaDefault = null;
 
   async function recargar() {
     const [cfg, movs] = await Promise.all([getConfig(), getAll('movimientos')]);
     cuentas = Array.isArray(cfg.cuentas) ? cfg.cuentas.slice() : [];
+    meta = (cfg.cuentasMeta && typeof cfg.cuentasMeta === 'object') ? cfg.cuentasMeta : {};
+    ctaDefault = cfg.cuentaDefault || null;
     movimientos = movs;
   }
 
@@ -38,6 +50,7 @@ export async function abrirCuentas({ onSaved } = {}) {
   }
 
   const usos = (nombre) => movimientos.filter((m) => m && m.cuenta === nombre).length;
+  const esCredito = (nombre) => !!(meta[nombre] && meta[nombre].tipo === 'credito');
   const avisar = () => { if (typeof onSaved === 'function') onSaved(); };
 
   return hojaNav((api) => {
@@ -47,15 +60,18 @@ export async function abrirCuentas({ onSaved } = {}) {
       const filas = cuentas.length
         ? cuentas.map((c) => {
           const n = usos(c);
+          const cred = esCredito(c);
+          const def = c === ctaDefault;
+          const usoTxt = n === 0 ? 'sin movimientos' : `${n} movimiento${n > 1 ? 's' : ''}`;
+          const metaTxt = `${cred ? 'Crédito' : 'Débito'}${def ? ' · por defecto' : ''} · ${usoTxt}`;
           return `
-            <div class="cfg-row cfg-row--static">
+            <button type="button" class="cfg-row cfg-row--tap" data-act="acciones" data-nombre="${esc(c)}">
               <span class="cfg-row__body">
-                <span class="cfg-row__title">${esc(c)}</span>
-                <span class="cfg-row__meta">${n === 0 ? 'Sin movimientos' : `${n} movimiento${n > 1 ? 's' : ''}`}</span>
+                <span class="cfg-row__title">${esc(c)}${def ? ' <span class="cfg-tag">Default</span>' : ''}</span>
+                <span class="cfg-row__meta">${metaTxt}</span>
               </span>
-              <button type="button" class="icon-btn cfg-row__del" data-act="borrar" data-nombre="${esc(c)}"
-                aria-label="Eliminar ${esc(c)}">${IC.trash}</button>
-            </div>`;
+              <span class="cfg-row__chev" aria-hidden="true">${CHEV}</span>
+            </button>`;
         }).join('')
         : vacioCfg('No tienes cuentas. Agrega al menos una para registrar gastos.');
 
@@ -67,7 +83,7 @@ export async function abrirCuentas({ onSaved } = {}) {
         : botonAgregar('Agregar cuenta');
 
       const html = `
-        ${cabecera('Cuentas', { sub: 'Dónde tienes tu plata: efectivo, billeteras y bancos.' })}
+        ${cabecera('Cuentas', { sub: 'Dónde tienes tu plata: efectivo, billeteras y tarjetas.' })}
         <div class="cfg-list">${filas}</div>
         ${alta}`;
 
@@ -88,8 +104,8 @@ export async function abrirCuentas({ onSaved } = {}) {
           requestAnimationFrame(() => input.focus());
         }
 
-        panel.querySelectorAll('[data-act="borrar"]').forEach((b) => {
-          b.addEventListener('click', () => borrar(b.dataset.nombre));
+        panel.querySelectorAll('[data-act="acciones"]').forEach((b) => {
+          b.addEventListener('click', () => acciones(b.dataset.nombre));
         });
 
         async function agregar() {
@@ -113,6 +129,35 @@ export async function abrirCuentas({ onSaved } = {}) {
       });
     }
 
+    /* Menú por cuenta: cambiar tipo, poner por defecto o eliminar. */
+    async function acciones(nombre) {
+      const cred = esCredito(nombre);
+      const def = nombre === ctaDefault;
+      const items = [
+        { value: 'tipo', label: cred ? 'Marcar como débito' : 'Marcar como crédito', icon: IC_CARD },
+      ];
+      if (!def) items.push({ value: 'default', label: 'Poner por defecto', icon: IC_STAR });
+      items.push({ value: 'borrar', label: 'Eliminar cuenta', danger: true, icon: IC.trash });
+
+      const elegido = await menu({ title: nombre, items });
+      if (!elegido) return;
+      try {
+        if (elegido === 'tipo') {
+          await saveConfig({ cuentasMeta: { [nombre]: { tipo: cred ? 'debito' : 'credito' } } });
+          await recargar(); avisar(); pantalla();
+          toast(cred ? 'Ahora es débito' : 'Ahora es crédito');
+        } else if (elegido === 'default') {
+          await saveConfig({ cuentaDefault: nombre });
+          await recargar(); avisar(); pantalla();
+          toast('Cuenta por defecto actualizada');
+        } else if (elegido === 'borrar') {
+          await borrar(nombre);
+        }
+      } catch (err) {
+        toast('No se pudo aplicar: ' + err.message, { icono: false });
+      }
+    }
+
     async function borrar(nombre) {
       const n = usos(nombre);
       const ok = await confirmar({
@@ -124,7 +169,10 @@ export async function abrirCuentas({ onSaved } = {}) {
       });
       if (!ok) return;
       try {
-        await saveConfig({ cuentas: cuentas.filter((c) => c !== nombre) });
+        // Si era la cuenta por defecto, se limpia para que caiga en la primera.
+        const cambios = { cuentas: cuentas.filter((c) => c !== nombre) };
+        if (nombre === ctaDefault) cambios.cuentaDefault = null;
+        await saveConfig(cambios);
         await recargar();
         toast('Cuenta eliminada');
         avisar();

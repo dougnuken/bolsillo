@@ -688,6 +688,20 @@
 }
 .cfg-row__chev { flex: 0 0 auto; color: var(--text-3); display: grid; place-items: center; }
 .cfg-row__chev svg { width: 17px; height: 17px; }
+/* Badge "Default" en el título de una fila (p. ej. cuenta por defecto) */
+.cfg-tag {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  padding: 1px 7px;
+  border-radius: var(--r-full);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-accent);
+  vertical-align: middle;
+}
 .cfg-row__del { flex: 0 0 auto; color: var(--text-3); }
 .cfg-row__del:hover { color: var(--semaforo-rojo); background: var(--semaforo-rojo-bg); }
 

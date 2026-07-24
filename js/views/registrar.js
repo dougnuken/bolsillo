@@ -60,6 +60,7 @@ function fresh() {
   return {
     screen: 'metodos', modo: 'teclado', tipo: 'gasto', editId: null,
     montoStr: '', categoriaId: '', ingresoId: '', cuenta: '', fecha: hoyISO(),
+    cuotas: 1, // compra a cuotas (solo gasto en tarjeta de crédito)
     comercio: '', esFijo: false, notas: '', fuente: 'manual',
     detalles: false, keypad: true, agregandoCuenta: false,
     metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
@@ -76,6 +77,16 @@ let sheetRef = null, openRef = null, closeRef = null, onSavedRef = null;
 
 const montoActual = () => (parseInt(STATE.montoStr || '0', 10) || 0);
 const cuentas = () => (cfg && Array.isArray(cfg.cuentas) ? cfg.cuentas : []);
+/** Cuenta por defecto al registrar (config.cuentaDefault, o la primera). */
+const cuentaDefault = () => {
+  const d = cfg && cfg.cuentaDefault;
+  return (d && cuentas().includes(d)) ? d : (cuentaDefault());
+};
+/** ¿La cuenta es tarjeta de crédito? (cfg.cuentasMeta[nombre].tipo === 'credito') */
+const esCredito = (nombre) => {
+  const m = cfg && cfg.cuentasMeta ? cfg.cuentasMeta[nombre] : null;
+  return !!(m && m.tipo === 'credito');
+};
 const esIngreso = () => STATE.tipo === 'ingreso';
 
 /** Carga las fuentes de negocio (para elegir a cuál se abona un ingreso). */
@@ -98,7 +109,7 @@ function saveDraft() {
   const d = {
     modo: STATE.modo, montoStr: STATE.montoStr, categoriaId: STATE.categoriaId,
     cuenta: STATE.cuenta, fecha: STATE.fecha, comercio: STATE.comercio,
-    esFijo: STATE.esFijo, notas: STATE.notas,
+    esFijo: STATE.esFijo, notas: STATE.notas, cuotas: STATE.cuotas,
   };
   try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* cuota llena: ignorar */ }
 }
@@ -279,7 +290,25 @@ function cuentaSelector() {
          <button type="button" class="btn btn--primary btn--sm" data-act="cuenta-add">Agregar</button>
        </div>`
     : `<button type="button" class="acct-chip acct-chip--add" data-act="cuenta-new">${IC.plus}<span>Nueva</span></button>`;
-  return `<div class="acct-row">${opts}${nueva}</div>`;
+  const cuotasBloque = (!esIngreso() && esCredito(STATE.cuenta)) ? cuotasSelector() : '';
+  return `<div class="acct-row">${opts}${nueva}</div>${cuotasBloque}`;
+}
+
+/* Selector de cuotas: solo gasto en tarjeta de crédito. 1 = de contado. */
+function cuotasSelector() {
+  const opciones = [1, 3, 6, 12, 24, 36];
+  const chips = opciones.map((n) => `
+    <button type="button" class="acct-chip${STATE.cuotas === n ? ' is-sel' : ''}" data-cuotas="${n}">${n === 1 ? 'De contado' : n}</button>`).join('');
+  const monto = montoActual();
+  const hint = STATE.cuotas > 1 && monto > 0
+    ? `<p class="cuotas-hint">≈ ${esc(formatCOP(Math.round(monto / STATE.cuotas)))}/mes durante ${STATE.cuotas} meses</p>`
+    : '';
+  return `
+    <div class="cuotas-field">
+      <span class="field__label">¿A cuántas cuotas?</span>
+      <div class="acct-row cuotas-chips">${chips}</div>
+      ${hint}
+    </div>`;
 }
 
 /* Selector de fuente de negocio (modo Ingreso). Sin fuentes → aviso + atajo. */
@@ -443,7 +472,7 @@ function cambiarTipo(t) {
     // Ingreso no tiene selección de método de captura → directo al formulario.
     STATE.screen = 'form';
     STATE.keypad = true;
-    if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+    if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
     if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
   } else {
     // Gasto: si ya eligió método (teclado/texto/foto) vuelve al formulario; si no,
@@ -501,7 +530,7 @@ function bind() {
       STATE.metodoElegido = true;
       STATE.screen = 'form';
       STATE.keypad = metodo === 'teclado';
-      if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+      if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
       paint();
     });
   });
@@ -543,6 +572,10 @@ function bind() {
   // cuentas
   sheetRef.querySelectorAll('[data-cuenta]').forEach((b) => {
     b.addEventListener('click', () => { STATE.cuenta = b.dataset.cuenta; paint(); });
+  });
+
+  sheetRef.querySelectorAll('[data-cuotas]').forEach((b) => {
+    b.addEventListener('click', () => { STATE.cuotas = Number(b.dataset.cuotas) || 1; paint(); });
   });
 
   // inputs de texto (sin repintar)
@@ -645,7 +678,7 @@ async function onFotoElegida(e) {
   STATE.tipo = 'gasto';
   STATE.fuente = 'foto';
   STATE.screen = 'foto-cargando';
-  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
   paint();
 
   const categorias = catalogoVisible().map((c) => ({ id: c.id, label: c.label }));
@@ -819,7 +852,7 @@ function abrirVoz() {
   STATE.keypad = false;
   STATE.vozConfianzaBaja = false;
   STATE.vozEscuchando = false;
-  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
   paint();
 }
 
@@ -864,7 +897,7 @@ async function interpretarVozDictada() {
   STATE.tipo = 'gasto';
   STATE.fuente = 'voz';
   STATE.screen = 'voz-cargando';
-  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
   paint();
 
   const categorias = catalogoVisible().map((c) => ({ id: c.id, label: c.label }));
@@ -910,7 +943,7 @@ function retomarDraft() {
   if (!draftPend) return;
   STATE = { ...fresh(), ...draftPend, screen: 'form', editId: null, metodoElegido: true };
   STATE.keypad = STATE.modo !== 'texto';
-  if (!STATE.cuenta) STATE.cuenta = cuentas()[0] || '';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
   draftPend = null;
   paint();
 }
@@ -937,8 +970,10 @@ async function guardar() {
   const ingreso = esIngreso();
   if (ingreso && !STATE.ingresoId) { toast('Elige de qué negocio entró', { icono: false }); return; }
   if (!ingreso && !STATE.categoriaId) return;
-  const cuenta = STATE.cuenta || cuentas()[0] || '';
+  const cuenta = STATE.cuenta || cuentaDefault();
   if (!cuenta) { toast('Agrega una cuenta primero', { icono: false }); return; }
+  // cuotas: solo para gasto en tarjeta de crédito; en cualquier otro caso = 1.
+  const cuotas = (!ingreso && esCredito(cuenta) && Number.isInteger(STATE.cuotas) && STATE.cuotas > 1) ? STATE.cuotas : 1;
 
   try {
     if (STATE.editId) {
@@ -954,7 +989,7 @@ async function guardar() {
           const c = {
             monto, categoria: STATE.categoriaId, cuenta,
             fecha: STATE.fecha, comercio: STATE.comercio.trim(),
-            esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+            esFijo: STATE.esFijo, notas: STATE.notas.trim(), cuotas,
           };
           return { ...c, esHormiga: derivarEsHormiga({ ...orig, ...c }, cfg || undefined) };
         })();
@@ -976,6 +1011,7 @@ async function guardar() {
       const mov = crearMovimiento({
         monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
         cuenta, fecha: STATE.fecha, fuente: STATE.fuente, esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+        cuotas,
       }, { config: cfg || undefined });
       await put('movimientos', mov);
       toast('Guardado');
@@ -1001,15 +1037,16 @@ async function abrir(mov = null) {
       ...fresh(), screen: 'form', modo: 'teclado', tipo: esIn ? 'ingreso' : 'gasto', editId: mov.id,
       montoStr: mov.monto ? String(mov.monto) : '',
       categoriaId: mov.categoria || '', ingresoId: mov.ingresoId || '',
-      cuenta: mov.cuenta || (cuentas()[0] || ''),
+      cuenta: mov.cuenta || (cuentaDefault()),
       fecha: (mov.fecha || hoyISO()).slice(0, 10), comercio: mov.comercio || '',
       esFijo: !!mov.esFijo, notas: mov.notas || '', fuente: mov.fuente || 'manual',
+      cuotas: Number.isInteger(mov.cuotas) && mov.cuotas > 1 ? mov.cuotas : 1,
       detalles: true, keypad: true, agregandoCuenta: false, metodoElegido: true,
     };
     draftPend = null;
   } else {
     STATE = fresh();
-    STATE.cuenta = cuentas()[0] || '';
+    STATE.cuenta = cuentaDefault();
     draftPend = loadDraft();
   }
   if (openRef) openRef();

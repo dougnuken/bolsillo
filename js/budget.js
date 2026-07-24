@@ -74,6 +74,24 @@ function enMes(mov, prefijo) {
   return mov && typeof mov.fecha === 'string' && mov.fecha.slice(0, 7) === prefijo;
 }
 
+/**
+ * Porción del monto de un movimiento que cae en el mes (anio, mes 1-based).
+ * - Compra normal (cuotas ≤ 1): monto completo si es su mes de compra, si no 0.
+ * - Compra a N cuotas: monto/N en cada uno de los N meses desde la compra
+ *   (Modelo A: lo que realmente pagas cada mes). PURA.
+ */
+export function porcionEnMes(mov, anio, mes) {
+  if (!mov || typeof mov.fecha !== 'string' || mov.fecha.length < 7) return 0;
+  const monto = Number.isFinite(mov.monto) ? mov.monto : 0;
+  const py = Number(mov.fecha.slice(0, 4));
+  const pm = Number(mov.fecha.slice(5, 7));
+  const n = Number.isInteger(mov.cuotas) && mov.cuotas > 1 ? mov.cuotas : 1;
+  if (n <= 1) return (py === anio && pm === mes) ? monto : 0;
+  const offset = (anio - py) * 12 + (mes - pm);
+  if (offset < 0 || offset >= n) return 0;
+  return Math.round(monto / n);
+}
+
 /** Umbral amarillo desde config, con default seguro. */
 function leerUmbralAmarillo(config) {
   const raw = config && config.umbralesSemaforo && config.umbralesSemaforo.amarillo;
@@ -98,7 +116,7 @@ function desglosarCategorias(variables, variableGastado, config) {
   const acum = new Map();
   for (const m of variables) {
     const id = typeof m.categoria === 'string' && m.categoria.trim() !== '' ? m.categoria : CATEGORIA_FALLBACK;
-    acum.set(id, (acum.get(id) || 0) + m.monto);
+    acum.set(id, (acum.get(id) || 0) + m.montoMes);
   }
   const filas = [];
   for (const [categoriaId, total] of acum) {
@@ -201,14 +219,19 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
   const recs = Array.isArray(recurrentes) ? recurrentes.filter(Boolean) : [];
   const creds = Array.isArray(creditos) ? creditos.filter(Boolean) : [];
 
-  const { dia, prefijo } = partes(hoy);
+  const { anio, mes: mesN, dia, prefijo } = partes(hoy);
   const diasMes = diasEnMes(hoy);
   const diasRestantes = diasMes - dia + 1; // hoy cuenta
   const avance = dia / diasMes; // fracción de mes transcurrida (dia>=1 ⇒ >0)
 
-  // Gasto VARIABLE del mes: gasto y NO fijo (excluye ingresos, pagos, transfers, fijos).
-  const variables = movs.filter((m) => m.tipo === 'gasto' && m.esFijo === false && enMes(m, prefijo));
-  const variableGastado = redondear(variables.reduce((s, m) => s + m.monto, 0));
+  // Gasto VARIABLE del mes: gasto y NO fijo. Cada compra aporta su PORCIÓN del
+  // mes (monto completo si es normal; monto/N si es a cuotas — Modelo A). Así una
+  // compra a cuotas de un mes anterior sigue pesando su parte este mes.
+  const variables = movs
+    .filter((m) => m.tipo === 'gasto' && m.esFijo === false)
+    .map((m) => ({ ...m, montoMes: porcionEnMes(m, anio, mesN) }))
+    .filter((m) => m.montoMes > 0);
+  const variableGastado = redondear(variables.reduce((s, m) => s + m.montoMes, 0));
 
   // Ingresos RECIBIDOS del mes: solo lo que el usuario registró que entró (los
   // negocios varían; el "esperado" es referencia, no entra al cálculo).
@@ -218,7 +241,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
 
   const { fijos: fijosDelMes, creditos: fijosCreditos } = calcularFijos(movs, recs, creds, prefijo);
   const totalHormiga = redondear(
-    movs.filter((m) => m.esHormiga === true && enMes(m, prefijo)).reduce((s, m) => s + m.monto, 0),
+    movs.filter((m) => m.esHormiga === true).reduce((s, m) => s + porcionEnMes(m, anio, mesN), 0),
   );
   const porCategoria = desglosarCategorias(variables, variableGastado, config);
 
@@ -421,16 +444,18 @@ export const VIGILADOS_DEFAULT = Object.freeze(['persona1', 'persona2', 'persona
  * @returns {Readonly<object>[]} una fila por vigilado, ordenada por gasto desc
  */
 export function resumenPersonas({ movimientos = [], vigilados = [], netoDelMes = 0, topes = TOPES_PERSONA_DEFAULT, avisoPuntos = AVISO_PUNTOS_DEFAULT, hoy } = {}) {
-  const { prefijo } = partes(hoy);
+  const { anio, mes } = partes(hoy);
   const neto = esEntero(netoDelMes) ? netoDelMes : (Number.isFinite(netoDelMes) ? Math.round(netoDelMes) : 0);
   const aviso = Number.isFinite(avisoPuntos) && avisoPuntos >= 0 ? avisoPuntos : AVISO_PUNTOS_DEFAULT;
 
-  // Gasto TOTAL del mes por categoría (fijo + variable).
+  // Gasto TOTAL del mes por categoría (fijo + variable), repartiendo cuotas.
   const gastoPorCat = new Map();
   for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
-    if (!m || m.tipo !== 'gasto' || !enMes(m, prefijo)) continue;
+    if (!m || m.tipo !== 'gasto') continue;
+    const porcion = porcionEnMes(m, anio, mes);
+    if (porcion <= 0) continue;
     const id = esTextoNoVacio(m.categoria) ? m.categoria : CATEGORIA_FALLBACK;
-    gastoPorCat.set(id, (gastoPorCat.get(id) || 0) + m.monto);
+    gastoPorCat.set(id, (gastoPorCat.get(id) || 0) + porcion);
   }
 
   const filas = (Array.isArray(vigilados) ? vigilados : []).map((v) => {

@@ -88,6 +88,9 @@ export function crearMovimiento(datos = {}, { now = new Date(), config } = {}) {
     cuenta: typeof datos.cuenta === 'string' ? datos.cuenta.trim() : '',
     fuente: datos.fuente ?? 'manual',
     esFijo: datos.esFijo === true,
+    // Compra a cuotas (tarjeta de crédito): N ≥ 1. 1 = de contado. El motor
+    // reparte el monto como monto/N en los próximos N meses (ver budget.js).
+    cuotas: Number.isInteger(datos.cuotas) && datos.cuotas > 1 ? datos.cuotas : 1,
     notas: typeof datos.notas === 'string' ? datos.notas : '',
     adjuntoId: datos.adjuntoId ?? null,
     aiMeta: datos.aiMeta ?? null,
@@ -127,6 +130,10 @@ export function validarMovimiento(obj = {}) {
   if (typeof obj.categoria !== 'string') errores.push('La categoría debe ser texto.');
   if (typeof obj.comercio !== 'string') errores.push('El comercio debe ser texto.');
   if (typeof obj.esFijo !== 'boolean') errores.push('esFijo debe ser booleano.');
+  // cuotas: opcional (retrocompat con movimientos viejos); si viene, entero ≥ 1.
+  if (obj.cuotas !== undefined && (!Number.isInteger(obj.cuotas) || obj.cuotas < 1)) {
+    errores.push('cuotas debe ser un entero ≥ 1.');
+  }
 
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }
@@ -379,6 +386,10 @@ export function configDefault() {
     presupuestos: Object.freeze({}),
     // Cuentas del usuario (se siembran en el primer arranque desde app.js).
     cuentas: Object.freeze([]),
+    // Metadata por cuenta: {nombre: {tipo:'credito'|'debito'}}. Sin entrada = débito.
+    cuentasMeta: Object.freeze({}),
+    // Cuenta seleccionada por defecto al registrar. null = primera de la lista.
+    cuentaDefault: null,
     // Overrides de categorización que el usuario "enseñó" (comercioNorm→categoríaId).
     categoriasAprendidas: Object.freeze({}),
     // Categorías propias del usuario: [{id, label}]. Los ids son estables
@@ -415,6 +426,8 @@ export function crearConfig(datos = {}) {
     presupuestos: Object.freeze({ ...d.presupuestos, ...(datos.presupuestos || {}) }),
     // cuentas: reemplazo (no merge) — al agregar una cuenta se pasa el arreglo completo.
     cuentas: Object.freeze(Array.isArray(datos.cuentas) ? datos.cuentas.slice() : d.cuentas.slice()),
+    // cuentasMeta: merge por nombre (el llamante pasa el mapa parcial o completo).
+    cuentasMeta: Object.freeze({ ...d.cuentasMeta, ...(datos.cuentasMeta || {}) }),
     // categoriasAprendidas: merge sobre lo existente (el llamante pasa el mapa completo).
     categoriasAprendidas: Object.freeze({ ...d.categoriasAprendidas, ...(datos.categoriasAprendidas || {}) }),
     // categoriasPersonalizadas: reemplazo (el llamante pasa el arreglo completo).
