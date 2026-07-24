@@ -39,6 +39,7 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
 const stage = document.getElementById('view-stage');
 const tabbar = document.getElementById('tabbar');
+const headerTitleEl = document.getElementById('header-title');
 
 let currentRoute = null;
 
@@ -98,6 +99,8 @@ function navigate(routeId, { replace = false } = {}) {
 
   currentRoute = routeId;
   syncTabbar(routeId);
+  // título compacto del header (aparece al condensar en scroll)
+  if (headerTitleEl) headerTitleEl.textContent = ROUTES[routeId].label || routeId;
 
   if (replace) {
     history.replaceState(null, '', '#/' + routeId);
@@ -137,21 +140,29 @@ function initTabbar() {
    angosta) para dejar más espacio; al subir vuelve a expandirse ---- */
 let navLastTop = 0;
 let navMin = false;
+let headerCondensed = false;
 function setNavMin(on) {
   if (on === navMin) return;
   navMin = on;
   document.body.classList.toggle('nav-min', on);
 }
+/* header: vidrio esmerilado + título compacto centrado al alejarse del tope */
+function setHeaderCondensed(on) {
+  if (on === headerCondensed) return;
+  headerCondensed = on;
+  document.body.classList.toggle('header-condensed', on);
+}
 function onStageScroll(e) {
   const el = e.target;
   if (!el || !el.classList || !el.classList.contains('view')) return;
   const top = el.scrollTop;
+  setHeaderCondensed(top > 24);                      // condensa el header apenas bajas
   if (top < 48) setNavMin(false);                   // cerca del tope: expandida
   else if (top - navLastTop > 6) setNavMin(true);    // bajando: resumida
   else if (navLastTop - top > 6) setNavMin(false);   // subiendo: expandida
   navLastTop = top;
 }
-function resetNav() { navLastTop = 0; setNavMin(false); }
+function resetNav() { navLastTop = 0; setNavMin(false); setHeaderCondensed(false); }
 
 /* ---- header: la campana abre el centro de notificaciones ---- */
 function initHeader() {
@@ -261,6 +272,10 @@ async function correrRecurrentes() {
 
 /* ---- notificaciones (campana) ---- */
 let pendientesFijos = []; // gastos fijos por registrar este mes
+
+/* Señal de "cancelar TODO el flujo" (X / tap-fuera / Escape), distinta de
+   "Omitir" (saltar solo este), para pedirMontoVariable. */
+const CANCELAR = Symbol('cancelar');
 
 const ICON_X =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
@@ -388,9 +403,16 @@ async function confirmarPendientes(pendientes) {
   const variables = pendientes.filter((p) => p.pediMonto === true);
   try {
     if (directos.length) await bulkPut('movimientos', directos);
-    for (const sol of variables) {
+    for (let i = 0; i < variables.length; i++) {
+      const sol = variables[i];
       const monto = await pedirMontoVariable(sol);
-      if (!Number.isInteger(monto) || monto <= 0) continue; // omitido este mes
+      // X / tap-fuera / Escape → corta TODO el resto; los que faltan vuelven a
+      // quedar pendientes (no obligamos a Omitir uno por uno).
+      if (monto === CANCELAR || monto === undefined) {
+        pendientesFijos = variables.slice(i);
+        break;
+      }
+      if (!Number.isInteger(monto) || monto <= 0) continue; // "Omitir": salta solo este
       const mov = crearMovimiento({
         fecha: sol.fecha, monto, tipo: 'gasto',
         categoria: sol.categoria || '', comercio: sol.comercio || '',
@@ -416,7 +438,8 @@ function pedirMontoVariable(sol) {
     ? formatCOP(sol.montoEstimado).replace('$', '') : '';
   const html = `
     <div class="ov-grip" aria-hidden="true"></div>
-    <h3 class="ov-title">¿Cuánto fue ${esc(nombre)} este mes?</h3>
+    <button type="button" class="icon-btn ov-close" data-ov="cancel" aria-label="Cerrar">${ICON_X}</button>
+    <h3 class="ov-title ov-title--menu">¿Cuánto fue ${esc(nombre)} este mes?</h3>
     <p class="ov-text">Escribe el valor real de este mes. Puedes omitirlo si aún no lo sabes.</p>
     <label class="field">
       <span class="field__label">Monto de este mes</span>
@@ -437,6 +460,7 @@ function pedirMontoVariable(sol) {
     };
     panel.querySelector('[data-ov="save"]').addEventListener('click', guardar);
     panel.querySelector('[data-ov="skip"]').addEventListener('click', () => cerrar(null));
+    panel.querySelector('[data-ov="cancel"]').addEventListener('click', () => cerrar(CANCELAR));
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); guardar(); } });
   });
 }

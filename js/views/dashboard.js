@@ -206,20 +206,25 @@ function categoriasHTML(e) {
       <div class="section-head"><span class="section-head__title">En qué se va</span></div>
       ${proj}
       <div class="catbar-list">${filas}</div>
+      ${hormigaHTML(e)}
     </div>`;
 }
 
 function hormigaHTML(e) {
-  if (!e.totalHormiga) return '';
-  // Parte del gasto variable que se fue en pequeños gastos "hormiga".
+  if (!e.totalHormiga || !e.hormigaCount) return '';
+  const n = e.hormigaCount;
+  const compras = `${n} compra${n !== 1 ? 's' : ''} pequeña${n !== 1 ? 's' : ''}`;
   const share = e.variableGastado > 0 ? e.totalHormiga / e.variableGastado : null;
-  const sub = share != null
-    ? `<span class="hormiga-note__sub">${pct(share)} de tu gasto variable</span>` : '';
+  // Insight: cuántas compras "hormiga", su proyección al cierre y qué parte del variable.
+  const partes = [];
+  if (e.proyeccionHormiga > 0) partes.push(`a este ritmo <strong class="num">${formatCOP(e.proyeccionHormiga)}</strong> al mes`);
+  if (share != null) partes.push(`${pct(share)} de tu variable`);
+  const sub = partes.length ? `<span class="hormiga-note__sub">${partes.join(' · ')}</span>` : '';
   return `
     <div class="hormiga-note">
       <span class="hormiga-note__ic">${categoriaPorId('hormiga').icon}</span>
       <span class="hormiga-note__bd">
-        <span class="hormiga-note__txt">Gasto hormiga del mes</span>
+        <span class="hormiga-note__txt">Gasto hormiga · ${compras}</span>
         ${sub}
       </span>
       <span class="hormiga-note__val num">${formatCOP(e.totalHormiga)}</span>
@@ -227,8 +232,9 @@ function hormigaHTML(e) {
 }
 
 function contenidoHTML(e, negocios) {
+  // El insight "hormiga" ahora vive dentro de "En qué se va" (categoriasHTML).
   return gaugeCardHTML(e) + statRowHTML(e) + fijosCardHTML(e)
-    + negociosHTML(negocios) + categoriasHTML(e) + hormigaHTML(e);
+    + negociosHTML(negocios) + categoriasHTML(e);
 }
 
 /* ---- animaciones (solo transform/opacity/stroke-dashoffset/width) ---- */

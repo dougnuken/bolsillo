@@ -213,7 +213,7 @@
   border-radius: var(--r-full);
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent-glow);
-  transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
+  transition: width var(--dur) var(--ease-in-out), height var(--dur) var(--ease-in-out);
 }
 
 /* FAB central elevado */
@@ -233,7 +233,7 @@
   background: var(--fab-grad);
   box-shadow: var(--sh-fab);
   border: 1px solid var(--fab-rim);
-  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease), bottom var(--dur) var(--ease);
+  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease), bottom var(--dur) var(--ease-in-out);
   will-change: transform;
 }
 .fab:hover { filter: brightness(1.06); }
@@ -252,20 +252,21 @@
    ANGOSTA (los iconos se acercan) y con la barrita naranja encogida. Vuelve
    a expandirse al subir. Animación sutil pero premium. --- */
 .tabbar {
-  transition: height var(--dur) var(--ease),
-              left var(--dur) var(--ease),
-              right var(--dur) var(--ease);
+  /* colapso suave: ease-in-out simétrico (sin snap) */
+  transition: height var(--dur) var(--ease-in-out),
+              left var(--dur) var(--ease-in-out),
+              right var(--dur) var(--ease-in-out);
 }
 .tab__label {
   max-height: 1.4em;
   overflow: hidden;
-  transition: opacity var(--dur-fast) var(--ease), max-height var(--dur) var(--ease);
+  transition: opacity var(--dur) var(--ease-in-out), max-height var(--dur) var(--ease-in-out);
 }
 body.nav-min .tabbar--4 {
   height: var(--nav-h-min);
-  /* se angosta bastante desde los lados → los iconos se juntan hacia el centro */
-  left: max(18%, env(safe-area-inset-left));
-  right: max(18%, env(safe-area-inset-right));
+  /* se angosta un poco desde los lados (recorrido corto = movimiento sutil) */
+  left: max(10%, env(safe-area-inset-left));
+  right: max(10%, env(safe-area-inset-right));
 }
 body.nav-min .tab__label { opacity: 0; max-height: 0; }
 /* la barrita naranja del activo también encoge */
@@ -1116,7 +1117,10 @@ body.nav-min .fab {
   font-weight: var(--fw-semibold); font-size: var(--fs-body); color: var(--text-1);
 }
 .mov-row__amount.is-in { color: var(--semaforo-verde); }
-.mov-row__more { width: 40px; flex: 0 0 auto; color: var(--text-3); align-self: center; }
+/* 3-dots sin contenedor: solo el ícono (visual más liviano) */
+.mov-row__more { width: 40px; flex: 0 0 auto; color: var(--text-3); align-self: center; background: none; }
+.mov-row__more:hover { background: none; color: var(--text-2); }
+.mov-row__more:active { background: none; }
 .src-badge {
   font-size: 9.5px; font-weight: var(--fw-bold); letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--text-3); background: var(--glass-2); border: 1px solid var(--line-1);

@@ -108,9 +108,16 @@ img { max-width: 100%; display: block; }
   background: var(--bg-app); /* canvas claro + washes de ambiente */
 }
 
-/* ---- Header (respeta el notch / Dynamic Island) ---- */
+/* ---- Header (respeta el notch / Dynamic Island) ----
+   Overlay transparente SOBRE el escenario de vistas: el contenido fluye por
+   debajo (llega hasta el borde superior) y, al hacer scroll, el header se
+   "condensa" a vidrio esmerilado + título compacto centrado (patrón nav
+   grande → nav inline de iOS). */
 .app-header {
-  flex: 0 0 auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   height: calc(var(--header-h) + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   padding-left: max(var(--sp-5), env(safe-area-inset-left));
@@ -119,10 +126,52 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: flex-end;
   gap: var(--sp-3);
-  /* Sin fondo ni divider: continúa el canvas; la campana queda flotando. */
-  background: transparent;
-  position: relative;
   z-index: 30;
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  /* deja pasar scroll/tap al contenido; solo la campana captura */
+  pointer-events: none;
+  transition: background var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.app-header .icon-btn { pointer-events: auto; }
+
+/* Título compacto centrado (aparece al condensar). */
+.app-header__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: env(safe-area-inset-top);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease),
+              transform var(--dur) var(--ease);
+}
+
+/* Estado condensado (al hacer scroll fuera del tope). */
+body.header-condensed .app-header {
+  background: var(--glass-header);
+  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
+  backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
+  border-bottom-color: var(--line-2);
+}
+body.header-condensed .app-header__title {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-header,
+  .app-header__title { transition: none; }
 }
 
 /* ---- Zona de vistas (scroll) ---- */
@@ -138,8 +187,11 @@ img { max-width: 100%; display: block; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  /* +sp-4: la barra ahora flota (16px sobre el borde inferior) */
-  padding: var(--sp-5) max(var(--sp-5), env(safe-area-inset-left))
+  /* top: deja espacio para el header overlay (status + nav) — el contenido
+     arranca bajo la campana y puede subir por detrás al hacer scroll.
+     bottom +sp-4: la barra flota (16px sobre el borde inferior). */
+  padding: calc(env(safe-area-inset-top) + var(--header-h) + var(--sp-3))
+           max(var(--sp-5), env(safe-area-inset-left))
            calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-4) + var(--sp-8))
            max(var(--sp-5), env(safe-area-inset-right));
   opacity: 0;

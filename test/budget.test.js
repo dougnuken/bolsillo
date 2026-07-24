@@ -345,6 +345,28 @@ test('totalHormiga: suma solo los gastos hormiga del mes', () => {
   assert.equal(e.totalHormiga, 20_000); // 8.000 + 12.000
 });
 
+test('hormigaCount + proyeccionHormiga: cuenta las compras chicas y proyecta al cierre', () => {
+  // Arrange: dos compras hormiga (<20.000) el día 10 de 30 (avance 1/3)
+  const movs = [
+    gasto('2026-04-03', 8_000, { categoria: 'hormiga' }),
+    gasto('2026-04-04', 12_000, { categoria: 'restaurantes' }),
+    gasto('2026-04-05', 500_000, { categoria: 'ocio' }), // grande: NO hormiga
+  ];
+  // Act
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], hoy: '2026-04-10' });
+  // Assert
+  assert.equal(e.hormigaCount, 2);           // dos compras hormiga
+  assert.equal(e.proyeccionHormiga, 60_000); // 20.000 / (10/30)
+});
+
+test('sin gastos hormiga: hormigaCount 0 y proyeccionHormiga 0', () => {
+  const movs = [gasto('2026-04-05', 500_000, { categoria: 'ocio' })];
+  const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], hoy: '2026-04-10' });
+  assert.equal(e.totalHormiga, 0);
+  assert.equal(e.hormigaCount, 0);
+  assert.equal(e.proyeccionHormiga, 0);
+});
+
 test('proyección: variableGastado / avance, más los fijos', () => {
   // Arrange: 500.000 el día 10 de 30 → proyección variable 1.500.000
   const movs = [gasto('2026-04-05', 500_000, { categoria: 'ocio' }), fijo('2026-04-01', 1_000_000)];

@@ -19,7 +19,9 @@
      (barra + FAB) refracte algo. Aditivo: el fondo sigue casi blanco. */
   --wash-coral: rgba(255, 120, 80, 0.10);
   --wash-mint:  rgba(20, 150, 110, 0.08);
+  --wash-top:   rgba(255, 120, 80, 0.07);   /* tinte muy leve del borde superior (zona status/Dynamic Island) */
   --bg-app:
+    linear-gradient(180deg, var(--wash-top), transparent 14%),
     radial-gradient(90% 55% at 82% 4%, var(--wash-coral), transparent 60%),
     radial-gradient(80% 50% at 8% 96%, var(--wash-mint), transparent 60%),
     var(--bg-0);

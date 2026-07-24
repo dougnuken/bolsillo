@@ -489,28 +489,32 @@
 }
 .cat-break__proj strong { color: var(--text-1); font-weight: var(--fw-semibold); }
 
-/* total hormiga del mes (aviso suave) */
+/* insight de gasto hormiga del mes (neutro, NO caución) */
 .hormiga-note {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  margin-top: var(--sp-5);
-  padding: var(--sp-3) var(--sp-4);
+  margin-top: var(--sp-4);
+  padding: var(--sp-3);
   border-radius: var(--r-md);
-  background: var(--semaforo-ambar-bg);
-  border: 1px solid var(--semaforo-ambar-line);
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
 }
-.hormiga-note__ic { color: var(--semaforo-ambar); display: grid; place-items: center; }
+.hormiga-note__ic {
+  color: var(--cat-hormiga);   /* dorado = identidad de la categoría, no estado */
+  display: grid; place-items: center; flex: 0 0 auto;
+}
 .hormiga-note__ic svg { width: 22px; height: 22px; }
-.hormiga-note__txt { font-size: var(--fs-sm); color: var(--text-1); font-weight: var(--fw-medium); }
+.hormiga-note__txt { font-size: var(--fs-sm); color: var(--text-1); font-weight: var(--fw-semibold); }
 .hormiga-note__bd { flex: 1 1 auto; min-width: 0; }
-.hormiga-note__sub { display: block; font-size: var(--fs-xs); color: var(--semaforo-ambar-text); margin-top: 1px; }
+.hormiga-note__sub { display: block; font-size: var(--fs-xs); color: var(--text-2); margin-top: 1px; }
+.hormiga-note__sub strong { color: var(--text-1); font-weight: var(--fw-semibold); }
 .hormiga-note__val {
   margin-left: auto;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
   font-weight: var(--fw-bold);
-  color: var(--semaforo-ambar);
+  color: var(--text-1);
 }
 
 /* ============================================================

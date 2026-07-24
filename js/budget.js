@@ -240,9 +240,16 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
   );
 
   const { fijos: fijosDelMes, creditos: fijosCreditos } = calcularFijos(movs, recs, creds, prefijo);
-  const totalHormiga = redondear(
-    movs.filter((m) => m.esHormiga === true).reduce((s, m) => s + porcionEnMes(m, anio, mesN), 0),
-  );
+  // Gasto "hormiga": compras variables pequeñas (bajo el umbral). Cada una
+  // aporta su porción del mes; contamos las que efectivamente pesan este mes
+  // y proyectamos el total al cierre con el mismo avance del semáforo.
+  const hormigaMes = movs
+    .filter((m) => m.esHormiga === true)
+    .map((m) => porcionEnMes(m, anio, mesN))
+    .filter((p) => p > 0);
+  const totalHormiga = redondear(hormigaMes.reduce((s, p) => s + p, 0));
+  const hormigaCount = hormigaMes.length;
+  const proyeccionHormiga = totalHormiga > 0 ? redondear(totalHormiga / avance) : 0;
   const porCategoria = desglosarCategorias(variables, variableGastado, config);
 
   const proyeccionVariable = redondear(variableGastado / avance);
@@ -258,6 +265,8 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     fijosDelMes,
     fijosCreditos,
     totalHormiga,
+    hormigaCount,
+    proyeccionHormiga,
     porCategoria,
     proyeccionVariable,
     proyeccionTotal,
