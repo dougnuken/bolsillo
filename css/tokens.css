@@ -160,6 +160,7 @@
 
   /* ---- Layout ---- */
   --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
+  --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
   --header-h: 56px;
   --page-max: 560px;            /* ancho máx. de contenido */
 

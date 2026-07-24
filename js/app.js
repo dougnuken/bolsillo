@@ -81,6 +81,7 @@ function navigate(routeId, { replace = false } = {}) {
   incoming.classList.remove('is-entering');
   incoming.classList.add('is-active');
   incoming.scrollTop = 0;
+  resetNav();
 
   if (outgoing) {
     outgoing.classList.remove('is-active');
@@ -131,6 +132,26 @@ function initTabbar() {
     });
   });
 }
+
+/* ---- nav colapsable al hacer scroll: al bajar se resume (sin labels, más
+   angosta) para dejar más espacio; al subir vuelve a expandirse ---- */
+let navLastTop = 0;
+let navMin = false;
+function setNavMin(on) {
+  if (on === navMin) return;
+  navMin = on;
+  document.body.classList.toggle('nav-min', on);
+}
+function onStageScroll(e) {
+  const el = e.target;
+  if (!el || !el.classList || !el.classList.contains('view')) return;
+  const top = el.scrollTop;
+  if (top < 48) setNavMin(false);                   // cerca del tope: expandida
+  else if (top - navLastTop > 6) setNavMin(true);    // bajando: resumida
+  else if (navLastTop - top > 6) setNavMin(false);   // subiendo: expandida
+  navLastTop = top;
+}
+function resetNav() { navLastTop = 0; setNavMin(false); }
 
 /* ---- header: la campana abre el centro de notificaciones ---- */
 function initHeader() {
@@ -239,6 +260,9 @@ async function correrRecurrentes() {
 /* ---- notificaciones (campana) ---- */
 let pendientesFijos = []; // gastos fijos por registrar este mes
 
+const ICON_X =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+
 /** Siembra los nombres iniciales de las personas SIN pisar tus renombres. */
 async function sembrarNombresPersona(cfg) {
   const ren = (cfg && cfg.categoriasRenombradas) || {};
@@ -318,11 +342,11 @@ async function abrirNotificaciones() {
 
   const html = `
     <div class="ov-grip" aria-hidden="true"></div>
-    <h3 class="ov-title">Notificaciones</h3>
+    <button type="button" class="icon-btn ov-close" data-n="close" aria-label="Cerrar">${ICON_X}</button>
+    <h3 class="ov-title ov-title--menu">Notificaciones</h3>
     ${vacio ? '<p class="ov-text">Todo al día. Sin pendientes ni alertas por ahora.</p>' : ''}
     ${pendBloque}
-    ${alertaBloque}
-    <button type="button" class="btn btn--ghost btn--block" data-n="cerrar">Cerrar</button>`;
+    ${alertaBloque}`;
 
   hoja(html, (panel, cerrar) => {
     const reg = panel.querySelector('[data-n="reg"]');
@@ -333,7 +357,7 @@ async function abrirNotificaciones() {
       await confirmarPendientes(tanda);
       await refrescarBadge();
     });
-    panel.querySelector('[data-n="cerrar"]').addEventListener('click', () => cerrar());
+    panel.querySelector('[data-n="close"]').addEventListener('click', () => cerrar());
   });
 }
 
@@ -417,6 +441,9 @@ function boot() {
   initTabbar();
   initHeader();
   initSheet();
+
+  // Scroll dentro de las vistas → colapsa/expande la barra (captura, no burbujea).
+  stage.addEventListener('scroll', onStageScroll, { passive: true, capture: true });
 
   window.addEventListener('hashchange', () => navigate(routeFromHash()));
 

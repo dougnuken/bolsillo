@@ -232,7 +232,7 @@
   background: var(--fab-grad);
   box-shadow: var(--sh-fab);
   border: 1px solid var(--fab-rim);
-  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease);
+  transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease), bottom var(--dur) var(--ease);
   will-change: transform;
 }
 .fab:hover { filter: brightness(1.06); }
@@ -247,51 +247,42 @@
 .tabbar--4 .tab svg { width: 22px; height: 22px; }
 .tabbar--4 .tab__label { white-space: nowrap; }
 
-/* Avatar en la pestaña Perfil (photo-ready) */
-.tab__avatar {
-  width: 23px;
-  height: 23px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-full);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: var(--fw-bold);
+/* --- Nav colapsable al hacer scroll: oculta labels y se hace más angosto,
+   dejando más espacio para ver información. Vuelve a expandirse al subir. --- */
+.tabbar { transition: height var(--dur) var(--ease); }
+.tab__label {
+  max-height: 1.4em;
   overflow: hidden;
-  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: opacity var(--dur-fast) var(--ease), max-height var(--dur) var(--ease);
 }
-.tab__avatar img { width: 100%; height: 100%; object-fit: cover; }
-/* Perfil activo: el avatar se enciende con el material coral del FAB */
-.tab--perfil.is-active .tab__avatar {
-  background: var(--fab-grad);
-  border-color: var(--fab-rim);
-  color: var(--text-inverse);
-  box-shadow: var(--fab-hi);
+body.nav-min .tabbar--4 { height: var(--nav-h-min); }
+body.nav-min .tab__label { opacity: 0; max-height: 0; }
+body.nav-min .fab {
+  bottom: calc(env(safe-area-inset-bottom) + var(--sp-4) + var(--nav-h-min) - 30px);
 }
-/* La pestaña Perfil no usa el indicador superior de barra (lo marca el avatar) */
-.tab--perfil.is-active::before { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tabbar, .tab__label, .fab { transition: none; }
+}
 
 /* Campana de notificaciones: ícono flotando (sin círculo gris) + badge redondo */
 .icon-btn--notif { position: relative; background: none; color: var(--text-2); }
 .icon-btn--notif:hover { background: none; color: var(--text-1); }
 .notif-badge {
   position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 17px;
-  height: 17px;
+  top: 1px;
+  right: 1px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
   display: grid;
   place-items: center;
   border-radius: var(--r-full);
   background: var(--semaforo-rojo);
   color: var(--text-inverse);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: var(--fw-bold);
   line-height: 1;
-  border: 2px solid var(--bg-0);   /* anillo del canvas: separa la burbuja del ícono */
-  box-shadow: 0 1px 3px rgba(212, 42, 34, 0.4);
+  box-shadow: 0 1px 4px rgba(212, 42, 34, 0.45);
 }
 .notif-badge[hidden] { display: none; }
 
