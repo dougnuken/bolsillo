@@ -954,8 +954,9 @@
   flex: 1 1 auto;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* el safe-area inferior lo cubre .ob__foot (queda debajo del scroll) */
   padding: var(--sp-4) max(var(--sp-5), env(safe-area-inset-left))
-           calc(env(safe-area-inset-bottom) + var(--sp-6)) max(var(--sp-5), env(safe-area-inset-right));
+           var(--sp-5) max(var(--sp-5), env(safe-area-inset-right));
 }
 .ob__step {
   max-width: var(--page-max);
@@ -965,22 +966,6 @@
   transition: opacity var(--dur-slow) var(--ease), transform var(--dur-slow) var(--ease);
 }
 .ob__step.is-in { opacity: 1; transform: none; }
-
-.ob__ic {
-  display: grid; place-items: center;
-  width: 62px; height: 62px;
-  margin-bottom: var(--sp-5);
-  border-radius: var(--r-lg);
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
-}
-.ob__ic svg { width: 32px; height: 32px; }
-.ob__ic--ok {
-  color: var(--semaforo-verde);
-  background: var(--semaforo-verde-bg);
-  border-color: var(--semaforo-verde-line);
-}
 
 .ob__title {
   font-size: var(--fs-display);
@@ -1016,7 +1001,17 @@
 }
 .ob__bullets strong { color: var(--text-1); }
 
-.ob__actions { margin-top: var(--sp-7); }
+/* footer fijo: el CTA queda SIEMPRE abajo, al alcance del pulgar (fuera del
+   scroll). Hairline superior lo separa del contenido que se desplaza. */
+.ob__foot {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--line-1);
+  padding: var(--sp-4) max(var(--sp-5), env(safe-area-inset-left))
+           calc(env(safe-area-inset-bottom) + var(--sp-4)) max(var(--sp-5), env(safe-area-inset-right));
+  animation: obFootIn var(--dur) var(--ease) both;
+}
+@keyframes obFootIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.ob__actions { max-width: var(--page-max); margin: 0 auto; }
 .ob__skip {
   display: block;
   width: 100%;
@@ -1096,6 +1091,75 @@
 @media (prefers-reduced-motion: reduce) {
   .ob, .ob__step, .ob__dot { transition-duration: 1ms; }
   .ob__step { transform: none; }
+  .ob__foot { animation: none; }
+}
+
+/* ============================================================
+   Onboarding · cierre "listo" — confeti + emoji animado
+   Solo transform/opacity. Confeti propio (sin librerías, es PWA).
+   Contenido a la zona (overflow hidden). Respeta reduced-motion.
+   ============================================================ */
+.ob__celebra {
+  position: relative;
+  height: 104px;
+  margin-bottom: var(--sp-5);
+  display: grid;
+  place-items: center;
+  overflow: hidden;              /* contiene el confeti a la zona */
+}
+.ob__emoji {
+  position: relative;
+  z-index: 1;
+  font-size: 62px;
+  line-height: 1;
+  animation: obEmojiPop 0.6s var(--ease-fan) both 0.12s;
+}
+@keyframes obEmojiPop {
+  0%   { opacity: 0; transform: scale(0.3) rotate(-14deg); }
+  55%  { opacity: 1; transform: scale(1.16) rotate(7deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+/* confeti: lluvia con vaivén desde detrás del emoji */
+.ob__confeti { position: absolute; inset: 0; pointer-events: none; }
+.ob__conf {
+  position: absolute;
+  top: 38%;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: obFallA 1.15s var(--ease) both;
+}
+@keyframes obFallA {
+  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(96px) translateX(14px) rotate(320deg); }
+}
+@keyframes obFallB {
+  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(96px) translateX(-14px) rotate(-320deg); }
+}
+/* posición, color, forma, dirección y retardo por pieza (CSP: sin inline) */
+.ob__conf--1  { left: 10%; background: var(--accent);         animation-name: obFallB; animation-delay: 0.20s; }
+.ob__conf--2  { left: 18%; background: var(--semaforo-verde); animation-delay: 0.34s; }
+.ob__conf--3  { left: 26%; background: var(--accent-light);   animation-name: obFallB; animation-delay: 0.10s; width: 7px; height: 11px; }
+.ob__conf--4  { left: 34%; background: var(--cat-ocio);       animation-delay: 0.42s; }
+.ob__conf--5  { left: 42%; background: var(--semaforo-ambar); animation-name: obFallB; animation-delay: 0.26s; width: 9px; height: 9px; }
+.ob__conf--6  { left: 50%; background: var(--accent);         animation-delay: 0.05s; }
+.ob__conf--7  { left: 58%; background: var(--cat-salud);      animation-name: obFallB; animation-delay: 0.38s; width: 7px; height: 11px; }
+.ob__conf--8  { left: 66%; background: var(--semaforo-verde); animation-delay: 0.16s; }
+.ob__conf--9  { left: 74%; background: var(--accent-light);   animation-name: obFallB; animation-delay: 0.30s; }
+.ob__conf--10 { left: 82%; background: var(--semaforo-ambar); animation-delay: 0.46s; width: 9px; height: 9px; }
+.ob__conf--11 { left: 90%; background: var(--cat-ocio);       animation-name: obFallB; animation-delay: 0.14s; }
+.ob__conf--12 { left: 14%; background: var(--semaforo-verde); animation-delay: 0.52s; width: 7px; height: 11px; }
+.ob__conf--13 { left: 38%; background: var(--accent);         animation-name: obFallB; animation-delay: 0.60s; }
+.ob__conf--14 { left: 70%; background: var(--cat-salud);      animation-delay: 0.56s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ob__emoji { animation: none; }
+  .ob__conf { animation: none; opacity: 0; }   /* sin confeti en reduced-motion */
 }
 
 /* ============================================================

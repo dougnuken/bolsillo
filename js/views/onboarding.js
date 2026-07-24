@@ -19,11 +19,15 @@ const CUENTAS_SUGERIDAS = ['Efectivo', 'Nequi', 'Bancolombia'];
 const INTRO_TOTAL = 3;      // gancho → valor → cierre
 const TOTAL_PASOS = 4;      // sueldo → cuentas → fijos → listo
 
+// Confeti del cierre (paso "listo"): 14 piezas cuya posición/color/tiempo viven
+// en clases .ob__conf--N de views.css (CSP style-src 'self' bloquea style="").
+// Respeta prefers-reduced-motion (allí se ocultan sin animación).
+const CONFETI = Array.from({ length: 14 }, (_, i) => `<i class="ob__conf ob__conf--${i + 1}"></i>`).join('');
+
 const IC = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
-  fiesta: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 9 8l7 7-12 5Z"/><path d="M14 4.5c1 .5 1.4 1.6 1 2.6M18 3c1.6.8 2.3 2.6 1.7 4.2M17 10.5c1 .5 2.2.1 2.7-.9"/></svg>',
   // Intro premium
   chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   flecha: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
@@ -231,7 +235,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
           <span class="field__label">Día de pago</span>
           <input class="field__input" id="ob-dia" type="number" min="1" max="31" inputmode="numeric"
             placeholder="30" value="${esc(dia)}" />
-        </label>
+        </label>`,
+      foot: `
         <div class="ob__actions">
           <button type="button" class="btn btn--primary btn--block" data-act="siguiente">Continuar</button>
           <button type="button" class="ob__skip" data-act="saltar">Configurar después</button>
@@ -263,7 +268,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
         <h1 class="ob__title">¿Dónde tienes tu plata?</h1>
         <p class="ob__text">Estas son las cuentas que usarás al registrar un gasto. Quita las que no uses.</p>
         <div class="ob__chips">${chips || '<p class="cfg-empty">Sin cuentas: agrega al menos una.</p>'}</div>
-        ${alta}
+        ${alta}`,
+      foot: `
         <div class="ob__actions">
           <button type="button" class="btn btn--primary btn--block" data-act="siguiente">Continuar</button>
         </div>`,
@@ -347,7 +353,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
         <p class="ob__text">Tu checklist de gastos fijos: arriendo, colegio, seguros, suscripciones… y también los que cambian de valor (luz, agua, gasolina, celular). Bolsillo los tiene en cuenta al calcular lo que te queda.</p>
         <p class="ob__text ob__text--sm">Si el monto es siempre igual, ponlo. Si cambia cada mes, márcalo como <strong>valor variable</strong> y Bolsillo te preguntará el valor real cada mes. Este paso es opcional, puedes saltarlo.</p>
         ${lista}
-        ${form}
+        ${form}`,
+      foot: `
         <div class="ob__actions">
           <button type="button" class="btn btn--primary btn--block" data-act="siguiente">
             ${st.fijos.length ? 'Continuar' : 'Lo hago después'}
@@ -419,15 +426,19 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
     const fijos = st.fijos.filter((f) => f.activo).reduce((s, f) => s + (f.monto || 0), 0);
     return {
       html: `
-        <span class="ob__ic ob__ic--ok">${IC.fiesta}</span>
-        <h1 class="ob__title">Listo, ya puedes empezar</h1>
+        <div class="ob__celebra">
+          <span class="ob__confeti" aria-hidden="true">${CONFETI}</span>
+          <span class="ob__emoji" role="img" aria-label="Celebración">🎉</span>
+        </div>
+        <h1 class="ob__title">¡Listo! Ya puedes empezar</h1>
         <p class="ob__text">Con esto el semáforo ya sabe calcular tu ritmo del mes.</p>
         <div class="ob__resumen">
           <div class="ob__resumen-row"><span>Sueldo</span><strong class="num">${esc(sueldo)}</strong></div>
           <div class="ob__resumen-row"><span>Cuentas</span><strong>${esc(String(st.cuentas.length))}</strong></div>
           <div class="ob__resumen-row"><span>Gastos fijos</span><strong class="num">${esc(fijos ? formatCOP(fijos) : 'Ninguno')}</strong></div>
         </div>
-        <p class="ob__text ob__text--sm">Toca el botón <strong>+</strong> para registrar tu primer gasto. Todo lo demás lo cambias en Ajustes.</p>
+        <p class="ob__text ob__text--sm">Toca el botón <strong>+</strong> para registrar tu primer gasto. Todo lo demás lo cambias en Ajustes.</p>`,
+      foot: `
         <div class="ob__actions">
           <button type="button" class="btn btn--primary btn--block" data-act="terminar">Ir a mi bolsillo</button>
         </div>`,
@@ -478,7 +489,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   function pintar() {
     if (st.fase === 'intro') { pintarIntro(); return; }
 
-    const { html, bind } = PASOS[st.paso]();
+    const { html, foot, bind } = PASOS[st.paso]();
     const puntos = Array.from({ length: TOTAL_PASOS }, (_, i) =>
       `<span class="ob__dot${i === st.paso ? ' is-on' : ''}${i < st.paso ? ' is-done' : ''}"></span>`).join('');
 
@@ -495,7 +506,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
           aria-valuemax="${TOTAL_PASOS}" aria-label="Paso ${st.paso + 1} de ${TOTAL_PASOS}">${puntos}</div>
         <span class="ob__back-spacer"></span>
       </div>
-      <div class="ob__scroll"><div class="ob__step">${html}</div></div>`;
+      <div class="ob__scroll"><div class="ob__step">${html}</div></div>
+      ${foot ? `<div class="ob__foot">${foot}</div>` : ''}`;
 
     const cont = raiz.querySelector('.ob__step');
     if (!prefersReduced) {
