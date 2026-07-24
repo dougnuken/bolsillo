@@ -386,6 +386,9 @@ export function configDefault() {
     categoriasPersonalizadas: Object.freeze([]),
     // Renombres de las categorías canónicas: {categoriaId: 'Nuevo nombre'}.
     categoriasRenombradas: Object.freeze({}),
+    // Topes de gasto por persona/categoría vigilada, como FRACCIÓN del ingreso
+    // neto del mes: {categoriaId: 0.15}. Vacío = usa los defaults del motor.
+    topesPersona: Object.freeze({}),
     // Ícono/tint elegido por categoría (canónica o propia): {id: {icono, tint}}.
     categoriasEstilo: Object.freeze({}),
     // Categorías ocultas del selector de captura (siguen resolviendo): [id].
@@ -421,6 +424,8 @@ export function crearConfig(datos = {}) {
         : d.categoriasPersonalizadas.slice(),
     ),
     categoriasRenombradas: Object.freeze({ ...d.categoriasRenombradas, ...(datos.categoriasRenombradas || {}) }),
+    // topesPersona: merge sobre lo existente (el llamante pasa el mapa completo o parcial).
+    topesPersona: Object.freeze({ ...d.topesPersona, ...(datos.topesPersona || {}) }),
     // categoriasEstilo: merge sobre lo existente (el llamante pasa el mapa completo).
     categoriasEstilo: Object.freeze({ ...d.categoriasEstilo, ...(datos.categoriasEstilo || {}) }),
     // categoriasOcultas / categoriasOrden: reemplazo (el llamante pasa el arreglo completo).

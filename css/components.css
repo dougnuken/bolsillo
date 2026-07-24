@@ -264,6 +264,62 @@
 .fab:active { transform: translateX(-50%) scale(0.93); }
 .fab svg { width: 28px; height: 28px; }
 
+/* --- Barra de 4 pestañas: Hoy · Personas · [FAB] · Movimientos · Perfil --- */
+.tabbar--4 {
+  grid-template-columns: 1fr 1fr var(--sp-9) 1fr 1fr;
+}
+.tabbar--4 .tab { font-size: 10px; gap: 2px; }
+.tabbar--4 .tab svg { width: 22px; height: 22px; }
+.tabbar--4 .tab__label { white-space: nowrap; }
+
+/* Avatar en la pestaña Perfil (photo-ready) */
+.tab__avatar {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-accent);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  overflow: hidden;
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.tab__avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Perfil activo: el avatar se enciende con el material coral del FAB */
+.tab--perfil.is-active .tab__avatar {
+  background: var(--fab-grad);
+  border-color: var(--fab-rim);
+  color: var(--text-inverse);
+  box-shadow: var(--fab-hi);
+}
+/* La pestaña Perfil no usa el indicador superior de barra (lo marca el avatar) */
+.tab--perfil.is-active::before { display: none; }
+
+/* Campana de notificaciones + badge */
+.icon-btn--notif { position: relative; }
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--semaforo-rojo);
+  color: var(--text-inverse);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  border: 1.5px solid var(--glass-header);
+  box-shadow: var(--fab-hi);
+}
+.notif-badge[hidden] { display: none; }
+
 /* ============================================================
    Bottom sheet (Registrar - placeholder)
    ============================================================ */

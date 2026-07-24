@@ -1,7 +1,9 @@
 /* ============================================================
-   Bolsillo · views/ajustes.js
-   Hub de configuración. Cada fila abre su sub-hoja (cfg-*.js) y
+   Bolsillo · views/perfil.js
+   Perfil + hub de configuración. Avatar arriba, luego Seguridad,
+   Mi dinero, Datos y App. Cada fila abre su sub-hoja (cfg-*.js) y
    se repinta al volver, así los subtítulos siempre dicen la verdad.
+   (Reemplaza la antigua vista Ajustes; se llega desde la pestaña Perfil.)
    ============================================================ */
 
 import { getAll, getConfig } from '../db.js';
@@ -22,12 +24,14 @@ import { abrirApiKey } from './cfg-api.js';
 import { abrirUmbrales } from './cfg-umbrales.js';
 import { abrirOnboarding } from './onboarding.js';
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.6.0';
 
 const CHEVRON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 
 const ICONS = {
+  contrasena: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.2" r="1.1"/></svg>',
+  faceid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 9.5v3l-1 1"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>',
   sueldo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 10.2a2.4 2.4 0 0 1 2.5-1.7c1.3 0 2.3.8 2.3 1.9 0 2.4-4.8 1.4-4.8 3.8 0 1.1 1 1.9 2.3 1.9a2.4 2.4 0 0 0 2.5-1.7"/></svg>',
   negocios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>',
   fijos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg>',
@@ -42,7 +46,7 @@ const ICONS = {
   privacidad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8-7 10-4-2-7-5.6-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
 };
 
-/** Fila de ajustes. `sub` va escapado; `alerta` la marca en ámbar. */
+/** Fila de ajustes navegable. `sub` va escapado; `alerta` la marca en ámbar. */
 function row(icon, title, sub, accion, { alerta = false } = {}) {
   return `<button class="settings-row${alerta ? ' settings-row--alerta' : ''}" type="button" data-act="${esc(accion)}">
     <span class="settings-row__icon">${icon}</span>
@@ -52,6 +56,18 @@ function row(icon, title, sub, accion, { alerta = false } = {}) {
     </span>
     <span class="settings-row__chev">${CHEVRON}</span>
   </button>`;
+}
+
+/** Fila deshabilitada con pill "Pronto" (funciones aún no disponibles). */
+function rowSoon(icon, title, sub) {
+  return `<div class="settings-row settings-row--soon" aria-disabled="true">
+    <span class="settings-row__icon">${icon}</span>
+    <span class="settings-row__body">
+      <span class="settings-row__title">${esc(title)}</span>
+      ${sub ? `<span class="settings-row__sub">${esc(sub)}</span>` : ''}
+    </span>
+    <span class="settings-row__soon">Pronto</span>
+  </div>`;
 }
 
 /* ---- subtítulos vivos ---- */
@@ -106,13 +122,16 @@ function subUmbrales(config) {
 }
 
 export default {
-  label: 'Ajustes',
+  label: 'Perfil',
 
   render() {
     return `
-      <header class="view-greet">
-        <p class="view-greet__eyebrow">Preferencias</p>
-        <h1 class="view-greet__title">Ajustes</h1>
+      <header class="perfil-head">
+        <span class="perfil-head__avatar" aria-hidden="true">D</span>
+        <div class="perfil-head__id">
+          <p class="perfil-head__name">Doug</p>
+          <p class="perfil-head__sub">Tu perfil y ajustes</p>
+        </div>
       </header>
       <div id="cfg-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>`;
   },
@@ -128,8 +147,8 @@ export default {
           getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
         ]);
       } catch (err) {
-        console.warn('[Bolsillo] no se pudo cargar Ajustes:', err);
-        body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus ajustes. Reintenta.</p>';
+        console.warn('[Bolsillo] no se pudo cargar Perfil:', err);
+        body.innerHTML = '<p class="hoy-error">No se pudo cargar tu perfil. Reintenta.</p>';
         return;
       }
       if (!root.isConnected) return; // el usuario ya cambió de vista
@@ -139,6 +158,14 @@ export default {
       const backupVencido = respaldoVencido(config.fechaUltimoBackup);
 
       body.innerHTML = `
+        <section class="settings-group">
+          <p class="settings-group__label">Seguridad</p>
+          <div class="settings-list">
+            ${rowSoon(ICONS.contrasena, 'Contraseña', 'Protege la app con un código')}
+            ${rowSoon(ICONS.faceid, 'Bloqueo con Face ID', 'Abre con tu cara al entrar')}
+          </div>
+        </section>
+
         <section class="settings-group">
           <p class="settings-group__label">Mi dinero</p>
           <div class="settings-list">

@@ -378,3 +378,86 @@ export function resumenNegocios({ fuentes = [], movimientos = [], creditos = [],
   });
   return Object.freeze(filas);
 }
+
+/* ============================================================
+   Personas — guardarraíl de gasto por persona/categoría vigilada
+   ============================================================ */
+
+/**
+ * Topes por defecto como FRACCIÓN del ingreso neto del mes.
+ * Guardarraíl estilo 50/30/20 (proteger ahorro; "gustos" acotados).
+ * El id es la categoría; el tope es el punto ROJO (mala práctica).
+ * Doug: persona1=Antonella(hija) · persona2=Marley(novia) · persona3=Madre.
+ * Editable por el usuario en config.topesPersona (merge por id).
+ */
+export const TOPES_PERSONA_DEFAULT = Object.freeze({
+  persona1: 0.15, // Antonella (hija)
+  persona2: 0.10, // Marley (novia)
+  persona3: 0.10, // Madre
+  yo: 0.15,       // Yo (personal)
+  ocio: 0.10,     // Ocio (categoría vigilada)
+});
+
+/** Banda ámbar: cuántos PUNTOS de fracción antes del tope avisa (2 pts). */
+export const AVISO_PUNTOS_DEFAULT = 0.02;
+
+/** Ids vigilados por defecto en el dashboard de Personas (orden de la barra). */
+export const VIGILADOS_DEFAULT = Object.freeze(['persona1', 'persona2', 'persona3', 'yo', 'ocio']);
+
+/**
+ * Resumen de gasto por "vigilado" (persona o categoría) contra su tope,
+ * medido como fracción del ingreso NETO del mes. PURA y de solo lectura.
+ *
+ * Cuenta TODO el gasto del mes con esa categoría (fijo + variable): es
+ * "cuánto va en esta persona", no solo lo discrecional.
+ *
+ * @param {object} args
+ * @param {object[]}    args.movimientos  movimientos del usuario
+ * @param {object[]}    args.vigilados    [{id, label}] a vigilar (personas + ocio…)
+ * @param {number}      args.netoDelMes   ingreso neto del mes (sueldo + negocios recibidos)
+ * @param {object}      [args.topes]      {id: fracción} tope por id (rojo)
+ * @param {number}      [args.avisoPuntos] banda ámbar en puntos (default 0.02)
+ * @param {Date|string} args.hoy          fecha de referencia (inyectable)
+ * @returns {Readonly<object>[]} una fila por vigilado, ordenada por gasto desc
+ */
+export function resumenPersonas({ movimientos = [], vigilados = [], netoDelMes = 0, topes = TOPES_PERSONA_DEFAULT, avisoPuntos = AVISO_PUNTOS_DEFAULT, hoy } = {}) {
+  const { prefijo } = partes(hoy);
+  const neto = esEntero(netoDelMes) ? netoDelMes : (Number.isFinite(netoDelMes) ? Math.round(netoDelMes) : 0);
+  const aviso = Number.isFinite(avisoPuntos) && avisoPuntos >= 0 ? avisoPuntos : AVISO_PUNTOS_DEFAULT;
+
+  // Gasto TOTAL del mes por categoría (fijo + variable).
+  const gastoPorCat = new Map();
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'gasto' || !enMes(m, prefijo)) continue;
+    const id = esTextoNoVacio(m.categoria) ? m.categoria : CATEGORIA_FALLBACK;
+    gastoPorCat.set(id, (gastoPorCat.get(id) || 0) + m.monto);
+  }
+
+  const filas = (Array.isArray(vigilados) ? vigilados : []).map((v) => {
+    const gastado = redondear(gastoPorCat.get(v.id) || 0);
+    const topeFrac = Number.isFinite(topes[v.id]) && topes[v.id] > 0 ? topes[v.id] : 0;
+    const pctIngreso = neto > 0 ? gastado / neto : 0;              // fracción del neto (0..1)
+    const topeMonto = topeFrac > 0 ? redondear(neto * topeFrac) : null;
+    const avanceTope = topeFrac > 0 ? pctIngreso / topeFrac : 0;   // 1 = justo en el tope
+    const faltanPuntos = topeFrac > 0 ? topeFrac - pctIngreso : null; // >0 aún hay margen
+
+    let color = 'verde';
+    if (topeFrac > 0) {
+      if (pctIngreso >= topeFrac) color = 'rojo';
+      else if (pctIngreso >= topeFrac - aviso) color = 'ambar';
+    }
+    return Object.freeze({
+      id: v.id,
+      label: esTextoNoVacio(v.label) ? v.label : v.id,
+      gastado,
+      pctIngreso,     // fracción del neto
+      topeFrac,       // fracción tope (rojo)
+      topeMonto,      // pesos del tope
+      avanceTope,     // gastado / tope (0..>1)
+      faltanPuntos,   // puntos de fracción para el tope (negativo = ya pasó)
+      color,
+    });
+  });
+  filas.sort((a, b) => b.gastado - a.gastado);
+  return Object.freeze(filas);
+}

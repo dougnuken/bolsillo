@@ -44,30 +44,37 @@
           <span class="greeting__name">Doug</span>
         </span>
       </div>
-      <button class="icon-btn" id="open-ajustes" type="button" aria-label="Ajustes">
+      <button class="icon-btn icon-btn--notif" id="open-notif" type="button" aria-label="Notificaciones">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3.2"></circle>
-          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1A2 2 0 1 1 7 4.6l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path>
+          <path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path>
+          <path d="M13.7 20a2 2 0 0 1-3.4 0"></path>
         </svg>
+        <span class="notif-badge" id="notif-badge" hidden>0</span>
       </button>
     </header>
 
     <!-- Escenario de vistas (poblado por JS) -->
     <main class="view-stage" id="view-stage"></main>
 
-    <!-- Tab bar inferior + FAB.
-         Piloto: solo Hoy + Movimientos (el FAB central va en medio).
-         Créditos se maneja desde Ajustes → Créditos; Asesor llega en otra tanda.
-         Para re-mostrar una pestaña: reañade su <button> y su entrada en ROUTES (app.js). -->
-    <nav class="tabbar" id="tabbar" aria-label="Navegación principal" role="tablist">
+    <!-- Tab bar inferior + FAB (4 pestañas: Hoy · Personas · [FAB] · Movimientos · Perfil).
+         Para re-mostrar/añadir una pestaña: su <button> aquí + su entrada en ROUTES (app.js). -->
+    <nav class="tabbar tabbar--4" id="tabbar" aria-label="Navegación principal" role="tablist">
       <button class="tab" type="button" data-route="hoy" role="tab">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8.5"/><path d="M10 20v-5h4v5"/></svg>
         <span class="tab__label">Hoy</span>
+      </button>
+      <button class="tab" type="button" data-route="personas" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 13.6A5.5 5.5 0 0 1 20.5 19"/></svg>
+        <span class="tab__label">Personas</span>
       </button>
       <span aria-hidden="true"></span>
       <button class="tab" type="button" data-route="movimientos" role="tab">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13M7 8l3-3M7 8l3 3"/><path d="M17 16H4M17 16l-3-3M17 16l-3 3"/></svg>
         <span class="tab__label">Movimientos</span>
+      </button>
+      <button class="tab tab--perfil" type="button" data-route="perfil" role="tab">
+        <span class="tab__avatar" aria-hidden="true">D</span>
+        <span class="tab__label">Perfil</span>
       </button>
     </nav>
 

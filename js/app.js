@@ -5,17 +5,19 @@
    ============================================================ */
 
 import dashboard from './views/dashboard.js';
+import personas from './views/personas.js';
 import movimientos from './views/movimientos.js';
-import ajustes from './views/ajustes.js';
+import perfil from './views/perfil.js';
 import registrar from './views/registrar.js';
 // Ocultas en el piloto (se re-agregan a ROUTES + tab bar cuando estén listas):
-// import creditos from './views/creditos.js';  // CRUD real vive en Ajustes → Créditos
+// import creditos from './views/creditos.js';  // CRUD real vive en Perfil → Créditos
 // import asesor from './views/asesor.js';       // chat IA, llega en otra tanda
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
 import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
 import { migrarIngresos, ingresoNecesitaMigracion, crearMovimiento } from './model.js';
-import { aplicarPersonalizacion } from './categories.js';
+import { aplicarPersonalizacion, categoriaPorId } from './categories.js';
+import { calcularEstado, resumenPersonas, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAULT } from './budget.js';
 import { parseCOP, formatCOP } from './money.js';
 import { bindMontosVivos } from './money-input.js';
 import { hoja } from './overlay.js';
@@ -25,8 +27,9 @@ const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
 
 const ROUTES = {
   hoy: dashboard,
+  personas,
   movimientos,
-  ajustes,
+  perfil,
   // creditos, asesor: ocultas en el piloto. Sin entrada aquí, sus hashes
   // (#/creditos, #/asesor) caen a DEFAULT_ROUTE en routeFromHash() → nunca rompen.
 };
@@ -129,14 +132,10 @@ function initTabbar() {
   });
 }
 
-/* ---- header: el engrane lleva a la vista Ajustes completa ---- */
+/* ---- header: la campana abre el centro de notificaciones ---- */
 function initHeader() {
-  const settingsBtn = document.getElementById('open-ajustes');
-  if (settingsBtn) {
-    settingsBtn.addEventListener('click', () => {
-      location.hash = '#/ajustes';
-    });
-  }
+  const bell = document.getElementById('open-notif');
+  if (bell) bell.addEventListener('click', () => { abrirNotificaciones(); });
 }
 
 /* ---- bottom sheet: Registrar ---- */
@@ -158,7 +157,7 @@ function initSheet() {
     delete document.body.dataset.sheet;
   };
 
-  registrar.mount(sheet, { open, close, onSaved: () => refreshActive(currentRoute) });
+  registrar.mount(sheet, { open, close, onSaved: () => { refreshActive(currentRoute); refrescarBadge(); } });
 
   fab.addEventListener('click', () => registrar.abrir());
   scrim.addEventListener('click', () => registrar.cerrar());
@@ -168,8 +167,7 @@ function initSheet() {
 }
 
 /* ---- datos: siembra de cuentas + materialización de recurrentes ---- */
-const ICON_BANG =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>';
+const esTextoNoVacio = (v) => typeof v === 'string' && v.trim() !== '';
 
 async function initData() {
   await openDB();
@@ -187,6 +185,9 @@ async function initData() {
     || Object.keys(cfg.categoriasRenombradas || {}).length > 0;
   aplicarPersonalizacion(cfg);
   if (personalizado) refreshActive(currentRoute); // repinta con las etiquetas del usuario
+
+  // Nombres iniciales de las personas de Doug (idempotente: no pisa renombres tuyos).
+  cfg = await sembrarNombresPersona(cfg);
 
   // Primer arranque: guía de inicio antes que nada.
   const ingresos = await getAll('ingresos');
@@ -230,33 +231,110 @@ async function correrRecurrentes() {
     await bulkPut('movimientos', auto);
     refreshActive('movimientos');
   }
-  if (porConfirmar.length) mostrarBannerConfirmar(porConfirmar);
+  // Sin popup automático: los pendientes viven en la campana (no molesta al arrancar).
+  pendientesFijos = porConfirmar;
+  await refrescarBadge();
 }
 
-function mostrarBannerConfirmar(pendientes) {
-  const prev = document.getElementById('rec-banner');
-  if (prev) prev.remove();
-  const shell = document.querySelector('.app-shell');
-  if (!shell) return;
-  const b = document.createElement('div');
-  b.id = 'rec-banner';
-  b.className = 'rec-banner';
-  b.setAttribute('role', 'status');
-  b.innerHTML = `
-    <span class="rec-banner__ic">${ICON_BANG}</span>
-    <p class="rec-banner__msg">Tienes <strong>${pendientes.length}</strong> gasto${pendientes.length > 1 ? 's' : ''} fijo${pendientes.length > 1 ? 's' : ''} por registrar este mes.</p>
-    <div class="rec-banner__actions">
-      <button type="button" class="btn btn--primary btn--sm" data-b="ok">Registrar</button>
-      <button type="button" class="btn btn--ghost btn--sm" data-b="no" aria-label="Ahora no">Ahora no</button>
-    </div>`;
-  shell.appendChild(b);
-  requestAnimationFrame(() => b.classList.add('is-show'));
-  const quitar = () => { b.classList.remove('is-show'); setTimeout(() => b.remove(), 300); };
-  b.querySelector('[data-b="ok"]').addEventListener('click', async () => {
-    quitar();
-    await confirmarPendientes(pendientes);
+/* ---- notificaciones (campana) ---- */
+let pendientesFijos = []; // gastos fijos por registrar este mes
+
+/** Siembra los nombres iniciales de las personas SIN pisar tus renombres. */
+async function sembrarNombresPersona(cfg) {
+  const ren = (cfg && cfg.categoriasRenombradas) || {};
+  const faltan = {};
+  if (!esTextoNoVacio(ren.persona1)) faltan.persona1 = 'Antonella';
+  if (!esTextoNoVacio(ren.persona2)) faltan.persona2 = 'Marley';
+  if (!esTextoNoVacio(ren.persona3)) faltan.persona3 = 'Madre';
+  if (Object.keys(faltan).length === 0) return cfg;
+  const nueva = await saveConfig({ categoriasRenombradas: faltan });
+  aplicarPersonalizacion(nueva);
+  refreshActive(currentRoute);
+  return nueva;
+}
+
+/** Alertas de gasto por persona/categoría (ámbar o rojo) del mes actual. */
+async function recolectarAlertas() {
+  try {
+    const [movs, ingresos, recs, creds, cfg] = await Promise.all([
+      getAll('movimientos'), getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
+    ]);
+    const empleo = ingresos.find((i) => i && i.fuente === 'empleo') || null;
+    const hoy = new Date();
+    const estado = calcularEstado({
+      ingresoEmpleo: empleo ? empleo.monto : null,
+      movimientos: movs, recurrentes: recs, creditos: creds, hoy, config: cfg,
+    });
+    if (!estado.configurado) return [];
+    const vigilados = VIGILADOS_DEFAULT.map((id) => ({ id, label: categoriaPorId(id).label }));
+    const topes = { ...TOPES_PERSONA_DEFAULT, ...(cfg.topesPersona || {}) };
+    const filas = resumenPersonas({ movimientos: movs, vigilados, netoDelMes: estado.plataDelMes, topes, hoy });
+    return filas.filter((f) => f.color === 'ambar' || f.color === 'rojo');
+  } catch (err) {
+    console.warn('[Bolsillo] no se pudieron leer alertas:', err);
+    return [];
+  }
+}
+
+/** Actualiza el badge de la campana: pendientes fijos + alertas de personas. */
+async function refrescarBadge() {
+  const badge = document.getElementById('notif-badge');
+  if (!badge) return;
+  const alertas = await recolectarAlertas();
+  const total = pendientesFijos.length + alertas.length;
+  if (total > 0) { badge.textContent = String(total); badge.hidden = false; }
+  else { badge.hidden = true; }
+}
+
+/** Centro de notificaciones (hoja): pendientes por registrar + alertas. */
+async function abrirNotificaciones() {
+  const alertas = await recolectarAlertas();
+  const pend = pendientesFijos;
+  const vacio = pend.length === 0 && alertas.length === 0;
+
+  const alertaItem = (a) => {
+    const cls = a.color === 'rojo' ? 'rojo' : 'ambar';
+    const topePct = Math.round(a.topeFrac * 100);
+    const vaPct = Math.round(a.pctIngreso * 100);
+    const msg = a.color === 'rojo'
+      ? `<strong>${esc(a.label)}</strong>: pasaste tu tope del ${topePct}% (vas en ${vaPct}%)`
+      : `<strong>${esc(a.label)}</strong>: cerca del tope del ${topePct}% (vas en ${vaPct}%)`;
+    return `<div class="notif-item notif-item--${cls}"><span class="notif-item__dot"></span><p>${msg}</p></div>`;
+  };
+
+  const pendBloque = pend.length ? `
+    <div class="notif-group">
+      <p class="notif-group__label">Por registrar</p>
+      <div class="notif-item notif-item--ambar"><span class="notif-item__dot"></span>
+        <p>Tienes <strong>${pend.length}</strong> gasto${pend.length > 1 ? 's' : ''} fijo${pend.length > 1 ? 's' : ''} por registrar este mes.</p></div>
+      <button type="button" class="btn btn--primary btn--block" data-n="reg">Registrarlos ahora</button>
+    </div>` : '';
+
+  const alertaBloque = alertas.length ? `
+    <div class="notif-group">
+      <p class="notif-group__label">Alertas de personas</p>
+      ${alertas.map(alertaItem).join('')}
+    </div>` : '';
+
+  const html = `
+    <div class="ov-grip" aria-hidden="true"></div>
+    <h3 class="ov-title">Notificaciones</h3>
+    ${vacio ? '<p class="ov-text">Todo al día. Sin pendientes ni alertas por ahora.</p>' : ''}
+    ${pendBloque}
+    ${alertaBloque}
+    <button type="button" class="btn btn--ghost btn--block" data-n="cerrar">Cerrar</button>`;
+
+  hoja(html, (panel, cerrar) => {
+    const reg = panel.querySelector('[data-n="reg"]');
+    if (reg) reg.addEventListener('click', async () => {
+      cerrar();
+      const tanda = pendientesFijos;
+      pendientesFijos = [];
+      await confirmarPendientes(tanda);
+      await refrescarBadge();
+    });
+    panel.querySelector('[data-n="cerrar"]').addEventListener('click', () => cerrar());
   });
-  b.querySelector('[data-b="no"]').addEventListener('click', quitar);
 }
 
 /**

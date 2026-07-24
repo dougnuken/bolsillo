@@ -1439,3 +1439,168 @@
   .obi__fan { transform: none !important; }
   .obi__bigring { transform: translate(-50%, -50%) !important; }
 }
+
+/* ============================================================
+   Perfil — cabecera con avatar + fila "Pronto"
+   ============================================================ */
+.perfil-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+.perfil-head__avatar {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-full);
+  background: var(--fab-grad);
+  border: 1px solid var(--fab-rim);
+  box-shadow: var(--fab-hi), 0 6px 16px -6px var(--accent-glow);
+  color: var(--text-inverse);
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  overflow: hidden;
+  user-select: none;
+}
+.perfil-head__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.perfil-head__name { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; color: var(--text-1); }
+.perfil-head__sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
+
+/* Fila deshabilitada con pill "Pronto" */
+.settings-row--soon { cursor: default; }
+.settings-row--soon:hover { background: none; }
+.settings-row--soon .settings-row__title { color: var(--text-2); }
+.settings-row__soon {
+  flex: none;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-accent);
+  border-radius: var(--r-full);
+  padding: 3px 10px;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   Personas — gasto por persona vs tope (% del ingreso neto)
+   ============================================================ */
+.personas-intro {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: var(--sp-4);
+}
+.personas-sub { margin-top: var(--sp-6); margin-bottom: var(--sp-3); }
+.personas-grid { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.persona-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--sh-card);
+}
+.persona-card__top { display: flex; align-items: center; gap: var(--sp-3); }
+.persona-card__avatar {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  color: var(--tint, var(--text-1));
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
+}
+.persona-card__avatar svg { width: 22px; height: 22px; }
+.persona-card__id { flex: 1 1 auto; min-width: 0; }
+.persona-card__name { font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--text-1); letter-spacing: -0.01em; }
+.persona-card__amt { font-size: var(--fs-sm); color: var(--text-2); margin-top: 1px; }
+.persona-card__track {
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--track);
+  margin: var(--sp-3) 0 var(--sp-2);
+  overflow: hidden;
+}
+.persona-card__fill {
+  display: block;
+  width: 0;                 /* el ancho real lo setea JS (CSP: nada de style= inline) */
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--semaforo-verde);
+  transition: width var(--dur) var(--ease);
+}
+.persona-card--ambar .persona-card__fill { background: var(--semaforo-ambar); }
+.persona-card--rojo .persona-card__fill { background: var(--semaforo-rojo); }
+.persona-card__foot { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.4; }
+.persona-card--ambar .persona-card__foot { color: var(--semaforo-ambar-text); }
+.persona-card--rojo .persona-card__foot { color: var(--semaforo-rojo-text); }
+
+/* Bonus — el gasto NO fijo #1 del mes */
+.bonus-card {
+  margin-top: var(--sp-6);
+  background: linear-gradient(150deg, var(--accent-soft), transparent 80%);
+  border: 1px solid var(--line-accent);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+}
+.bonus-card__kicker {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.bonus-card__row { display: flex; align-items: center; gap: var(--sp-3); margin: var(--sp-3) 0; }
+.bonus-card__ic {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  color: var(--tint, var(--accent));
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+}
+.bonus-card__ic svg { width: 20px; height: 20px; }
+.bonus-card__body { flex: 1 1 auto; min-width: 0; }
+.bonus-card__name { font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--text-1); }
+.bonus-card__sub { font-size: var(--fs-xs); color: var(--text-2); margin-top: 1px; }
+.bonus-card__amt { font-size: var(--fs-h3); font-weight: var(--fw-bold); color: var(--text-1); flex: none; }
+.bonus-card__note { font-size: var(--fs-xs); color: var(--text-2); line-height: 1.4; }
+
+/* ============================================================
+   Notificaciones (campana → hoja)
+   ============================================================ */
+.notif-group { margin-top: var(--sp-4); }
+.notif-group__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: var(--sp-2);
+}
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
+  margin-bottom: var(--sp-2);
+}
+.notif-item p { font-size: var(--fs-sm); color: var(--text-1); line-height: 1.4; }
+.notif-item__dot { width: 8px; height: 8px; flex: none; margin-top: 6px; border-radius: var(--r-full); background: var(--text-3); }
+.notif-item--ambar { background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); }
+.notif-item--ambar .notif-item__dot { background: var(--semaforo-ambar); }
+.notif-item--rojo { background: var(--semaforo-rojo-bg); border-color: var(--semaforo-rojo-line); }
+.notif-item--rojo .notif-item__dot { background: var(--semaforo-rojo); }
+.notif-group .btn { margin-top: var(--sp-2); }
