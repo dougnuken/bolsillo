@@ -1502,7 +1502,6 @@
   border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
-  box-shadow: var(--sh-card);
 }
 .persona-card__top { display: flex; align-items: center; gap: var(--sp-3); }
 .persona-card__avatar {
@@ -1512,9 +1511,9 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-md);
-  color: var(--tint, var(--text-1));
-  background: var(--glass-2);
-  border: 1px solid var(--line-2);
+  /* mismo contraste tintado por categoría que en Movimientos (.mov-row__icon) */
+  background: color-mix(in srgb, var(--tint, var(--text-3)) 12%, transparent);
+  color: color-mix(in srgb, var(--tint, var(--text-1)) 60%, var(--text-2));
 }
 .persona-card__avatar svg { width: 22px; height: 22px; }
 .persona-card__id { flex: 1 1 auto; min-width: 0; }

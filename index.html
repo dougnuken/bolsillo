@@ -38,12 +38,6 @@
 
     <!-- Header (respeta notch / Dynamic Island) -->
     <header class="app-header">
-      <div class="brand">
-        <span class="greeting">
-          <span class="greeting__hi">Hola,</span>
-          <span class="greeting__name">Doug</span>
-        </span>
-      </div>
       <button class="icon-btn icon-btn--notif" id="open-notif" type="button" aria-label="Notificaciones">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path>
@@ -55,6 +49,9 @@
 
     <!-- Escenario de vistas (poblado por JS) -->
     <main class="view-stage" id="view-stage"></main>
+
+    <!-- Barrido de vidrio: difumina lo que pasa por detrás de la barra flotante. -->
+    <div class="nav-blur" aria-hidden="true"></div>
 
     <!-- Tab bar inferior + FAB (4 pestañas: Hoy · Personas · [FAB] · Movimientos · Perfil).
          Para re-mostrar/añadir una pestaña: su <button> aquí + su entrada en ROUTES (app.js). -->

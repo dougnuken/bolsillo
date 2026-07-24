@@ -2,31 +2,6 @@
    Bolsillo · Componentes
    ============================================================ */
 
-/* ---- Marca en header ---- */
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-/* Saludo personal — reemplaza el título de marca */
-.greeting {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.08;
-}
-.greeting__hi {
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  color: var(--text-2);
-  letter-spacing: 0.01em;
-}
-.greeting__name {
-  font-size: var(--fs-h3);
-  font-weight: var(--fw-bold);
-  color: var(--text-1);
-  letter-spacing: -0.01em;
-}
-
 /* icono-botón del header (>=44px táctil) */
 .icon-btn {
   width: 40px;
@@ -298,15 +273,15 @@
 /* La pestaña Perfil no usa el indicador superior de barra (lo marca el avatar) */
 .tab--perfil.is-active::before { display: none; }
 
-/* Campana de notificaciones + badge */
-.icon-btn--notif { position: relative; }
+/* Campana de notificaciones: ícono flotando (sin círculo gris) + badge redondo */
+.icon-btn--notif { position: relative; background: none; color: var(--text-2); }
+.icon-btn--notif:hover { background: none; color: var(--text-1); }
 .notif-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  top: 3px;
+  right: 3px;
+  width: 17px;
+  height: 17px;
   display: grid;
   place-items: center;
   border-radius: var(--r-full);
@@ -315,10 +290,26 @@
   font-size: 10px;
   font-weight: var(--fw-bold);
   line-height: 1;
-  border: 1.5px solid var(--glass-header);
-  box-shadow: var(--fab-hi);
+  border: 2px solid var(--bg-0);   /* anillo del canvas: separa la burbuja del ícono */
+  box-shadow: 0 1px 3px rgba(212, 42, 34, 0.4);
 }
 .notif-badge[hidden] { display: none; }
+
+/* Barrido de vidrio inferior: difumina lo que pasa por detrás de la barra
+   flotante (sobre el contenido, bajo la barra) para no perder legibilidad. */
+.nav-blur {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-9));
+  z-index: 35;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  -webkit-mask: linear-gradient(to top, #000 45%, transparent 100%);
+          mask: linear-gradient(to top, #000 45%, transparent 100%);
+}
 
 /* ============================================================
    Bottom sheet (Registrar - placeholder)
