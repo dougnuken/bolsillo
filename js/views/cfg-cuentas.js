@@ -28,24 +28,33 @@ const IC_PDF =
 const MAX_PDF_BYTES = 15 * 1024 * 1024; // 15 MB
 
 /** Abre el selector de archivos, lee un PDF y devuelve {base64, mediaType}
-    o {error} o null (cancelado). No mantiene el input en el DOM. */
+    o {error} o null (cancelado).
+
+    iOS Safari solo abre el picker si `input.click()` corre de forma SÍNCRONA
+    dentro del gesto del usuario: por eso quien llame NO debe hacer `await`
+    antes de invocar esta función. El input se agrega al DOM (algunos WebKit no
+    disparan `change` en inputs desprendidos) y se limpia al terminar. */
 function elegirArchivoPDF() {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf';
+    input.style.display = 'none';
+    const limpiar = () => { input.remove(); };
     input.addEventListener('change', () => {
       const file = input.files && input.files[0];
-      if (!file) { resolve(null); return; }
-      if (file.size > MAX_PDF_BYTES) { resolve({ error: 'El PDF es muy grande (máx 15 MB).' }); return; }
+      if (!file) { limpiar(); resolve(null); return; }
+      if (file.size > MAX_PDF_BYTES) { limpiar(); resolve({ error: 'El PDF es muy grande (máx 15 MB).' }); return; }
       const reader = new FileReader();
       reader.onload = () => {
+        limpiar();
         const m = /^data:([^;]+);base64,(.*)$/.exec(reader.result || '');
         resolve(m ? { mediaType: m[1], base64: m[2] } : { error: 'No se pudo leer el PDF.' });
       };
-      reader.onerror = () => resolve({ error: 'No se pudo leer el PDF.' });
+      reader.onerror = () => { limpiar(); resolve({ error: 'No se pudo leer el PDF.' }); };
       reader.readAsDataURL(file);
     }, { once: true });
+    document.body.appendChild(input);
     input.click();
   });
 }
@@ -82,6 +91,10 @@ export async function abrirCuentas({ onSaved } = {}) {
   let movimientos = [];
   let meta = {};
   let ctaDefault = null;
+  // Se guardan en memoria para poder abrir el file picker del extracto SIN
+  // ningún await previo (requisito de iOS Safari; ver elegirArchivoPDF).
+  let apiKey = '';
+  let modeloExtractos;
 
   async function recargar() {
     const [cfg, movs] = await Promise.all([getConfig(), getAll('movimientos')]);
@@ -89,6 +102,8 @@ export async function abrirCuentas({ onSaved } = {}) {
     meta = (cfg.cuentasMeta && typeof cfg.cuentasMeta === 'object') ? cfg.cuentasMeta : {};
     ctaDefault = cfg.cuentaDefault || null;
     movimientos = movs;
+    apiKey = typeof cfg.apiKey === 'string' ? cfg.apiKey : '';
+    modeloExtractos = cfg.modelos && cfg.modelos.extractos;
   }
 
   try {
@@ -265,8 +280,9 @@ export async function abrirCuentas({ onSaved } = {}) {
 
         // Leer el extracto (PDF) con IA → prellena corte/límite/tasa para revisar.
         panel.querySelector('[data-act="subir-extracto"]')?.addEventListener('click', async () => {
-          const cfg = await getConfig();
-          const apiKey = cfg.apiKey;
+          // iOS Safari: el file picker solo abre si input.click() corre SÍNCRONO
+          // dentro del gesto del tap, así que NO hacemos ningún await antes de
+          // elegir el archivo (la clave y el modelo ya están cargados en memoria).
           if (!apiKey || !apiKey.trim()) {
             toast('Configura tu clave de Anthropic en Perfil → Clave de Anthropic');
             return;
@@ -282,7 +298,7 @@ export async function abrirCuentas({ onSaved } = {}) {
 
           const r = await analizarExtracto({
             base64: picked.base64, mediaType: picked.mediaType, apiKey,
-            modelo: cfg.modelos && cfg.modelos.extractos,
+            modelo: modeloExtractos,
           });
 
           if (btn) { btn.disabled = false; btn.innerHTML = `${IC_PDF}<span>Leer del extracto (PDF)</span>`; }
