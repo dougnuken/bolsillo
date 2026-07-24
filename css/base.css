@@ -64,6 +64,22 @@ button {
   border: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* mata el zoom por doble-tap de iOS/WebKit (conserva pinch-zoom).
+     Crítico en el teclado numérico: toques rápidos se leían como doble-tap. */
+  touch-action: manipulation;
+}
+
+/* Misma red anti-doble-tap-zoom para controles no-button y a nivel raíz */
+html,
+a,
+label,
+input,
+select,
+textarea,
+[role="switch"],
+[role="button"],
+[tabindex] {
+  touch-action: manipulation;
 }
 
 a { color: var(--accent); text-decoration: none; }
