@@ -213,6 +213,7 @@
   border-radius: var(--r-full);
   background: var(--accent);
   box-shadow: 0 0 12px var(--accent-glow);
+  transition: width var(--dur) var(--ease), height var(--dur) var(--ease);
 }
 
 /* FAB central elevado */
@@ -247,21 +248,33 @@
 .tabbar--4 .tab svg { width: 22px; height: 22px; }
 .tabbar--4 .tab__label { white-space: nowrap; }
 
-/* --- Nav colapsable al hacer scroll: oculta labels y se hace más angosto,
-   dejando más espacio para ver información. Vuelve a expandirse al subir. --- */
-.tabbar { transition: height var(--dur) var(--ease); }
+/* --- Nav colapsable al hacer scroll: al bajar se resume — más baja, MÁS
+   ANGOSTA (los iconos se acercan) y con la barrita naranja encogida. Vuelve
+   a expandirse al subir. Animación sutil pero premium. --- */
+.tabbar {
+  transition: height var(--dur) var(--ease),
+              left var(--dur) var(--ease),
+              right var(--dur) var(--ease);
+}
 .tab__label {
   max-height: 1.4em;
   overflow: hidden;
   transition: opacity var(--dur-fast) var(--ease), max-height var(--dur) var(--ease);
 }
-body.nav-min .tabbar--4 { height: var(--nav-h-min); }
+body.nav-min .tabbar--4 {
+  height: var(--nav-h-min);
+  /* se angosta bastante desde los lados → los iconos se juntan hacia el centro */
+  left: max(18%, env(safe-area-inset-left));
+  right: max(18%, env(safe-area-inset-right));
+}
 body.nav-min .tab__label { opacity: 0; max-height: 0; }
+/* la barrita naranja del activo también encoge */
+body.nav-min .tab.is-active::before { width: 13px; height: 2px; }
 body.nav-min .fab {
   bottom: calc(env(safe-area-inset-bottom) + var(--sp-4) + var(--nav-h-min) - 30px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .tabbar, .tab__label, .fab { transition: none; }
+  .tabbar, .tab__label, .fab, .tab.is-active::before { transition: none; }
 }
 
 /* Campana de notificaciones: ícono flotando (sin círculo gris) + badge redondo */
@@ -485,7 +498,7 @@ body.nav-min .fab {
    Sheet Registrar — scroll interno + volver
    ============================================================ */
 .sheet {
-  max-height: 92dvh;
+  max-height: 95dvh;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

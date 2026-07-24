@@ -425,15 +425,21 @@ function renderForm() {
 /* ============================================================
    Paint + binds
    ============================================================ */
+let lastPaintedScreen = null;
 function paint() {
   if (!sheetRef) return;
-  sheetRef.scrollTop = 0;
+  // Preserva el scroll en repintados de la MISMA pantalla (p. ej. tocar el
+  // switch o un chip abajo no debe saltar arriba). Solo reinicia al cambiar.
+  const mismaPantalla = STATE.screen === lastPaintedScreen;
+  const prevScroll = sheetRef.scrollTop;
   sheetRef.innerHTML = STATE.screen === 'form' ? renderForm()
     : STATE.screen === 'foto-cargando' ? renderCargando()
       : STATE.screen === 'voz' ? renderVoz()
         : STATE.screen === 'voz-cargando' ? renderVozCargando()
           : renderMetodos();
   bind();
+  sheetRef.scrollTop = mismaPantalla ? prevScroll : 0;
+  lastPaintedScreen = STATE.screen;
   if (STATE.screen === 'form' && STATE.modo === 'texto') {
     const ti = sheetRef.querySelector('#reg-texto');
     if (ti) setTimeout(() => ti.focus(), 60);
