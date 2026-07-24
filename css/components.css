@@ -1128,44 +1128,6 @@
 .mov-error { padding: var(--sp-6); color: var(--semaforo-rojo); font-size: var(--fs-sm); text-align: center; }
 
 /* ============================================================
-   Banner de recurrentes por confirmar
-   ============================================================ */
-.rec-banner {
-  position: absolute;
-  left: max(var(--sp-4), env(safe-area-inset-left));
-  right: max(var(--sp-4), env(safe-area-inset-right));
-  /* Por ENCIMA del FAB (que cabalga la barra): su corona queda a
-     (nav-h + sp-4 + 30px); sumamos sp-4 de aire para no pisarlo. */
-  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4) + 30px + var(--sp-4));
-  z-index: var(--z-toast);
-  display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap;
-  padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--r-md);
-  /* Vidrio OSCURO de alto contraste: el aviso salta a la vista. */
-  background: color-mix(in srgb, var(--text-1) 82%, transparent);
-  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.3);
-  backdrop-filter: blur(var(--blur-strong)) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: var(--sh-md), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-}
-.rec-banner.is-show { opacity: 1; transform: none; }
-/* coral resalta sobre el vidrio oscuro; el texto va claro (AA). */
-.rec-banner__ic { color: var(--accent-light); flex: 0 0 auto; }
-.rec-banner__ic svg { width: 20px; height: 20px; }
-.rec-banner__msg { flex: 1 1 140px; font-size: var(--fs-sm); color: var(--text-inverse); }
-.rec-banner__actions { display: flex; gap: var(--sp-2); flex: 0 0 auto; }
-/* "Ahora no" (ghost) legible sobre oscuro: pastilla translúcida clara. */
-.rec-banner .btn--ghost {
-  background: rgba(255, 255, 255, 0.10);
-  color: var(--text-inverse);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-.rec-banner .btn--ghost:hover { background: rgba(255, 255, 255, 0.18); }
-
-/* ============================================================
    Registrar — segmented Gasto/Ingreso + modo Ingreso
    ============================================================ */
 .seg {
