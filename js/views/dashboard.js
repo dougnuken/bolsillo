@@ -45,7 +45,6 @@ function greetHTML() {
   const mes = CLASE_MES[hoy.getMonth()];
   return `
     <header class="view-greet">
-      <p class="view-greet__eyebrow">Tu bolsillo · ${mes}.</p>
       <h1 class="view-greet__title">Hoy</h1>
     </header>`;
 }
