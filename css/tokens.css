@@ -57,7 +57,7 @@
   --accent-light: #FF7A52;      /* brillo del FAB (highlight superior) */
   --accent-soft: rgba(255, 90, 54, 0.12);
   --accent-glow: rgba(255, 90, 54, 0.30);
-  --accent-grad: #FF5A36;       /* sólido: botones (.btn--primary / orb) SIN degradado */
+  --accent-grad: #FF5A36;       /* sólido: SOLO el orbe del asesor (.advisor-orb). Los .btn--primary usan --fab-grad. */
   /* FAB: degradado sutil aprobado por Doug (Liquid Glass claro) */
   --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
 

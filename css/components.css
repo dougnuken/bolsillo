@@ -58,7 +58,8 @@
 .btn svg { width: 19px; height: 19px; }
 
 .btn--primary {
-  background: var(--accent-grad);
+  /* CTA primario = mismo vidrio coral degradado del FAB (identidad unificada) */
+  background: var(--fab-grad);
   color: var(--text-inverse);
   /* etiqueta blanca sobre coral: >=16px/700 (AA-large) */
   font-size: var(--fs-body);
@@ -66,7 +67,8 @@
   letter-spacing: -0.01em;
   box-shadow: 0 12px 24px -10px var(--accent-glow);
 }
-.btn--primary:active { background: var(--accent-deep); }
+/* press: conserva el degradado, solo lo atenúa un punto (sin salto a plano) */
+.btn--primary:active { filter: brightness(0.96); }
 /* hover NO oscurece: sube el brillo */
 .btn--primary:hover { filter: brightness(1.06); }
 
