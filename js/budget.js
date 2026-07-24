@@ -486,3 +486,88 @@ export function resumenPersonas({ movimientos = [], vigilados = [], netoDelMes =
   filas.sort((a, b) => b.gastado - a.gastado);
   return Object.freeze(filas);
 }
+
+/* ============================================================
+   Tarjeta de crédito — resumen del ciclo (corte / pago)
+   ============================================================ */
+
+/** Día efectivo del mes (clamp a [1, último día del mes]). PURA. */
+function diaClamp(anio, mes, dia) {
+  const ultimo = new Date(anio, mes, 0).getDate(); // mes 1-based → último día
+  return Math.min(Math.max(1, Number(dia) || 1), ultimo);
+}
+
+/** ISO 'YYYY-MM-DD' desde año, mes (1-based) y día. PURA. */
+function isoDe(anio, mes, dia) {
+  return `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
+/** Días entre dos ISO 'YYYY-MM-DD' (b − a), en UTC para evitar TZ. PURA. */
+function diasEntreISO(aISO, bISO) {
+  const a = Date.UTC(+aISO.slice(0, 4), +aISO.slice(5, 7) - 1, +aISO.slice(8, 10));
+  const b = Date.UTC(+bISO.slice(0, 4), +bISO.slice(5, 7) - 1, +bISO.slice(8, 10));
+  return Math.round((b - a) / 86400000);
+}
+
+/**
+ * Resumen del ciclo de una tarjeta de crédito. PURA y de solo lectura.
+ * - acumulado: cargos del ciclo actual = compras de CONTADO en la ventana
+ *   (corte anterior, próximo corte] + la cuota del mes del corte para compras
+ *   a cuotas.
+ * - corteISO / pagoISO: próximo corte y su fecha límite de pago.
+ * - cuotasActivas / cuotasMensual: planes de cuotas vivos este mes en la tarjeta.
+ *
+ * @param {object} args
+ * @param {object[]}    args.movimientos
+ * @param {string}      args.cuenta      nombre de la tarjeta
+ * @param {number}      args.corteDia    día del mes del corte (1..31)
+ * @param {number}      [args.limiteDia] día límite de pago (1..31)
+ * @param {Date|string} args.hoy
+ * @returns {Readonly<object>|null} null si no hay día de corte válido
+ */
+export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, hoy } = {}) {
+  if (!Number.isInteger(corteDia) || corteDia < 1 || corteDia > 31) return null;
+  const { anio, mes, dia } = partes(hoy);
+  const hoyISO = isoDe(anio, mes, dia);
+
+  // Próximo corte: este mes si aún no pasó; si ya pasó, el mes siguiente.
+  const corteEsteMes = diaClamp(anio, mes, corteDia);
+  let ncA = anio, ncM = mes;
+  if (dia > corteEsteMes) { ncM += 1; if (ncM > 12) { ncM = 1; ncA += 1; } }
+  const corteISO = isoDe(ncA, ncM, diaClamp(ncA, ncM, corteDia));
+
+  // Corte anterior: inicio del ciclo actual (el día después de él cuenta ya adentro).
+  let pcA = ncA, pcM = ncM - 1; if (pcM < 1) { pcM = 12; pcA -= 1; }
+  const pcISO = isoDe(pcA, pcM, diaClamp(pcA, pcM, corteDia));
+
+  // Pago: día límite en el mes del corte (o el siguiente si límite < corte).
+  const lim = Number.isInteger(limiteDia) && limiteDia >= 1 && limiteDia <= 31 ? limiteDia : null;
+  let pagoISO = null;
+  if (lim != null) {
+    let pgA = ncA, pgM = ncM;
+    if (lim < corteDia) { pgM += 1; if (pgM > 12) { pgM = 1; pgA += 1; } }
+    pagoISO = isoDe(pgA, pgM, diaClamp(pgA, pgM, lim));
+  }
+
+  let acumulado = 0, cuotasActivas = 0, cuotasMensual = 0;
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'gasto' || m.cuenta !== cuenta) continue;
+    const n = Number.isInteger(m.cuotas) && m.cuotas > 1 ? m.cuotas : 1;
+    if (n > 1) {
+      acumulado += porcionEnMes(m, ncA, ncM); // la cuota que cae en el mes del corte
+      if (porcionEnMes(m, anio, mes) > 0) { cuotasActivas += 1; cuotasMensual += Math.round(m.monto / n); }
+    } else if (typeof m.fecha === 'string' && m.fecha > pcISO && m.fecha <= corteISO) {
+      acumulado += Number.isFinite(m.monto) ? m.monto : 0; // contado dentro de la ventana del ciclo
+    }
+  }
+
+  return Object.freeze({
+    acumulado: redondear(acumulado),
+    corteISO,
+    pagoISO,
+    diasParaCorte: diasEntreISO(hoyISO, corteISO),
+    diasParaPago: pagoISO ? diasEntreISO(hoyISO, pagoISO) : null,
+    cuotasActivas,
+    cuotasMensual: redondear(cuotasMensual),
+  });
+}

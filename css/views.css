@@ -705,6 +705,46 @@
 .cfg-row__del { flex: 0 0 auto; color: var(--text-3); }
 .cfg-row__del:hover { color: var(--semaforo-rojo); background: var(--semaforo-rojo-bg); }
 
+/* Ficha de cuenta: sub-encabezado + formulario del ciclo de la tarjeta */
+.cfg-subhead {
+  margin: var(--sp-6) var(--sp-1) var(--sp-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.cfg-form { padding: var(--sp-2) var(--sp-1) 0; }
+.cfg-field { margin-top: var(--sp-3); }
+.cfg-field:first-child { margin-top: 0; }
+.cfg-cta { margin-top: var(--sp-4); }
+.cfg-danger { margin-top: var(--sp-6); }
+
+/* Resumen del ciclo de la tarjeta (este ciclo llevas $X, se paga el día Y) */
+.tj-res {
+  margin-top: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--accent-soft);
+  border: 1px solid var(--line-accent);
+}
+.tj-res__lbl {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.tj-res__monto {
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  margin-top: 2px;
+}
+.tj-res__meta { font-size: var(--fs-sm); color: var(--text-2); margin-top: var(--sp-2); line-height: 1.5; }
+.tj-res__cuotas { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--accent); margin-top: var(--sp-2); }
+
 .cfg-empty {
   padding: var(--sp-5) var(--sp-4);
   font-size: var(--fs-sm);
