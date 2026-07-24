@@ -8,7 +8,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  construirPeticionExtracto, normalizarExtracto, analizarExtracto,
+  construirPeticionExtracto, construirPeticionExtractoImagenes,
+  normalizarExtracto, analizarExtracto, analizarExtractoImagenes,
   TOOL_EXTRACTO, MODELO_EXTRACTO_DEFAULT,
 } from '../js/extracto-pdf.js';
 import { tasaEAaMV } from '../js/model.js';
@@ -29,6 +30,22 @@ test('arma el body con document PDF + tool_use forzado', () => {
 test('respeta el modelo pasado', () => {
   const body = construirPeticionExtracto({ base64: 'x', modelo: 'claude-otro' });
   assert.equal(body.model, 'claude-otro');
+});
+
+/* ---- construirPeticionExtractoImagenes (camino real: PDF descifrado) ---- */
+
+test('arma el body con IMÁGENES + tool_use forzado', () => {
+  const body = construirPeticionExtractoImagenes({
+    imagenes: [{ base64: 'AAA', mediaType: 'image/jpeg' }, { base64: 'BBB' }],
+  });
+  assert.equal(body.model, MODELO_EXTRACTO_DEFAULT);
+  assert.equal(body.tool_choice.name, TOOL_EXTRACTO.name);
+  const imgs = body.messages[0].content.filter((b) => b.type === 'image');
+  assert.equal(imgs.length, 2);
+  assert.equal(imgs[0].source.media_type, 'image/jpeg');
+  assert.equal(imgs[0].source.data, 'AAA');
+  assert.equal(imgs[1].source.media_type, 'image/jpeg'); // default
+  assert.ok(body.messages[0].content.some((b) => b.type === 'text'));
 });
 
 /* ---- normalizarExtracto ---- */
@@ -111,4 +128,39 @@ test('documento que no es extracto → sin-datos', async () => {
 test('sin bloque tool_use → error', async () => {
   const r = await analizarExtracto({ base64: 'x', apiKey: 'k' }, { fetchImpl: async () => ({ status: 200, ok: true, json: async () => ({ content: [{ type: 'text', text: 'hola' }] }) }) });
   assert.equal(r.estado, 'error');
+});
+
+/* ---- analizarExtractoImagenes (fetch inyectado) ---- */
+
+test('imágenes sin clave → sin-clave (no toca la red)', async () => {
+  let llamado = false;
+  const r = await analizarExtractoImagenes(
+    { imagenes: [{ base64: 'AAA' }], apiKey: '' },
+    { fetchImpl: async () => { llamado = true; return {}; } },
+  );
+  assert.equal(r.estado, 'sin-clave');
+  assert.equal(llamado, false);
+});
+
+test('imágenes vacías → error (no toca la red)', async () => {
+  let llamado = false;
+  const r = await analizarExtractoImagenes(
+    { imagenes: [], apiKey: 'k' },
+    { fetchImpl: async () => { llamado = true; return {}; } },
+  );
+  assert.equal(r.estado, 'error');
+  assert.equal(llamado, false);
+});
+
+test('imágenes camino feliz: manda la clave en x-api-key y normaliza', async () => {
+  let headersVistos = null;
+  const fetchImpl = async (url, opts) => {
+    headersVistos = opts.headers;
+    return { status: 200, ok: true, json: async () => ({ content: [{ type: 'tool_use', input: { corte: 8, limite: 28, encontrado: true } }] }) };
+  };
+  const r = await analizarExtractoImagenes({ imagenes: [{ base64: 'AAA' }], apiKey: 'sk-secreta' }, { fetchImpl });
+  assert.equal(r.estado, 'ok');
+  assert.equal(r.corte, 8);
+  assert.equal(r.limite, 28);
+  assert.equal(headersVistos['x-api-key'], 'sk-secreta');
 });

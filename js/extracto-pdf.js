@@ -70,36 +70,56 @@ export const TOOL_EXTRACTO = Object.freeze({
   },
 });
 
-/**
- * Construye el cuerpo de /v1/messages para leer un extracto en PDF. PURA.
- * @param {{base64:string, mediaType?:string, modelo?:string}} p
- */
-export function construirPeticionExtracto({ base64, mediaType = 'application/pdf', modelo }) {
-  const sistema = [
-    'Eres un lector de extractos (estados de cuenta) de tarjetas de crédito de Colombia.',
-    'Lee el documento y llama SIEMPRE a la herramienta registrar_extracto con lo que encuentres.',
-    'FECHA DE CORTE (o "fecha de facturación"): devuelve solo el DÍA del mes (1 a 31) en "corte".',
-    'FECHA LÍMITE DE PAGO (o "fecha máxima/límite de pago", "paga hasta"): devuelve solo el DÍA (1 a 31) en "limite".',
-    'TASA de interés: devuelve el número en "tasa". Si el extracto la reporta como Efectiva Anual (E.A.) pon esAnual=true; si es mensual (M.V.) pon esAnual=false.',
-    'TOTAL: el "pago total" o "total a pagar" del período, entero en pesos COP.',
-    'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco").',
-    'Si el documento NO es un extracto de tarjeta, pon encontrado=false.',
-  ].join('\n');
+/* Instrucciones del sistema (compartidas por el camino documento y el de
+   imágenes: "el documento" cubre ambas entradas). */
+export const SISTEMA_EXTRACTO = [
+  'Eres un lector de extractos (estados de cuenta) de tarjetas de crédito de Colombia.',
+  'Lee el documento y llama SIEMPRE a la herramienta registrar_extracto con lo que encuentres.',
+  'FECHA DE CORTE (o "fecha de facturación"): devuelve solo el DÍA del mes (1 a 31) en "corte".',
+  'FECHA LÍMITE DE PAGO (o "fecha máxima/límite de pago", "paga hasta"): devuelve solo el DÍA (1 a 31) en "limite".',
+  'TASA de interés: devuelve el número en "tasa". Si el extracto la reporta como Efectiva Anual (E.A.) pon esAnual=true; si es mensual (M.V.) pon esAnual=false.',
+  'TOTAL: el "pago total" o "total a pagar" del período, entero en pesos COP.',
+  'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco").',
+  'Si el documento NO es un extracto de tarjeta, pon encontrado=false.',
+].join('\n');
 
+const TEXTO_INSTRUCCION = 'Extrae el ciclo de esta tarjeta con la herramienta.';
+
+function cuerpoBase(modelo, content) {
   return {
     model: modelo || MODELO_EXTRACTO_DEFAULT,
     max_tokens: 500,
-    system: sistema,
+    system: SISTEMA_EXTRACTO,
     tools: [TOOL_EXTRACTO],
     tool_choice: { type: 'tool', name: TOOL_EXTRACTO.name },
-    messages: [{
-      role: 'user',
-      content: [
-        { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64 } },
-        { type: 'text', text: 'Extrae el ciclo de esta tarjeta con la herramienta.' },
-      ],
-    }],
+    messages: [{ role: 'user', content }],
   };
+}
+
+/**
+ * Construye el cuerpo de /v1/messages para leer un extracto como PDF crudo
+ * (bloque `document`). PURA. Solo sirve para PDFs SIN cifrar.
+ * @param {{base64:string, mediaType?:string, modelo?:string}} p
+ */
+export function construirPeticionExtracto({ base64, mediaType = 'application/pdf', modelo }) {
+  return cuerpoBase(modelo, [
+    { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64 } },
+    { type: 'text', text: TEXTO_INSTRUCCION },
+  ]);
+}
+
+/**
+ * Construye el cuerpo con IMÁGENES (páginas del PDF ya rendidas y descifradas
+ * por pdf.js). PURA. Es el camino real: soporta extractos protegidos con clave.
+ * @param {{imagenes:Array<{base64:string, mediaType?:string}>, modelo?:string}} p
+ */
+export function construirPeticionExtractoImagenes({ imagenes = [], modelo }) {
+  const content = imagenes.map((im) => ({
+    type: 'image',
+    source: { type: 'base64', media_type: (im && im.mediaType) || 'image/jpeg', data: im && im.base64 },
+  }));
+  content.push({ type: 'text', text: TEXTO_INSTRUCCION });
+  return cuerpoBase(modelo, content);
 }
 
 /** Día del mes válido (1..31) o null. PURA. */
@@ -139,26 +159,11 @@ export function normalizarExtracto(input) {
 }
 
 /**
- * Llama a Claude (tool-use forzado) para leer un extracto en PDF. IMPURA
- * (red). `fetchImpl` inyectable. Espeja el manejo de errores de analizarRecibo.
- *
- * @param {{base64:string, mediaType?:string, apiKey:string, modelo?:string}} p
- * @param {{fetchImpl?: typeof fetch}} [opts]
- * @returns {Promise<{estado:'ok'|'sin-clave'|'sin-datos'|'invalida'|'red'|'error', mensaje?:string, corte?, limite?, tasa?, total?, banco?, encontrado?}>}
+ * Envía un cuerpo ya armado a /v1/messages y normaliza la respuesta a los
+ * estados públicos. IMPURA (red). PRIVADA: la comparten los caminos documento
+ * e imágenes. La clave viaja SOLO en x-api-key.
  */
-export async function analizarExtracto({ base64, mediaType, apiKey, modelo }, { fetchImpl } = {}) {
-  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
-  if (key === '') {
-    return { estado: 'sin-clave', mensaje: 'Configura tu clave de Anthropic en Perfil → Clave de Anthropic.' };
-  }
-  if (typeof base64 !== 'string' || base64 === '') {
-    return { estado: 'error', mensaje: 'No se pudo leer el PDF.' };
-  }
-  const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
-  if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
-
-  const body = construirPeticionExtracto({ base64, mediaType, modelo });
-
+async function enviarExtracto(body, key, doFetch) {
   let res;
   try {
     res = await doFetch(ANTHROPIC_MESSAGES_URL, {
@@ -193,4 +198,49 @@ export async function analizarExtracto({ base64, mediaType, apiKey, modelo }, { 
     return { estado: 'sin-datos', mensaje: 'No parece un extracto de tarjeta. Ingresa el ciclo a mano.' };
   }
   return { estado: 'ok', ...datos };
+}
+
+/**
+ * Lee un extracto enviando el PDF crudo (bloque `document`). Solo sirve para
+ * PDFs SIN cifrar. IMPURA (red). `fetchImpl` inyectable.
+ *
+ * @param {{base64:string, mediaType?:string, apiKey:string, modelo?:string}} p
+ * @param {{fetchImpl?: typeof fetch}} [opts]
+ * @returns {Promise<{estado:'ok'|'sin-clave'|'sin-datos'|'invalida'|'red'|'error', mensaje?:string, corte?, limite?, tasa?, total?, banco?, encontrado?}>}
+ */
+export async function analizarExtracto({ base64, mediaType, apiKey, modelo }, { fetchImpl } = {}) {
+  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
+  if (key === '') {
+    return { estado: 'sin-clave', mensaje: 'Configura tu clave de Anthropic en Perfil → Clave de Anthropic.' };
+  }
+  if (typeof base64 !== 'string' || base64 === '') {
+    return { estado: 'error', mensaje: 'No se pudo leer el PDF.' };
+  }
+  const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+  if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
+
+  return enviarExtracto(construirPeticionExtracto({ base64, mediaType, modelo }), key, doFetch);
+}
+
+/**
+ * Lee un extracto a partir de IMÁGENES (páginas del PDF ya descifradas y
+ * rendidas por pdf.js). Este es el camino real de la app: soporta extractos
+ * protegidos con contraseña. IMPURA (red). `fetchImpl` inyectable.
+ *
+ * @param {{imagenes:Array<{base64:string, mediaType?:string}>, apiKey:string, modelo?:string}} p
+ * @param {{fetchImpl?: typeof fetch}} [opts]
+ * @returns {Promise<{estado:'ok'|'sin-clave'|'sin-datos'|'invalida'|'red'|'error', mensaje?:string, corte?, limite?, tasa?, total?, banco?, encontrado?}>}
+ */
+export async function analizarExtractoImagenes({ imagenes, apiKey, modelo }, { fetchImpl } = {}) {
+  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
+  if (key === '') {
+    return { estado: 'sin-clave', mensaje: 'Configura tu clave de Anthropic en Perfil → Clave de Anthropic.' };
+  }
+  if (!Array.isArray(imagenes) || imagenes.length === 0) {
+    return { estado: 'error', mensaje: 'No se pudo leer el PDF.' };
+  }
+  const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+  if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
+
+  return enviarExtracto(construirPeticionExtractoImagenes({ imagenes, modelo }), key, doFetch);
 }

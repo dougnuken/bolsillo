@@ -10,12 +10,13 @@
    ============================================================ */
 
 import { getConfig, saveConfig, getAll } from '../db.js';
-import { confirmar } from '../overlay.js';
+import { confirmar, hoja } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
 import { formatCOP } from '../money.js';
 import { resumenTarjeta } from '../budget.js';
-import { analizarExtracto } from '../extracto-pdf.js';
+import { analizarExtractoImagenes } from '../extracto-pdf.js';
+import { abrirPDF, esErrorClave, claveIncorrecta, paginasAImagenes } from '../pdf-render.js';
 import {
   hojaNav, cabecera, bindCabecera, vacioCfg, botonAgregar, leerDia, IC,
 } from './cfg-sheet.js';
@@ -24,11 +25,16 @@ const CHEV =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 const IC_PDF =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8.5 13h1a1.2 1.2 0 0 1 0 2.4h-1V13Zm0 4.5V13"/></svg>';
+const ICON_X =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
 
 const MAX_PDF_BYTES = 15 * 1024 * 1024; // 15 MB
 
-/** Abre el selector de archivos, lee un PDF y devuelve {base64, mediaType}
-    o {error} o null (cancelado).
+/* Señal de "el usuario canceló el prompt de contraseña del PDF". */
+const CANCELADO = Symbol('cancelado');
+
+/** Abre el selector de archivos, lee un PDF y devuelve {bytes:ArrayBuffer}
+    o {error} o null (cancelado). Los bytes van a pdf.js (descifrado + render).
 
     iOS Safari solo abre el picker si `input.click()` corre de forma SÍNCRONA
     dentro del gesto del usuario: por eso quien llame NO debe hacer `await`
@@ -46,17 +52,62 @@ function elegirArchivoPDF() {
       if (!file) { limpiar(); resolve(null); return; }
       if (file.size > MAX_PDF_BYTES) { limpiar(); resolve({ error: 'El PDF es muy grande (máx 15 MB).' }); return; }
       const reader = new FileReader();
-      reader.onload = () => {
-        limpiar();
-        const m = /^data:([^;]+);base64,(.*)$/.exec(reader.result || '');
-        resolve(m ? { mediaType: m[1], base64: m[2] } : { error: 'No se pudo leer el PDF.' });
-      };
+      reader.onload = () => { limpiar(); resolve({ bytes: reader.result }); }; // ArrayBuffer
       reader.onerror = () => { limpiar(); resolve({ error: 'No se pudo leer el PDF.' }); };
-      reader.readAsDataURL(file);
+      reader.readAsArrayBuffer(file);
     }, { once: true });
     document.body.appendChild(input);
     input.click();
   });
+}
+
+/** Pide la contraseña del PDF (bottom-sheet). Devuelve la clave o null (cancelar).
+    La clave se usa SOLO local (pdf.js): nunca se guarda ni se envía a ningún lado. */
+function pedirClavePDF(reintento) {
+  const html = `
+    <div class="ov-grip" aria-hidden="true"></div>
+    <button type="button" class="icon-btn ov-close" data-c="cancel" aria-label="Cerrar">${ICON_X}</button>
+    <h3 class="ov-title ov-title--menu">Extracto protegido</h3>
+    <p class="ov-text">${reintento
+      ? 'Contraseña incorrecta. Inténtalo de nuevo.'
+      : 'Este PDF tiene contraseña. En los bancos suele ser tu número de cédula (sin puntos).'}</p>
+    <label class="field">
+      <span class="field__label">Contraseña del PDF</span>
+      <input class="field__input" id="pdf-clave" type="text" inputmode="numeric" autocomplete="off"
+        autocapitalize="off" spellcheck="false" placeholder="Ej. tu cédula" />
+    </label>
+    <p class="cfg-hint">Se usa solo en tu teléfono para abrir el PDF: no se guarda ni se envía a ningún lado.</p>
+    <div class="ov-actions">
+      <button type="button" class="btn btn--ghost btn--block" data-c="cancel2">Cancelar</button>
+      <button type="button" class="btn btn--primary btn--block" data-c="ok">Leer</button>
+    </div>`;
+  return hoja(html, (panel, cerrar) => {
+    const input = panel.querySelector('#pdf-clave');
+    requestAnimationFrame(() => input && input.focus());
+    const ok = () => cerrar((input.value || '').trim() || null);
+    panel.querySelector('[data-c="ok"]').addEventListener('click', ok);
+    panel.querySelector('[data-c="cancel"]').addEventListener('click', () => cerrar(null));
+    panel.querySelector('[data-c="cancel2"]').addEventListener('click', () => cerrar(null));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ok(); } });
+  });
+}
+
+/** Abre el PDF descifrándolo si hace falta (pide la clave en bucle hasta abrir
+    o cancelar). Lanza CANCELADO si el usuario cancela, o el error original si
+    no es de contraseña. */
+async function abrirConClave(bytes) {
+  try { return await abrirPDF(bytes); }            // 1er intento sin clave
+  catch (e) { if (!esErrorClave(e)) throw e; }     // no está cifrado → error real
+  let reintento = false;
+  for (;;) {
+    const clave = await pedirClavePDF(reintento);
+    if (clave == null) throw CANCELADO;            // canceló (o tap-fuera / Escape)
+    try { return await abrirPDF(bytes, clave); }
+    catch (e) {
+      if (claveIncorrecta(e)) { reintento = true; continue; }
+      throw e;
+    }
+  }
 }
 
 /** Formatea 'YYYY-MM-DD' como '5 ago'. */
@@ -279,6 +330,8 @@ export async function abrirCuentas({ onSaved } = {}) {
         });
 
         // Leer el extracto (PDF) con IA → prellena corte/límite/tasa para revisar.
+        // Los extractos colombianos suelen venir CIFRADOS (clave = cédula): se
+        // descifran y rinden a imagen con pdf.js (local) y se leen por visión.
         panel.querySelector('[data-act="subir-extracto"]')?.addEventListener('click', async () => {
           // iOS Safari: el file picker solo abre si input.click() corre SÍNCRONO
           // dentro del gesto del tap, así que NO hacemos ningún await antes de
@@ -293,18 +346,36 @@ export async function abrirCuentas({ onSaved } = {}) {
 
           const btn = panel.querySelector('[data-act="subir-extracto"]');
           const nota = panel.querySelector('#tj-extracto-nota');
-          if (btn) { btn.disabled = true; btn.innerHTML = '<span>Leyendo extracto…</span>'; }
-          if (nota) { nota.textContent = ''; nota.classList.remove('cfg-hint--err'); }
+          const setBusy = (txt) => { if (btn) { btn.disabled = true; btn.innerHTML = `<span>${esc(txt)}</span>`; } };
+          const setIdle = () => { if (btn) { btn.disabled = false; btn.innerHTML = `${IC_PDF}<span>Leer del extracto (PDF)</span>`; } };
+          const setNota = (txt, err) => { if (nota) { nota.textContent = txt; nota.classList.toggle('cfg-hint--err', !!err); } };
+          setNota('');
+          setBusy('Abriendo PDF…');
 
-          const r = await analizarExtracto({
-            base64: picked.base64, mediaType: picked.mediaType, apiKey,
-            modelo: modeloExtractos,
-          });
+          // 1) abrir/descifrar (pide la contraseña si el PDF está protegido)
+          let pdfDoc;
+          try {
+            pdfDoc = await abrirConClave(picked.bytes);
+          } catch (e) {
+            setIdle();
+            if (e === CANCELADO) return;       // el usuario canceló el prompt de clave
+            setNota('No se pudo abrir el PDF. ¿El archivo es correcto?', true);
+            return;
+          }
 
-          if (btn) { btn.disabled = false; btn.innerHTML = `${IC_PDF}<span>Leer del extracto (PDF)</span>`; }
+          // 2) rinde las páginas a imagen
+          setBusy('Leyendo extracto…');
+          let imagenes = [];
+          try { imagenes = await paginasAImagenes(pdfDoc); }
+          catch { setIdle(); setNota('No se pudo procesar el PDF.', true); return; }
+          if (!imagenes.length) { setIdle(); setNota('El PDF no tiene páginas legibles.', true); return; }
+
+          // 3) extrae el ciclo con IA (visión)
+          const r = await analizarExtractoImagenes({ imagenes, apiKey, modelo: modeloExtractos });
+          setIdle();
 
           if (r.estado !== 'ok') {
-            if (nota) { nota.textContent = r.mensaje || 'No pude leer el extracto. Ingrésalo a mano.'; nota.classList.add('cfg-hint--err'); }
+            setNota(r.mensaje || 'No pude leer el extracto. Ingrésalo a mano.', true);
             return;
           }
           const setV = (sel, v) => { const el = panel.querySelector(sel); if (el && v != null) el.value = v; };
@@ -314,7 +385,7 @@ export async function abrirCuentas({ onSaved } = {}) {
           const partes = [];
           if (r.banco) partes.push(r.banco);
           if (r.total != null) partes.push(`total ${formatCOP(r.total)}`);
-          if (nota) nota.textContent = `Leído del extracto${partes.length ? ' · ' + partes.join(' · ') : ''}. Revisa y guarda.`;
+          setNota(`Leído del extracto${partes.length ? ' · ' + partes.join(' · ') : ''}. Revisa y guarda.`, false);
           toast('Extracto leído — revisa los datos');
         });
 
