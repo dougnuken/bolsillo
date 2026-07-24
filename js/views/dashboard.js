@@ -184,6 +184,7 @@ function categoriasHTML(e) {
   const filas = top.map((c) => {
     const cat = categoriaPorId(c.categoriaId);
     const w = Math.max(4, Math.round((c.total / maxTotal) * 100));
+    // c.pct = parte de esta categoría dentro del gasto VARIABLE del mes.
     return `
       <div class="catbar ${cat.cls}">
         <span class="catbar__ic">${cat.icon}</span>
@@ -191,22 +192,37 @@ function categoriasHTML(e) {
           <span class="catbar__label">${esc(cat.label)}</span>
           <span class="catbar__track"><span class="catbar__fill" data-w="${w}"></span></span>
         </div>
-        <span class="catbar__amt num">${formatCOP(c.total)}</span>
+        <span class="catbar__fig">
+          <span class="catbar__amt num">${formatCOP(c.total)}</span>
+          <span class="catbar__pct num">${pct(c.pct)}</span>
+        </span>
       </div>`;
   }).join('');
+  // Proyección del gasto VARIABLE a fin de mes (complementa la total del anillo).
+  const proj = e.proyeccionVariable > 0
+    ? `<p class="cat-break__proj">A este ritmo cerrarás el mes con <strong class="num">${formatCOP(e.proyeccionVariable)}</strong> en gastos variables</p>`
+    : '';
   return `
     <div class="cat-break">
       <div class="section-head"><span class="section-head__title">En qué se va</span></div>
+      ${proj}
       <div class="catbar-list">${filas}</div>
     </div>`;
 }
 
 function hormigaHTML(e) {
   if (!e.totalHormiga) return '';
+  // Parte del gasto variable que se fue en pequeños gastos "hormiga".
+  const share = e.variableGastado > 0 ? e.totalHormiga / e.variableGastado : null;
+  const sub = share != null
+    ? `<span class="hormiga-note__sub">${pct(share)} de tu gasto variable</span>` : '';
   return `
     <div class="hormiga-note">
       <span class="hormiga-note__ic">${categoriaPorId('hormiga').icon}</span>
-      <span class="hormiga-note__txt">Gasto hormiga del mes</span>
+      <span class="hormiga-note__bd">
+        <span class="hormiga-note__txt">Gasto hormiga del mes</span>
+        ${sub}
+      </span>
       <span class="hormiga-note__val num">${formatCOP(e.totalHormiga)}</span>
     </div>`;
 }
