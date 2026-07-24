@@ -720,6 +720,12 @@
 .cfg-cta { margin-top: var(--sp-4); }
 .cfg-danger { margin-top: var(--sp-6); }
 
+/* Botón "leer del extracto" + nota de resultado */
+.cfg-extracto { margin-top: var(--sp-2); }
+.cfg-hint { margin: var(--sp-2) var(--sp-1) 0; font-size: var(--fs-xs); color: var(--text-2); line-height: 1.5; }
+.cfg-hint:empty { display: none; }
+.cfg-hint--err { color: var(--semaforo-rojo-text); }
+
 /* Resumen del ciclo de la tarjeta (este ciclo llevas $X, se paga el día Y) */
 .tj-res {
   margin-top: var(--sp-5);

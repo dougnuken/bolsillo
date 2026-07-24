@@ -15,12 +15,40 @@ import { toast } from '../toast.js';
 import { esc } from '../html.js';
 import { formatCOP } from '../money.js';
 import { resumenTarjeta } from '../budget.js';
+import { analizarExtracto } from '../extracto-pdf.js';
 import {
   hojaNav, cabecera, bindCabecera, vacioCfg, botonAgregar, leerDia, IC,
 } from './cfg-sheet.js';
 
 const CHEV =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+const IC_PDF =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8.5 13h1a1.2 1.2 0 0 1 0 2.4h-1V13Zm0 4.5V13"/></svg>';
+
+const MAX_PDF_BYTES = 15 * 1024 * 1024; // 15 MB
+
+/** Abre el selector de archivos, lee un PDF y devuelve {base64, mediaType}
+    o {error} o null (cancelado). No mantiene el input en el DOM. */
+function elegirArchivoPDF() {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf';
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) { resolve(null); return; }
+      if (file.size > MAX_PDF_BYTES) { resolve({ error: 'El PDF es muy grande (máx 15 MB).' }); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const m = /^data:([^;]+);base64,(.*)$/.exec(reader.result || '');
+        resolve(m ? { mediaType: m[1], base64: m[2] } : { error: 'No se pudo leer el PDF.' });
+      };
+      reader.onerror = () => resolve({ error: 'No se pudo leer el PDF.' });
+      reader.readAsDataURL(file);
+    }, { once: true });
+    input.click();
+  });
+}
 
 /** Formatea 'YYYY-MM-DD' como '5 ago'. */
 function fmtFecha(iso) {
@@ -172,6 +200,8 @@ export async function abrirCuentas({ onSaved } = {}) {
 
       const ciclo = cred ? `
         <p class="cfg-subhead">Ciclo de la tarjeta</p>
+        <button type="button" class="btn btn--ghost btn--block cfg-extracto" data-act="subir-extracto">${IC_PDF}<span>Leer del extracto (PDF)</span></button>
+        <p class="cfg-hint" id="tj-extracto-nota"></p>
         <div class="cfg-form">
           <div class="field field--split cfg-field">
             <label class="field__col">
@@ -231,6 +261,45 @@ export async function abrirCuentas({ onSaved } = {}) {
           await recargar();
           avisar();
           detalle(nombre);
+        });
+
+        // Leer el extracto (PDF) con IA → prellena corte/límite/tasa para revisar.
+        panel.querySelector('[data-act="subir-extracto"]')?.addEventListener('click', async () => {
+          const cfg = await getConfig();
+          const apiKey = cfg.apiKey;
+          if (!apiKey || !apiKey.trim()) {
+            toast('Configura tu clave de Anthropic en Perfil → Clave de Anthropic');
+            return;
+          }
+          const picked = await elegirArchivoPDF();
+          if (!picked) return;                 // cancelado
+          if (picked.error) { toast(picked.error, { icono: false }); return; }
+
+          const btn = panel.querySelector('[data-act="subir-extracto"]');
+          const nota = panel.querySelector('#tj-extracto-nota');
+          if (btn) { btn.disabled = true; btn.innerHTML = '<span>Leyendo extracto…</span>'; }
+          if (nota) { nota.textContent = ''; nota.classList.remove('cfg-hint--err'); }
+
+          const r = await analizarExtracto({
+            base64: picked.base64, mediaType: picked.mediaType, apiKey,
+            modelo: cfg.modelos && cfg.modelos.extractos,
+          });
+
+          if (btn) { btn.disabled = false; btn.innerHTML = `${IC_PDF}<span>Leer del extracto (PDF)</span>`; }
+
+          if (r.estado !== 'ok') {
+            if (nota) { nota.textContent = r.mensaje || 'No pude leer el extracto. Ingrésalo a mano.'; nota.classList.add('cfg-hint--err'); }
+            return;
+          }
+          const setV = (sel, v) => { const el = panel.querySelector(sel); if (el && v != null) el.value = v; };
+          setV('#tj-corte', r.corte);
+          setV('#tj-limite', r.limite);
+          setV('#tj-tasa', r.tasa);
+          const partes = [];
+          if (r.banco) partes.push(r.banco);
+          if (r.total != null) partes.push(`total ${formatCOP(r.total)}`);
+          if (nota) nota.textContent = `Leído del extracto${partes.length ? ' · ' + partes.join(' · ') : ''}. Revisa y guarda.`;
+          toast('Extracto leído — revisa los datos');
         });
 
         panel.querySelector('[data-act="guardar-ciclo"]')?.addEventListener('click', async () => {
