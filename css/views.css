@@ -36,8 +36,8 @@ body[data-route="hoy"] .app-header { display: none; }
   flex: 0 0 auto;
   background: linear-gradient(158deg, #FF9A5A 0%, #FF6A3D 52%, #EA491E 100%);
   color: #fff;
-  padding: calc(env(safe-area-inset-top) + 12px)
-           max(var(--sp-5), env(safe-area-inset-right)) 58px
+  padding: calc(env(safe-area-inset-top) + 22px)
+           max(var(--sp-5), env(safe-area-inset-right)) 76px
            max(var(--sp-5), env(safe-area-inset-left));
 }
 .hoy-hero__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
@@ -51,13 +51,13 @@ body[data-route="hoy"] .app-header { display: none; }
 .hoy-hero__name { font-size: 18px; font-weight: var(--fw-bold); margin-top: 1px; letter-spacing: -0.01em; }
 .hoy-hero__bell {
   width: 42px; height: 42px; border-radius: 14px; flex: 0 0 auto; position: relative;
-  background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2); border: none;
   display: grid; place-items: center; color: #fff;
 }
 .hoy-hero__bell svg { width: 21px; height: 21px; }
 .hoy-hero__bell .notif-badge { top: -5px; right: -5px; }
 
-.hoy-tabs { display: flex; gap: 8px; margin-top: 22px; }
+.hoy-tabs { display: flex; gap: 8px; margin-top: 28px; }
 .hoy-tab {
   padding: 9px 15px; border-radius: var(--r-full);
   font-size: 13px; font-weight: var(--fw-bold);
@@ -67,7 +67,7 @@ body[data-route="hoy"] .app-header { display: none; }
 .hoy-tab.is-on { background: #fff; color: var(--accent-deep); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14); }
 .hoy-tab:active { transform: scale(0.97); }
 
-.hoy-balance { margin-top: 24px; }
+.hoy-balance { margin-top: 32px; text-align: center; }
 .hoy-balance__lbl { font-size: 13px; opacity: 0.9; font-weight: var(--fw-semibold); }
 .hoy-balance__amt {
   font-family: var(--font-num); font-variant-numeric: tabular-nums;
@@ -88,6 +88,8 @@ body[data-route="hoy"] .app-header { display: none; }
   min-height: 100%;
 }
 .hoy-sheet__grip { width: 40px; height: 4px; border-radius: var(--r-full); background: var(--line-3); margin: 2px auto 16px; }
+/* Cards planas en Hoy: sin elevación (conservan fondo + hairline). */
+.hoy-sheet .card { box-shadow: none; }
 .hoy-empty { text-align: center; color: var(--text-2); font-size: var(--fs-sm); padding: var(--sp-8) var(--sp-4); line-height: 1.5; }
 
 /* lista de gastos fijos (pestaña Recurrentes) */

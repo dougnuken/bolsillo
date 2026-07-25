@@ -48,9 +48,9 @@ const ICON_BELL =
 
 function saludoInfo() {
   const h = new Date().getHours();
-  if (h < 12) return { txt: 'Buenos días,', emoji: '☀️' };
+  if (h < 12) return { txt: 'Buenos días,', emoji: '👋' };
   if (h < 19) return { txt: 'Buenas tardes,', emoji: '👋' };
-  return { txt: 'Buenas noches,', emoji: '🌙' };
+  return { txt: 'Buenas noches,', emoji: '👋' };
 }
 
 function heroHTML(salario) {
