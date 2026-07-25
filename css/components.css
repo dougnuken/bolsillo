@@ -288,9 +288,16 @@ body.nav-min .fab {
   .tabbar, .tab__label, .fab, .tab.is-active::before { transition: none; }
 }
 
-/* Campana de notificaciones: ícono flotando (sin círculo gris) + badge redondo */
-.icon-btn--notif { position: relative; background: none; color: var(--text-2); }
-.icon-btn--notif:hover { background: none; color: var(--text-1); }
+/* Campana de notificaciones: container translúcido (igual que el hero de Hoy) + badge */
+.icon-btn--notif {
+  position: relative;
+  width: 42px; height: 42px;
+  border-radius: 14px;
+  background: var(--glass-2);
+  border: 1px solid var(--line-1);
+  color: var(--text-2);
+}
+.icon-btn--notif:hover { background: var(--glass-3); color: var(--text-1); }
 .notif-badge {
   position: absolute;
   top: 1px;

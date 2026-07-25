@@ -118,8 +118,10 @@ img { max-width: 100%; display: block; }
   top: 0;
   left: 0;
   right: 0;
-  height: calc(var(--header-h) + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
+  /* +15px para que la campana quede a la MISMA altura que la del hero de Hoy
+     (evita el salto al cambiar de vista). */
+  height: calc(var(--header-h) + env(safe-area-inset-top) + 15px);
+  padding-top: calc(env(safe-area-inset-top) + 15px);
   padding-left: max(var(--sp-5), env(safe-area-inset-left));
   padding-right: max(var(--sp-5), env(safe-area-inset-right));
   display: flex;
@@ -155,7 +157,7 @@ img { max-width: 100%; display: block; }
   position: absolute;
   left: 0;
   right: 0;
-  top: env(safe-area-inset-top);
+  top: calc(env(safe-area-inset-top) + 15px);
   height: var(--header-h);
   display: flex;
   align-items: center;
