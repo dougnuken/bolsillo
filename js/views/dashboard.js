@@ -38,15 +38,71 @@ function pct(frac) {
   return Math.round(frac * 100) + '%';
 }
 
-function greetHTML() {
+/* ---- Hero naranja: avatar + saludo + campana + tabs + balance ---- */
+const NOMBRE = 'Doug Vargas';
+const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics'], ['recurrentes', 'Recurrentes']];
+let tabActivo = 'dashboard';
+
+const ICON_BELL =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
+
+function saludoInfo() {
   const h = new Date().getHours();
-  const saludo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-  const emoji = h < 12 ? '☀️' : h < 19 ? '👋' : '🌙';
+  if (h < 12) return { txt: 'Buenos días,', emoji: '☀️' };
+  if (h < 19) return { txt: 'Buenas tardes,', emoji: '👋' };
+  return { txt: 'Buenas noches,', emoji: '🌙' };
+}
+
+function heroHTML(salario) {
+  const s = saludoInfo();
+  const tabs = TABS.map(([id, label]) =>
+    `<button type="button" class="hoy-tab${tabActivo === id ? ' is-on' : ''}" role="tab" data-hoy-tab="${id}">${label}</button>`).join('');
+  const bal = salario != null && salario > 0 ? esc(formatCOP(salario)) : '—';
   return `
-    <header class="view-greet">
-      <p class="view-greet__eyebrow">${saludo}</p>
-      <h1 class="view-greet__title">Hola, Doug ${emoji}</h1>
+    <header class="hoy-hero">
+      <div class="hoy-hero__top">
+        <div class="hoy-hero__user">
+          <span class="hoy-hero__avatar" aria-hidden="true">DV</span>
+          <div>
+            <p class="hoy-hero__greet">${s.txt}</p>
+            <p class="hoy-hero__name">${esc(NOMBRE)} ${s.emoji}</p>
+          </div>
+        </div>
+        <button type="button" class="hoy-hero__bell" id="hoy-bell" aria-label="Notificaciones">
+          ${ICON_BELL}<span class="notif-badge" hidden>0</span>
+        </button>
+      </div>
+      <nav class="hoy-tabs" role="tablist" aria-label="Secciones de Hoy">${tabs}</nav>
+      <div class="hoy-balance">
+        <p class="hoy-balance__lbl">Tu dinero</p>
+        <p class="hoy-balance__amt num" id="hoy-balance">${bal}</p>
+      </div>
     </header>`;
+}
+
+/* Lista de gastos fijos (pestaña Recurrentes). */
+function recurrentesHTML(recs) {
+  const lista = Array.isArray(recs) ? recs.slice().sort((a, b) => (a.diaDelMes || 0) - (b.diaDelMes || 0)) : [];
+  if (!lista.length) {
+    return '<div class="hoy-empty">Aún no tienes gastos fijos. Créalos en Perfil → Gastos fijos.</div>';
+  }
+  const filas = lista.map((r) => {
+    const val = r.esVariable
+      ? (Number.isInteger(r.montoEstimado) && r.montoEstimado > 0
+        ? `<span class="rec-item__val num">~${esc(formatCOP(r.montoEstimado))}</span>`
+        : '<span class="rec-item__val rec-item__val--var">variable</span>')
+      : `<span class="rec-item__val num">${esc(formatCOP(r.monto))}</span>`;
+    const dia = Number.isInteger(r.diaDelMes) ? `día ${r.diaDelMes}` : '';
+    return `
+      <div class="rec-item">
+        <span class="rec-item__bd">
+          <span class="rec-item__name">${esc(r.nombre || 'Fijo')}</span>
+          ${dia ? `<span class="rec-item__meta">${dia}</span>` : ''}
+        </span>
+        ${val}
+      </div>`;
+  }).join('');
+  return `<div class="card rec-list">${filas}</div>`;
 }
 
 /* ---- estado vacío (sin sueldo configurado) ---- */
@@ -289,10 +345,12 @@ function ahorroCardHTML(hist) {
     </div>`;
 }
 
-function contenidoHTML(e, negocios, historial) {
-  // El insight "hormiga" ahora vive dentro de "En qué se va" (categoriasHTML).
-  return gaugeCardHTML(e) + statRowHTML(e) + ahorroCardHTML(historial)
-    + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
+/* Contenido de cada pestaña del Hoy. */
+function panelHTML(tab, e, negocios, historial, recs) {
+  if (tab === 'analytics') return gaugeCardHTML(e) + ahorroCardHTML(historial);
+  if (tab === 'recurrentes') return recurrentesHTML(recs);
+  // dashboard: disponible/gastado + fijos + negocios + en qué se va (+ hormiga)
+  return statRowHTML(e) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
 
 /* ---- animaciones (solo transform/opacity/stroke-dashoffset/width) ---- */
@@ -332,6 +390,26 @@ function aplicarBarras(body) {
 }
 
 /* ---- carga + pintado (async, tolerante a cambios de ruta) ---- */
+
+/* Pinta el contenido de la pestaña activa en el sheet (sin recargar datos). */
+function mostrarPanel(root, tab, datos) {
+  tabActivo = tab;
+  root.querySelectorAll('[data-hoy-tab]').forEach((b) => b.classList.toggle('is-on', b.dataset.hoyTab === tab));
+  const body = root.querySelector('#hoy-body');
+  if (!body) return;
+  if (!datos.estado.configurado) {
+    body.innerHTML = sinConfigHTML();
+    const cta = body.querySelector('#cta-sueldo');
+    if (cta) cta.addEventListener('click', () => abrirSueldo({ onSaved: () => pintar(root) }));
+    return;
+  }
+  body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs);
+  if (tab === 'analytics') animarAnillo(body, datos.estado);
+  aplicarBarras(body);
+  const scroll = root.querySelector('.hoy-sheet-scroll');
+  if (scroll) scroll.scrollTop = 0; // al cambiar de pestaña, vuelve arriba
+}
+
 async function pintar(root) {
   const body = root.querySelector('#hoy-body');
   if (!body) return;
@@ -339,6 +417,8 @@ async function pintar(root) {
   let estado;
   let negocios = [];
   let historial = [];
+  let recs = [];
+  let salario = 0;
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -346,12 +426,11 @@ async function pintar(root) {
     const empleo = ingresos.find((i) => i && i.fuente === 'empleo');
     const fuentes = ingresos.filter((i) => i && i.fuente !== 'empleo');
     const hoy = new Date();
-    estado = calcularEstado({
-      ingresoEmpleo: empleo ? empleo.monto : 0,
-      movimientos, recurrentes, creditos, hoy, config,
-    });
+    salario = empleo ? empleo.monto : 0;
+    estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
-    historial = historialAhorro({ movimientos, ingresoEmpleo: empleo ? empleo.monto : 0, hoy, meses: 6 });
+    historial = historialAhorro({ movimientos, ingresoEmpleo: salario, hoy, meses: 6 });
+    recs = recurrentes || [];
   } catch (err) {
     console.warn('[Bolsillo] no se pudo calcular el estado de Hoy:', err);
     body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus datos. Reintenta.</p>';
@@ -360,26 +439,35 @@ async function pintar(root) {
 
   if (!root.isConnected) return; // el usuario ya cambió de vista
 
-  if (!estado.configurado) {
-    body.innerHTML = sinConfigHTML();
-    const cta = body.querySelector('#cta-sueldo');
-    if (cta) cta.addEventListener('click', () => abrirSueldo({ onSaved: () => pintar(root) }));
-    return;
-  }
+  const balEl = root.querySelector('#hoy-balance');
+  if (balEl) balEl.textContent = salario > 0 ? formatCOP(salario) : '—';
 
-  body.innerHTML = contenidoHTML(estado, negocios, historial);
-  animarAnillo(body, estado);
-  aplicarBarras(body);
+  const datos = { estado, negocios, historial, recs };
+  root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
+    b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos));
+  });
+  mostrarPanel(root, tabActivo, datos);
 }
 
 export default {
   label: 'Hoy',
 
   render() {
-    return `${greetHTML()}<div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>`;
+    return `
+      <div class="hoy-layout">
+        ${heroHTML(null)}
+        <div class="hoy-sheet-scroll">
+          <div class="hoy-sheet">
+            <div class="hoy-sheet__grip" aria-hidden="true"></div>
+            <div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>
+          </div>
+        </div>
+      </div>`;
   },
 
   mount(root) {
+    const bell = root.querySelector('#hoy-bell');
+    if (bell) bell.addEventListener('click', () => document.dispatchEvent(new CustomEvent('bolsillo:notif')));
     pintar(root); // async, no bloquea el primer render
   },
 };

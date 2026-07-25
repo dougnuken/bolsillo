@@ -99,6 +99,8 @@ function navigate(routeId, { replace = false } = {}) {
 
   currentRoute = routeId;
   syncTabbar(routeId);
+  // marca la ruta en <body> (Hoy oculta el header global y va full-bleed)
+  document.body.dataset.route = routeId;
   // título compacto del header (aparece al condensar en scroll)
   if (headerTitleEl) headerTitleEl.textContent = ROUTES[routeId].label || routeId;
 
@@ -106,6 +108,7 @@ function navigate(routeId, { replace = false } = {}) {
     history.replaceState(null, '', '#/' + routeId);
   }
   document.title = 'Bolsillo · ' + (ROUTES[routeId].label || routeId);
+  refrescarBadge(); // el badge vive en el header global Y en la campana del hero de Hoy
 }
 
 function syncTabbar(routeId) {
@@ -171,6 +174,8 @@ function resetNav() { navLastTop = 0; setNavMin(false); setHeaderProgress(0); }
 function initHeader() {
   const bell = document.getElementById('open-notif');
   if (bell) bell.addEventListener('click', () => { abrirNotificaciones(); });
+  // la campana del hero de Hoy (otra vista) pide abrir el centro por evento
+  document.addEventListener('bolsillo:notif', () => { abrirNotificaciones(); });
 }
 
 /* ---- bottom sheet: Registrar ---- */
@@ -336,12 +341,14 @@ async function recolectarAlertas() {
 
 /** Actualiza el badge de la campana: pendientes fijos + alertas de personas. */
 async function refrescarBadge() {
-  const badge = document.getElementById('notif-badge');
-  if (!badge) return;
+  const badges = document.querySelectorAll('.notif-badge');
+  if (!badges.length) return;
   const alertas = await recolectarAlertas();
   const total = pendientesFijos.length + alertas.length;
-  if (total > 0) { badge.textContent = String(total); badge.hidden = false; }
-  else { badge.hidden = true; }
+  badges.forEach((badge) => {
+    if (total > 0) { badge.textContent = String(total); badge.hidden = false; }
+    else { badge.hidden = true; }
+  });
 }
 
 /** Centro de notificaciones (hoja): pendientes por registrar + alertas. */
