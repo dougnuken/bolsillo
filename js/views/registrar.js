@@ -11,7 +11,7 @@
 
 import { get, put, getConfig, saveConfig, getAll } from '../db.js';
 import {
-  crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga,
+  crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga, crearIngreso,
 } from '../model.js';
 import { formatCOP } from '../money.js';
 import { catalogoVisible, categoriaPorId } from '../categories.js';
@@ -62,7 +62,7 @@ function fresh() {
     montoStr: '', categoriaId: '', ingresoId: '', cuenta: '', fecha: hoyISO(),
     cuotas: 1, // compra a cuotas (solo gasto en tarjeta de crédito)
     comercio: '', esFijo: false, notas: '', fuente: 'manual',
-    detalles: false, keypad: true, agregandoCuenta: false,
+    detalles: false, keypad: true, agregandoCuenta: false, agregandoFuente: false,
     metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
     vozTexto: '', vozConfianzaBaja: false, // captura por voz (se resalta si la IA dudó)
     vozEscuchando: false, // dictado por micrófono en curso (SpeechRecognition)
@@ -312,17 +312,21 @@ function cuotasSelector() {
     </div>`;
 }
 
-/* Selector de fuente de negocio (modo Ingreso). Sin fuentes → aviso + atajo. */
+/* Selector de fuente de negocio (modo Ingreso) con opción "+ Nueva" (punteada,
+   inline) para crear un negocio sin salir a Ajustes. */
 function fuenteSelector() {
-  if (!fuentes.length) {
-    return `
-      <div class="acct-empty">
-        <p class="acct-empty__txt">Aún no tienes negocios. Créalos en <strong>Ajustes → Ingresos de negocios</strong> para registrar lo que entra.</p>
-      </div>`;
-  }
   const opts = fuentes.map((f) => `
     <button type="button" class="acct-chip${STATE.ingresoId === f.id ? ' is-sel' : ''}" data-fuente="${esc(f.id)}">${esc(nombreFuente(f))}</button>`).join('');
-  return `<div class="acct-row">${opts}</div>`;
+  const nueva = STATE.agregandoFuente
+    ? `<div class="acct-new">
+         <input type="text" class="field__input" id="reg-nueva-fuente" placeholder="Nombre del negocio" autocomplete="off" />
+         <button type="button" class="btn btn--primary btn--sm" data-act="fuente-add">Agregar</button>
+       </div>`
+    : `<button type="button" class="acct-chip acct-chip--add" data-act="fuente-new">${IC.plus}<span>Nueva</span></button>`;
+  const hint = (!fuentes.length && !STATE.agregandoFuente)
+    ? '<p class="acct-empty__txt">Aún no tienes negocios. Crea uno con <strong>+ Nueva</strong> (o en Ajustes → Ingresos).</p>'
+    : '';
+  return `<div class="acct-row">${opts}${nueva}</div>${hint}`;
 }
 
 /* Campo "Detalle" prominente (el sub libre de el usuario: uniformes, gasolina,
@@ -584,6 +588,8 @@ function bind() {
     else if (act === 'fecha') el.addEventListener('click', elegirFecha);
     else if (act === 'cuenta-new') el.addEventListener('click', () => { STATE.agregandoCuenta = true; STATE.detalles = true; paint(); const i = sheetRef.querySelector('#reg-nueva-cuenta'); if (i) i.focus(); });
     else if (act === 'cuenta-add') el.addEventListener('click', agregarCuenta);
+    else if (act === 'fuente-new') el.addEventListener('click', () => { STATE.agregandoFuente = true; paint(); const i = sheetRef.querySelector('#reg-nueva-fuente'); if (i) i.focus(); });
+    else if (act === 'fuente-add') el.addEventListener('click', agregarFuente);
     else if (act === 'fijo') {
       const toggle = () => { STATE.esFijo = !STATE.esFijo; scheduleSave(); paint(); };
       el.addEventListener('click', toggle);
@@ -1039,6 +1045,24 @@ async function agregarCuenta() {
     toast('Cuenta agregada');
   } catch (err) {
     toast('No se pudo agregar la cuenta: ' + err.message, { icono: false });
+  }
+}
+
+async function agregarFuente() {
+  const input = sheetRef.querySelector('#reg-nueva-fuente');
+  const nombre = input ? input.value.trim() : '';
+  if (!nombre) { STATE.agregandoFuente = false; paint(); return; }
+  try {
+    // Negocio mínimo (día de referencia 1; se afina en Ajustes → Ingresos).
+    const nuevo = crearIngreso({ fuente: 'negocio', nombre, diaDelMes: 1 });
+    await put('ingresos', nuevo);
+    await cargarFuentes();
+    STATE.ingresoId = nuevo.id;
+    STATE.agregandoFuente = false;
+    paint();
+    toast('Negocio agregado');
+  } catch (err) {
+    toast('No se pudo agregar el negocio: ' + err.message, { icono: false });
   }
 }
 

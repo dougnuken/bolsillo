@@ -128,15 +128,29 @@ img { max-width: 100%; display: block; }
   gap: var(--sp-3);
   z-index: 30;
   background: transparent;
-  border-bottom: 1px solid transparent;
   /* deja pasar scroll/tap al contenido; solo la campana captura */
   pointer-events: none;
-  transition: background var(--dur) var(--ease),
-              border-color var(--dur) var(--ease);
 }
 .app-header .icon-btn { pointer-events: auto; }
 
-/* Título compacto centrado (aparece al condensar). */
+/* Capa esmerilada que APARECE de forma GRADUAL con el scroll: su opacidad va
+   ligada a --header-p (0 en el tope → 1 al bajar, lo fija app.js siguiendo el
+   dedo). Así el frost + hairline entran suave, sin el salto binario anterior. */
+.app-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--glass-header);
+  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
+  backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
+  border-bottom: 1px solid var(--line-2);
+  opacity: var(--header-p, 0);
+  transition: opacity var(--dur-fast) linear; /* suaviza entre muestras de scroll */
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Título compacto centrado: entra junto con el frost (misma progresión). */
 .app-header__title {
   position: absolute;
   left: 0;
@@ -151,27 +165,13 @@ img { max-width: 100%; display: block; }
   font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
   color: var(--text-1);
-  opacity: 0;
-  transform: translateY(4px);
+  opacity: var(--header-p, 0);
+  transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
   pointer-events: none;
-  transition: opacity var(--dur) var(--ease),
-              transform var(--dur) var(--ease);
-}
-
-/* Estado condensado (al hacer scroll fuera del tope). */
-body.header-condensed .app-header {
-  background: var(--glass-header);
-  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
-  backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
-  border-bottom-color: var(--line-2);
-}
-body.header-condensed .app-header__title {
-  opacity: 1;
-  transform: none;
+  transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
 }
 @media (prefers-reduced-motion: reduce) {
-  .app-header,
-  .app-header__title { transition: none; }
+  .app-header__title { transform: none; }
 }
 
 /* ---- Zona de vistas (scroll) ---- */

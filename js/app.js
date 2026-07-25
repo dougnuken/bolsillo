@@ -140,29 +140,32 @@ function initTabbar() {
    angosta) para dejar más espacio; al subir vuelve a expandirse ---- */
 let navLastTop = 0;
 let navMin = false;
-let headerCondensed = false;
+let headerP = -1;
+const HEADER_RAMP = 64; // px de scroll para esmerilar el header del todo
 function setNavMin(on) {
   if (on === navMin) return;
   navMin = on;
   document.body.classList.toggle('nav-min', on);
 }
-/* header: vidrio esmerilado + título compacto centrado al alejarse del tope */
-function setHeaderCondensed(on) {
-  if (on === headerCondensed) return;
-  headerCondensed = on;
-  document.body.classList.toggle('header-condensed', on);
+/* header: el frost + el título compacto APARECEN de forma gradual, ligados al
+   scroll (0 en el tope → 1 tras HEADER_RAMP px). Suave, sin el salto binario. */
+function setHeaderProgress(top) {
+  const q = Math.round(Math.max(0, Math.min(1, top / HEADER_RAMP)) * 100) / 100;
+  if (q === headerP) return;
+  headerP = q;
+  document.body.style.setProperty('--header-p', String(q));
 }
 function onStageScroll(e) {
   const el = e.target;
   if (!el || !el.classList || !el.classList.contains('view')) return;
   const top = el.scrollTop;
-  setHeaderCondensed(top > 24);                      // condensa el header apenas bajas
+  setHeaderProgress(top);                            // header: aparece gradual con el scroll
   if (top < 48) setNavMin(false);                   // cerca del tope: expandida
   else if (top - navLastTop > 6) setNavMin(true);    // bajando: resumida
   else if (navLastTop - top > 6) setNavMin(false);   // subiendo: expandida
   navLastTop = top;
 }
-function resetNav() { navLastTop = 0; setNavMin(false); setHeaderCondensed(false); }
+function resetNav() { navLastTop = 0; setNavMin(false); setHeaderProgress(0); }
 
 /* ---- header: la campana abre el centro de notificaciones ---- */
 function initHeader() {

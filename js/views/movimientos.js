@@ -104,14 +104,14 @@ function filaMov(m) {
   const esIn = m.tipo === 'ingreso';
   return `
     <div class="mov-row" data-id="${esc(m.id)}">
-      <button type="button" class="mov-row__main" data-act="edit" data-id="${esc(m.id)}">
+      <div class="mov-row__main">
         <span class="mov-row__icon ${c.cls}">${c.icon}</span>
         <span class="mov-row__body">
           <span class="mov-row__title">${esc(titulo)}${hormiga}</span>
           <span class="mov-row__meta">${metas.join(' · ')} ${badge}</span>
         </span>
         <span class="mov-row__amount num${esIn ? ' is-in' : ''}">${formatMovimiento(m.monto, m.tipo)}</span>
-      </button>
+      </div>
       <button type="button" class="mov-row__more icon-btn" data-act="more" data-id="${esc(m.id)}" aria-label="Acciones">${ICON_MORE}</button>
     </div>`;
 }
@@ -203,12 +203,8 @@ export default {
         filtros.categoria = ''; filtros.cuenta = ''; filtros.fuente = ''; filtros.soloHormiga = false;
         pintar(cfg);
       });
-      cont.querySelectorAll('[data-act="edit"]').forEach((b) => {
-        b.addEventListener('click', async () => {
-          const m = todos.find((x) => x.id === b.dataset.id);
-          if (m) registrar.abrir(m);
-        });
-      });
+      // La fila NO abre edición al tocarla (evita ediciones accidentales al
+      // deslizar). Editar solo desde los 3 puntos → Editar.
       cont.querySelectorAll('[data-act="more"]').forEach((b) => {
         b.addEventListener('click', () => abrirAcciones(b.dataset.id, cfg));
       });

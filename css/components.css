@@ -171,7 +171,7 @@
   position: absolute;
   left: max(var(--sp-4), env(safe-area-inset-left));
   right: max(var(--sp-4), env(safe-area-inset-right));
-  bottom: calc(var(--sp-4) + env(safe-area-inset-bottom));
+  bottom: calc(var(--sp-2) + env(safe-area-inset-bottom));
   z-index: var(--z-nav);
   height: var(--nav-h);
   display: grid;
@@ -203,6 +203,16 @@
 .tab__label { line-height: 1; }
 .tab:active { transform: scale(0.93); }
 .tab.is-active { color: var(--accent); }
+/* pop sutil del ícono al seleccionar la pestaña */
+@keyframes tab-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+.tab.is-active svg { animation: tab-pop 0.32s var(--ease); }
+@media (prefers-reduced-motion: reduce) {
+  .tab.is-active svg { animation: none; }
+}
 /* indicador superior */
 .tab.is-active::before {
   content: "";
@@ -222,7 +232,7 @@
   z-index: var(--z-fab);
   left: 50%;
   /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
-  bottom: calc(env(safe-area-inset-bottom) + var(--sp-4) + var(--nav-h) - 30px);
+  bottom: calc(env(safe-area-inset-bottom) + var(--sp-2) + var(--nav-h) - 30px);
   transform: translateX(-50%);
   width: 60px;
   height: 60px;
@@ -272,7 +282,7 @@ body.nav-min .tab__label { opacity: 0; max-height: 0; }
 /* la barrita naranja del activo también encoge */
 body.nav-min .tab.is-active::before { width: 13px; height: 2px; }
 body.nav-min .fab {
-  bottom: calc(env(safe-area-inset-bottom) + var(--sp-4) + var(--nav-h-min) - 30px);
+  bottom: calc(env(safe-area-inset-bottom) + var(--sp-2) + var(--nav-h-min) - 30px);
 }
 @media (prefers-reduced-motion: reduce) {
   .tabbar, .tab__label, .fab, .tab.is-active::before { transition: none; }
@@ -1098,10 +1108,7 @@ body.nav-min .fab {
   padding: var(--sp-3);
   border-radius: var(--r-md);
   text-align: left;
-  transition: background var(--dur-fast) var(--ease);
 }
-.mov-row__main:hover { background: var(--glass-1); }
-.mov-row__main:active { background: var(--glass-2); }
 .mov-row__icon {
   width: 42px; height: 42px; flex: 0 0 auto;
   display: grid; place-items: center;
