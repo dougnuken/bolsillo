@@ -16,8 +16,8 @@ import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
 const CUENTAS_SUGERIDAS = ['Efectivo', 'Nequi', 'Bancolombia'];
-const INTRO_TOTAL = 3;      // gancho → valor → cierre
-const TOTAL_PASOS = 4;      // sueldo → cuentas → fijos → listo
+const INTRO_TOTAL = 3;      // 3 slides de bienvenida (split: hero 3D + copy)
+const TOTAL_PASOS = 5;      // nombre → sueldo → cuentas → fijos → listo
 
 // Confeti del cierre (paso "listo"): 14 piezas cuya posición/color/tiempo viven
 // en clases .ob__conf--N de views.css (CSP style-src 'self' bloquea style="").
@@ -28,14 +28,7 @@ const IC = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
-  // Intro premium
-  chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
   flecha: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
-  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
-  carrito: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h7.7a2 2 0 0 0 2-1.6L23 6H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>',
-  casa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/></svg>',
-  combustible: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v15"/><path d="M4 21h12"/><path d="M8 9h6"/><path d="M15 8l3 3v6a1.6 1.6 0 0 0 3 0V9l-2.5-2.5"/></svg>',
-  camara: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-2h5l1 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.2"/></svg>',
 };
 
 /** ¿Debe mostrarse el onboarding? PURA. */
@@ -63,9 +56,10 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
 
   // Estado local del flujo (se persiste paso a paso, no al final).
   const st = {
-    fase: 'intro',   // 'intro' (3 pantallas premium) | 'config' (sueldo/cuentas/fijos/listo)
-    introPaso: 0,    // 0=gancho 1=valor 2=cierre
+    fase: 'intro',   // 'intro' (3 slides split) | 'config' (nombre/sueldo/cuentas/fijos/listo)
+    introPaso: 0,    // 0=ahorro 1=registro 2=semáforo
     paso: 0,         // índice en PASOS (config)
+    nombre: typeof config.nombre === 'string' ? config.nombre : '',
     empleo: ingresos.find((i) => i && i.fuente === 'empleo') || null,
     cuentas: Array.isArray(config.cuentas) && config.cuentas.length ? config.cuentas.slice() : CUENTAS_SUGERIDAS.slice(),
     fijos: recurrentes.slice(),
@@ -84,6 +78,13 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   document.body.dataset.ob = 'open';
   void raiz.offsetWidth;
   raiz.classList.add('is-open');
+
+  // Navegación por teclado en la intro (accesibilidad: alternativa al swipe).
+  raiz.addEventListener('keydown', (e) => {
+    if (st.fase !== 'intro') return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); irIntro(st.introPaso + 1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); irIntro(st.introPaso - 1); }
+  });
 
   function cerrar() {
     raiz.classList.remove('is-open');
@@ -106,119 +107,119 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   const ir = (n) => { st.paso = n; pintar(); };
 
   /* ============================================================
-     INTRO PREMIUM — 3 pantallas tipo carrusel (gancho → valor → cierre).
-     Cards "de movimiento" ficticias (datos NEUTROS, nunca reales) que
-     entran en abanico desde un pivote inferior y quedan estáticas.
-     Al terminar ("Empezar") continúa a la configuración real (pasoSueldo).
+     INTRO — 3 slides de bienvenida (layout split): arriba un hero naranja
+     sólido con un ícono 3D grande de la funcionalidad; abajo, en el sheet,
+     dots + título + texto + CTA. Se avanza con la CTA o deslizando
+     (swipe izq/der); "Saltar" salta directo a la configuración. Al terminar
+     ("Empezar") continúa a la configuración real (pasoNombre).
      ============================================================ */
 
-  // Tarjeta de movimiento (icono con tint de categoría + nombre/sub + monto).
-  // Sin estilos inline: la app aplica CSP `style-src 'self'` (bloquea style=""),
-  // así que posición y tints viven en clases .obi__* de views.css.
-  function movCard(fan, { tint, icon, nombre, sub, monto, entra = false }) {
-    return `<div class="obi__card obi__fan obi__${fan}">
-        <div class="obi__mov">
-          <span class="obi__mov-ic obi__mov-ic--${tint}">${icon}</span>
-          <span class="obi__mov-bd">
-            <span class="obi__mov-n">${nombre}</span>
-            <span class="obi__mov-s">${sub}</span>
-          </span>
-          <span class="obi__mov-amt${entra ? ' is-in' : ''}">${monto}</span>
-        </div>
-      </div>`;
-  }
-
-  function anilloSemaforo(fan) {
-    return `<div class="obi__ring obi__fan obi__${fan}">
-        <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="trk" cx="100" cy="100" r="85"/><circle class="prg" cx="100" cy="100" r="85"/></svg>
-        <span class="obi__ring-lbl">Vas bien</span>
-      </div>`;
-  }
-
-  // Paso 1 · gancho: anillo "Vas bien" + un gasto + un chip de categoría.
-  function vizGancho() {
-    return `<div class="obi__viz">
-        <span class="obi__halo obi__halo--verde"></span>
-        <div class="obi__cluster">
-          <div class="obi__slot obi__slot--g1">${anilloSemaforo('fanA')}</div>
-          <div class="obi__slot obi__slot--g2">${movCard('fanB', { tint: 'mercado', icon: IC.carrito, nombre: 'Mercado', sub: 'D1 · hoy', monto: '$82.000' })}</div>
-          <div class="obi__slot obi__slot--g3">
-            <div class="obi__chip obi__fan obi__fanC"><span class="obi__chip-d obi__chip-d--transporte"></span>Transporte</div>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  // Paso 2 · valor: tres formas de registrar (teclado, voz, foto).
-  function vizValor() {
-    return `<div class="obi__viz">
-        <span class="obi__halo obi__halo--coral"></span>
-        <div class="obi__cluster">
-          <div class="obi__slot obi__slot--v1">${movCard('fanA', { tint: 'vivienda', icon: IC.casa, nombre: 'Arriendo', sub: 'Gasto fijo', monto: '$980.000' })}</div>
-          <div class="obi__slot obi__slot--v2">${movCard('fanB', { tint: 'transporte', icon: IC.combustible, nombre: 'Gasolina', sub: '🎤 por voz', monto: '$120.000' })}</div>
-          <div class="obi__slot obi__slot--v3">${movCard('fanC', { tint: 'recibo', icon: IC.camara, nombre: 'Recibo leído', sub: '📷 por foto', monto: '✓', entra: true })}</div>
-        </div>
-      </div>`;
-  }
-
-  // Paso 3 · cierre: anillo grande verde con el estado del mes.
-  function vizCierre() {
-    return `<div class="obi__viz">
-        <span class="obi__halo obi__halo--verde obi__halo--lg"></span>
-        <div class="obi__cluster">
-          <div class="obi__bigring">
-            <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="trk" cx="100" cy="100" r="85"/><circle class="prg" cx="100" cy="100" r="85"/></svg>
-            <span class="obi__bigring-c">
-              <span class="obi__bigring-st">${IC.check} Vas bien</span>
-              <span class="obi__bigring-pct">14%</span>
-            </span>
-          </div>
-        </div>
-      </div>`;
-  }
-
-  const INTROS = [
-    { viz: vizGancho, title: 'Tu plata, <b>clara y en calma.</b>' },
-    { viz: vizValor,  title: '<b>Regístralo</b> hablando o con una <b>foto.</b>' },
-    { viz: vizCierre, title: 'Un <b>semáforo</b> te dice si vas bien.' },
+  // Íconos de cada slide. PLACEHOLDER swappable: hoy emoji con pedestal; el día
+  // que existan los renders 3D, artHTML devuelve <img src="./img/onboarding/…">.
+  const SLIDES = [
+    { art: 'ahorro',   emoji: '🐷', title: 'Tu plata, <b>clara y en calma.</b>',
+      text: 'Bolsillo te muestra en qué se va tu mes, sin hojas de cálculo ni enredos.' },
+    { art: 'registro', emoji: '🎙️', title: '<b>Regístralo</b> hablando o con una <b>foto.</b>',
+      text: 'Un audio corto o una foto del recibo y Bolsillo lo entiende por ti.' },
+    { art: 'semaforo', emoji: '🚦', title: 'Un <b>semáforo</b> te dice si vas bien.',
+      text: 'Verde, ámbar o rojo según tu ritmo real del mes. Sabes al instante cómo vas.' },
   ];
+
+  // Arte 3D del hero de cada slide (render generado, fondo recortado). Imagen
+  // decorativa → alt="" (el título + texto comunican el significado).
+  // draggable=false: el swipe no debe iniciar un arrastre nativo de la imagen.
+  function artHTML(slide) {
+    return `<img class="ob2__img" src="./img/onboarding/${slide.art}.png" alt="" draggable="false" />`;
+  }
+
+  // Cambia de slide dentro de [0, INTRO_TOTAL-1]; re-pinta (con anim de entrada).
+  function irIntro(n) {
+    const next = Math.max(0, Math.min(INTRO_TOTAL - 1, n));
+    if (next === st.introPaso) return;
+    st.introPaso = next;
+    pintar();
+  }
+
+  // Swipe horizontal (pointer = mouse + touch). Umbral por distancia/dirección
+  // para no confundir con scroll ni con un tap en botones. Sin drag-follow, así
+  // que no necesita estilos inline (CSP style-src 'self').
+  function habilitarSwipe(el) {
+    if (!el) return;
+    let x0 = null, y0 = null;
+    el.addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; });
+    el.addEventListener('pointerup', (e) => {
+      if (x0 == null) return;
+      const dx = e.clientX - x0, dy = e.clientY - y0;
+      x0 = null;
+      // Gesto horizontal claro (distancia + dirección); un tap en un botón queda por debajo.
+      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      irIntro(st.introPaso + (dx < 0 ? 1 : -1)); // izquierda→siguiente, derecha→anterior
+    });
+    el.addEventListener('pointercancel', () => { x0 = null; });
+  }
 
   function entrarConfig() { st.fase = 'config'; st.paso = 0; pintar(); }
 
   function pintarIntro() {
     const idx = st.introPaso;
-    const { viz, title } = INTROS[idx];
+    const slide = SLIDES[idx];
     const esUltima = idx === INTRO_TOTAL - 1;
+    const teniaFoco = raiz.contains(document.activeElement) && document.activeElement !== raiz && document.activeElement !== document.body;
 
     const dots = Array.from({ length: INTRO_TOTAL }, (_, i) =>
-      `<span class="obi__dot${i === idx ? ' is-on' : ''}"></span>`).join('');
-
-    const controles = esUltima
-      ? `<button type="button" class="obi__cta" data-act="intro-empezar">${IC.flecha}<span>Empezar</span></button>`
-      : `<div class="obi__ctl">
-           <button type="button" class="obi__skip" data-act="saltar">Saltar</button>
-           <div class="obi__dots" role="progressbar" aria-valuenow="${idx + 1}" aria-valuemin="1"
-             aria-valuemax="${INTRO_TOTAL}" aria-label="Paso ${idx + 1} de ${INTRO_TOTAL}">${dots}</div>
-           <button type="button" class="obi__next" data-act="intro-next" aria-label="Siguiente">${IC.chevron}</button>
-         </div>`;
+      `<span class="ob2__dot${i === idx ? ' is-on' : ''}"></span>`).join('');
 
     raiz.innerHTML = `
-      <div class="obi">
-        ${viz()}
-        <div class="obi__copy">
-          <h2 class="obi__h">${title}</h2>
-          ${controles}
+      <div class="ob2">
+        <div class="ob2__hero">
+          <button type="button" class="ob2__skip" data-act="saltar">Saltar</button>
+          <div class="ob2__art">${artHTML(slide)}</div>
+        </div>
+        <div class="ob2__sheet">
+          <div class="ob2__dots" role="progressbar" aria-valuenow="${idx + 1}" aria-valuemin="1"
+            aria-valuemax="${INTRO_TOTAL}" aria-label="Paso ${idx + 1} de ${INTRO_TOTAL}">${dots}</div>
+          <h2 class="ob2__title">${slide.title}</h2>
+          <p class="ob2__text">${slide.text}</p>
+          <button type="button" class="ob2__cta" data-act="${esUltima ? 'intro-empezar' : 'intro-next'}">
+            <span>${esUltima ? 'Empezar' : 'Continuar'}</span>${IC.flecha}
+          </button>
         </div>
       </div>`;
 
     raiz.querySelectorAll('[data-act="saltar"]').forEach((b) => b.addEventListener('click', terminar));
     const next = raiz.querySelector('[data-act="intro-next"]');
-    if (next) next.addEventListener('click', () => { st.introPaso = Math.min(st.introPaso + 1, INTRO_TOTAL - 1); pintar(); });
+    if (next) next.addEventListener('click', () => irIntro(st.introPaso + 1));
     const emp = raiz.querySelector('[data-act="intro-empezar"]');
     if (emp) emp.addEventListener('click', entrarConfig);
+    habilitarSwipe(raiz.querySelector('.ob2'));
+    // Restaura el foco al CTA tras re-pintar (teclado: Enter/flechas siguen operando).
+    if (teniaFoco) { const cta = raiz.querySelector('.ob2__cta'); if (cta) cta.focus(); }
   }
 
   /* ---- pasos de configuración ---- */
+  function pasoNombre() {
+    return {
+      html: `
+        <h1 class="ob__title">¿Cómo te llamas?</h1>
+        <p class="ob__text">Para personalizar tu Bolsillo. Solo tu nombre, nada más.</p>
+        <label class="field">
+          <span class="field__label">Tu nombre</span>
+          <input class="field__input" id="ob-nombre" type="text" autocomplete="given-name"
+            autocapitalize="words" spellcheck="false" maxlength="40" placeholder="Doug" value="${esc(st.nombre || '')}" />
+        </label>`,
+      foot: `
+        <div class="ob__actions">
+          <button type="button" class="btn btn--primary btn--block" data-act="siguiente">Continuar</button>
+          <button type="button" class="ob__skip" data-act="saltar">Configurar después</button>
+        </div>`,
+      bind(cont) {
+        const input = cont.querySelector('#ob-nombre');
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); avanzar(); } });
+        requestAnimationFrame(() => input.focus());
+      },
+    };
+  }
+
   function pasoSueldo() {
     const valor = st.empleo ? formatCOP(st.empleo.monto).replace('$', '') : '';
     const dia = st.empleo && st.empleo.diaDelMes ? st.empleo.diaDelMes : '';
@@ -430,7 +431,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
           <span class="ob__confeti" aria-hidden="true">${CONFETI}</span>
           <span class="ob__emoji" role="img" aria-label="Celebración">🎉</span>
         </div>
-        <h1 class="ob__title">¡Listo! Ya puedes empezar</h1>
+        <h1 class="ob__title">¡Listo${st.nombre ? ', ' + esc(st.nombre) : ''}! Ya puedes empezar</h1>
         <p class="ob__text">Con esto el semáforo ya sabe calcular tu ritmo del mes.</p>
         <div class="ob__resumen">
           <div class="ob__resumen-row"><span>Sueldo</span><strong class="num">${esc(sueldo)}</strong></div>
@@ -446,11 +447,28 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
     };
   }
 
-  const PASOS = [pasoSueldo, pasoCuentas, pasoFijos, pasoListo];
+  const PASOS = [pasoNombre, pasoSueldo, pasoCuentas, pasoFijos, pasoListo];
 
   /* ---- avanzar (con persistencia del paso actual) ---- */
   async function avanzar() {
     if (st.paso === 0) {
+      const cont = raiz.querySelector('.ob__step');
+      const nombre = (cont.querySelector('#ob-nombre').value || '').trim();
+      if (!nombre) {
+        toast('Escribe tu nombre para continuar');
+        cont.querySelector('#ob-nombre').focus();
+        return;
+      }
+      st.nombre = nombre;
+      try {
+        await saveConfig({ nombre });
+      } catch (err) {
+        toast('No se pudo guardar tu nombre: ' + err.message, { icono: false, ms: 3200 });
+        return;
+      }
+    }
+
+    if (st.paso === 1) {
       const cont = raiz.querySelector('.ob__step');
       const monto = parseCOP(cont.querySelector('#ob-sueldo').value);
       if (!Number.isInteger(monto) || monto <= 0) {
@@ -472,7 +490,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
       }
     }
 
-    if (st.paso === 1) {
+    if (st.paso === 2) {
       if (!st.cuentas.length) { toast('Agrega al menos una cuenta'); return; }
       try {
         await saveConfig({ cuentas: st.cuentas });

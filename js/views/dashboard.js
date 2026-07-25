@@ -39,8 +39,16 @@ function pct(frac) {
 }
 
 /* ---- Hero naranja: avatar + saludo + campana + tabs + balance ---- */
-const NOMBRE = 'Doug Vargas';
 const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics'], ['recurrentes', 'Recurrentes']];
+
+/** Iniciales para el avatar: "Doug Vargas" → "DV". Vacío → ''. */
+function iniciales(nombre) {
+  const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+  if (!partes.length) return '';
+  const a = partes[0][0] || '';
+  const b = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (a + b).toUpperCase();
+}
 let tabActivo = 'dashboard';
 
 const ICON_BELL =
@@ -53,17 +61,19 @@ function saludoInfo() {
   return { txt: 'Buenas noches,', emoji: '👋' };
 }
 
-function heroHTML(salario) {
+function heroHTML(nombre, salario) {
   const s = saludoInfo();
   const bal = salario != null && salario > 0 ? esc(formatCOP(salario)) : '—';
+  const nom = String(nombre || '').trim();
+  const ini = iniciales(nom);
   return `
     <header class="hoy-hero">
       <div class="hoy-hero__top">
         <div class="hoy-hero__user">
-          <span class="hoy-hero__avatar" aria-hidden="true">DV</span>
+          <span class="hoy-hero__avatar" id="hoy-avatar" aria-hidden="true">${esc(ini)}</span>
           <div>
             <p class="hoy-hero__greet">${s.txt}</p>
-            <p class="hoy-hero__name">${esc(NOMBRE)} ${s.emoji}</p>
+            <p class="hoy-hero__name" id="hoy-name">${nom ? esc(nom) + ' ' : ''}${s.emoji}</p>
           </div>
         </div>
         <button type="button" class="hoy-hero__bell" id="hoy-bell" aria-label="Notificaciones">
@@ -437,6 +447,7 @@ async function pintar(root) {
   let historial = [];
   let recs = [];
   let salario = 0;
+  let nombre = '';
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -445,6 +456,7 @@ async function pintar(root) {
     const fuentes = ingresos.filter((i) => i && i.fuente !== 'empleo');
     const hoy = new Date();
     salario = empleo ? empleo.monto : 0;
+    nombre = (config && config.nombre) ? config.nombre : '';
     estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
     historial = historialAhorro({ movimientos, ingresoEmpleo: salario, hoy, meses: 6 });
@@ -460,6 +472,13 @@ async function pintar(root) {
   const balEl = root.querySelector('#hoy-balance');
   if (balEl) balEl.textContent = salario > 0 ? formatCOP(salario) : '—';
 
+  // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
+  const nom = String(nombre || '').trim();
+  const nameEl = root.querySelector('#hoy-name');
+  if (nameEl) nameEl.textContent = (nom ? nom + ' ' : '') + saludoInfo().emoji;
+  const avEl = root.querySelector('#hoy-avatar');
+  if (avEl) avEl.textContent = iniciales(nom);
+
   const datos = { estado, negocios, historial, recs };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
     b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos, true));
@@ -473,7 +492,7 @@ export default {
   render() {
     return `
       <div class="hoy-layout">
-        ${heroHTML(null)}
+        ${heroHTML('', null)}
         <div class="hoy-sheet-scroll">
           <div class="hoy-sheet">
             <div class="hoy-sheet__head">

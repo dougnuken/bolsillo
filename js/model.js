@@ -381,6 +381,8 @@ function migrarUnIngreso(ing, now) {
 export function configDefault() {
   return Object.freeze({
     id: CONFIG_ID,
+    // Nombre del usuario (se pide primero en el onboarding, personaliza el saludo).
+    nombre: '',
     umbralHormiga: UMBRAL_HORMIGA_DEFAULT,
     umbralesSemaforo: Object.freeze({ amarillo: 1.25 }),
     presupuestos: Object.freeze({}),
@@ -421,6 +423,7 @@ export function crearConfig(datos = {}) {
     ...d,
     ...datos,
     id: CONFIG_ID,
+    nombre: typeof datos.nombre === 'string' ? datos.nombre.trim() : d.nombre,
     umbralesSemaforo: Object.freeze({ ...d.umbralesSemaforo, ...(datos.umbralesSemaforo || {}) }),
     modelos: Object.freeze({ ...d.modelos, ...(datos.modelos || {}) }),
     presupuestos: Object.freeze({ ...d.presupuestos, ...(datos.presupuestos || {}) }),
