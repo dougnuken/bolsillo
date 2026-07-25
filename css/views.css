@@ -14,6 +14,7 @@
   color: var(--text-3);
 }
 .view-greet__title {
+  font-family: var(--font-display);
   font-size: var(--fs-h1);
   font-weight: var(--fw-bold);
   letter-spacing: -0.02em;
@@ -56,7 +57,7 @@ body[data-route="hoy"] .app-header { display: none; }
   display: grid; place-items: center; font-weight: var(--fw-bold); font-size: 15px;
 }
 .hoy-hero__greet { font-size: 12.5px; opacity: 0.9; font-weight: var(--fw-medium); }
-.hoy-hero__name { font-size: 18px; font-weight: var(--fw-bold); margin-top: 1px; letter-spacing: -0.01em; }
+.hoy-hero__name { font-family: var(--font-display); font-size: 18px; font-weight: var(--fw-bold); margin-top: 1px; letter-spacing: -0.01em; }
 .hoy-hero__bell {
   width: 42px; height: 42px; border-radius: 14px; flex: 0 0 auto; position: relative;
   background: var(--glass-2); border: 1px solid var(--line-2);
@@ -106,14 +107,14 @@ body[data-route="hoy"] .app-header { display: none; }
   background: none; border: none;
   transition: color var(--dur-fast) var(--ease);
 }
-.hoy-tab.is-on { color: var(--accent); }
+.hoy-tab.is-on { color: var(--text-1); }
 .hoy-tab:active { transform: scale(0.97); }
 .hoy-tabs__ind {
   position: absolute;
   left: 0; bottom: -1px;
   height: 2.5px; width: 0;
   border-radius: var(--r-full);
-  background: var(--accent);
+  background: var(--text-1);
   transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
 }
 
@@ -434,8 +435,8 @@ body[data-route="hoy"] .app-header { display: none; }
   flex: 0 0 auto;
   display: grid; place-items: center;
   border-radius: var(--r-xs);
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--text-1);
+  background: var(--bg-3);
 }
 .settings-row__icon svg { width: 19px; height: 19px; }
 .settings-row__body { flex: 1 1 auto; min-width: 0; }
@@ -755,9 +756,9 @@ body[data-route="hoy"] .app-header { display: none; }
   flex: 0 0 auto;
   display: grid; place-items: center;
   border-radius: var(--r-sm);
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
+  color: var(--text-1);
+  background: var(--bg-3);
+  border: none;
 }
 .sueldo-head__ic svg { width: 22px; height: 22px; }
 .sueldo-hint { display: block; font-size: var(--fs-xs); color: var(--text-3); margin-top: var(--sp-2); line-height: 1.4; }
@@ -911,7 +912,7 @@ body[data-route="hoy"] .app-header { display: none; }
   padding: var(--sp-5);
   border-radius: var(--r-xl);
   background: var(--bg-2);
-  border: 1px solid var(--line-2);
+  border: none;
   box-shadow: var(--sh-card);
 }
 .tj-res__lbl {
@@ -1546,6 +1547,7 @@ body[data-route="hoy"] .app-header { display: none; }
 
 .ob2__title {
   margin: 0;
+  font-family: var(--font-display);
   font-size: clamp(1.6rem, 1.05rem + 3.4vw, 2.25rem);
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -1615,7 +1617,7 @@ body[data-route="hoy"] .app-header { display: none; }
   user-select: none;
 }
 .perfil-head__avatar img { width: 100%; height: 100%; object-fit: cover; }
-.perfil-head__name { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; color: var(--text-1); }
+.perfil-head__name { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; color: var(--text-1); }
 .perfil-head__sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
 
 /* Fila deshabilitada con pill "Pronto" */
@@ -1648,7 +1650,7 @@ body[data-route="hoy"] .app-header { display: none; }
 
 .persona-card {
   background: var(--bg-2);
-  border: 1px solid var(--line-2);
+  border: none;
   border-radius: var(--r-lg);
   padding: var(--sp-4);
 }

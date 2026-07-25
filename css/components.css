@@ -67,7 +67,7 @@
 .card {
   position: relative;
   background: var(--bg-2);
-  border: 1px solid var(--line-2);
+  border: none;                 /* sin stroke: la losa se define por su fill elevado */
   border-radius: var(--r-lg);
   padding: var(--sp-5);
   box-shadow: var(--sh-card);
@@ -75,6 +75,7 @@
 /* (dirección clara: tarjeta plana con hairline; sin borde gradient) */
 .card::before { content: none; }
 .card__title {
+  font-family: var(--font-display);
   font-size: var(--fs-h3);
   font-weight: var(--fw-semibold);
   color: var(--text-1);
@@ -95,6 +96,7 @@
 }
 .section-head:first-child { margin-top: var(--sp-2); }
 .section-head__title {
+  font-family: var(--font-display);
   font-size: var(--fs-h2);
   font-weight: var(--fw-bold);
   letter-spacing: -0.015em;
@@ -144,9 +146,9 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-2xl);
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
+  color: var(--text-1);
+  background: var(--bg-3);
+  border: none;
 }
 .empty__art svg { width: 46px; height: 46px; }
 .empty__title {
@@ -202,7 +204,11 @@
 .tab svg { width: 23px; height: 23px; }
 .tab__label { line-height: 1; }
 .tab:active { transform: scale(0.93); }
-.tab.is-active { color: var(--accent); }
+/* activo = ícono RELLENO + blanco (sin acento naranja) */
+.tab.is-active { color: var(--text-1); }
+.tab__ico--fill { display: none; }
+.tab.is-active .tab__ico--line { display: none; }
+.tab.is-active .tab__ico--fill { display: block; }
 /* pop sutil del ícono al seleccionar la pestaña */
 @keyframes tab-pop {
   0% { transform: scale(1); }
@@ -213,18 +219,8 @@
 @media (prefers-reduced-motion: reduce) {
   .tab.is-active svg { animation: none; }
 }
-/* indicador superior */
-.tab.is-active::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  width: 22px;
-  height: 3px;
-  border-radius: var(--r-full);
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent-glow);
-  transition: width var(--dur) var(--ease-in-out), height var(--dur) var(--ease-in-out);
-}
+/* sin barra indicadora: el ícono relleno blanco ya marca la pestaña activa */
+.tab.is-active::before { content: none; }
 
 /* FAB central elevado */
 .fab {
@@ -384,6 +380,7 @@ body.nav-min .fab {
   color: var(--text-3);
 }
 .sheet__title {
+  font-family: var(--font-display);
   font-size: var(--fs-h2);
   font-weight: var(--fw-bold);
   letter-spacing: -0.015em;
@@ -451,8 +448,8 @@ body.nav-min .fab {
   width: 40px; height: 40px;
   display: grid; place-items: center;
   border-radius: var(--r-sm);
-  color: var(--accent);
-  background: var(--accent-soft);
+  color: var(--text-1);
+  background: var(--bg-3);
 }
 .capture-opt__icon svg { width: 22px; height: 22px; }
 .capture-opt__name {
@@ -663,7 +660,7 @@ body.nav-min .fab {
   border-bottom: 1.5px solid var(--line-2);
   transition: border-color var(--dur-fast) var(--ease);
 }
-.amt.is-active { border-bottom-color: var(--line-accent); }
+.amt.is-active { border-bottom-color: var(--line-3); }
 .amt__cur { font-family: var(--font-num); font-size: var(--fs-h2); color: var(--text-3); font-weight: var(--fw-semibold); }
 .amt__value {
   font-family: var(--font-num);
@@ -752,12 +749,13 @@ body.nav-min .fab {
   overflow: hidden;
 }
 /* seleccionado = vidrio coral glossy del FAB */
+/* seleccionado = pastilla clara neutra (sin acento naranja), texto/ícono oscuro */
 .cat-chip.is-sel {
-  background: var(--fab-grad);
-  border-color: var(--fab-rim);
-  box-shadow: var(--sh-chip-sel);
+  background: var(--text-1);
+  border-color: transparent;
+  box-shadow: var(--sh-sm);
 }
-.cat-chip.is-sel .cat-chip__ic { background: rgba(255, 255, 255, 0.22); color: var(--text-inverse); }
+.cat-chip.is-sel .cat-chip__ic { background: color-mix(in srgb, var(--text-inverse) 10%, transparent); color: var(--text-inverse); }
 .cat-chip.is-sel .cat-chip__label { color: var(--text-inverse); font-weight: var(--fw-semibold); }
 
 /* ---- selector de cuenta ---- */
@@ -782,10 +780,10 @@ body.nav-min .fab {
 .acct-chip:active { transform: scale(0.97); }
 /* seleccionado = vidrio coral glossy del FAB */
 .acct-chip.is-sel {
-  background: var(--fab-grad);
-  border-color: var(--fab-rim);
+  background: var(--text-1);
+  border-color: transparent;
   color: var(--text-inverse);
-  box-shadow: var(--sh-chip-sel);
+  box-shadow: var(--sh-sm);
   font-weight: var(--fw-semibold);
 }
 .acct-chip--add { color: var(--accent); border-style: dashed; }
@@ -900,12 +898,13 @@ body.nav-min .fab {
   transition: transform var(--dur-fast) var(--ease);
 }
 /* on = mismo vidrio coral glossy del FAB (degradado + borde cálido + brillo especular) */
+/* on = track claro neutro + perilla oscura (sin acento naranja) */
 .switch.is-on {
-  background: var(--fab-grad);
-  border-color: var(--fab-rim);
-  box-shadow: var(--sh-chip-sel);
+  background: var(--text-1);
+  border-color: transparent;
+  box-shadow: var(--sh-sm);
 }
-.switch.is-on .switch__dot { transform: translateX(18px); }
+.switch.is-on .switch__dot { transform: translateX(18px); background: var(--text-inverse); }
 
 /* toggle "detalles" */
 .detalles-toggle {
@@ -1028,13 +1027,13 @@ body.nav-min .fab {
   width: 22px; height: 22px;
   margin-left: var(--sp-2);
   display: grid; place-items: center;
-  color: var(--accent);
+  color: var(--text-1);
   opacity: 0;
 }
 .date-opt__check svg { width: 20px; height: 20px; }
-.date-opt.is-sel { background: var(--accent-soft); }
+.date-opt.is-sel { background: var(--glass-3); }
 .date-opt.is-sel .date-opt__title,
-.date-opt.is-sel .date-opt__sub { color: var(--accent); }
+.date-opt.is-sel .date-opt__sub { color: var(--text-1); }
 .date-opt.is-sel .date-opt__check { opacity: 1; }
 
 .date-sep { height: 1px; background: var(--line-2); margin: var(--sp-3) 0; }
@@ -1095,7 +1094,7 @@ body.nav-min .fab {
   transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
 }
 .mfilter:active { transform: scale(0.97); }
-.mfilter.is-sel { background: var(--accent-soft); border-color: var(--line-accent); color: var(--accent); }
+.mfilter.is-sel { background: var(--text-1); border-color: transparent; color: var(--text-inverse); }
 .mfilter--hormiga.is-sel { background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); color: var(--semaforo-ambar); }
 .mfilter__dot { width: 8px; height: 8px; border-radius: var(--r-full); background: var(--tint); }
 .mfilter-sep { flex: 0 0 auto; width: 1px; height: 20px; background: var(--line-2); margin: 0 2px; }
@@ -1177,9 +1176,9 @@ body.nav-min .fab {
   left: 0;
   width: 0;
   border-radius: var(--r-full);
-  background: var(--fab-grad);
-  border: 1px solid var(--fab-rim);
-  box-shadow: var(--sh-chip-sel);
+  background: var(--text-1);
+  border: 1px solid transparent;
+  box-shadow: var(--sh-sm);
   transform: translateX(0);
   transition: transform var(--dur) var(--ease),
               background var(--dur-fast) var(--ease),

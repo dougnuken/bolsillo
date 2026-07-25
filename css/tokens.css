@@ -13,8 +13,8 @@
   /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
   --bg-0: #0B0B0D;              /* canvas base de la app */
   --bg-1: #0B0B0D;              /* fondo de página */
-  --bg-2: #131316;             /* superficie / tarjetas (losa base) */
-  --bg-3: #1B1B1F;             /* losa anidada (icono de fila, tecla, celda) */
+  --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
+  --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
   --scrim: rgba(0, 0, 0, 0.62); /* overlay de sheets/modales (negro sobre negro pide más) */
 
   /* ---- Washes de ambiente (Liquid Glass oscuro) ----
@@ -119,10 +119,9 @@
   /* ---- Mesh del hero (Hoy / onboarding), tokenizado ----
      Canvas oscuro con glow coral arriba + eco violeta abajo. */
   --hero-mesh:
-    radial-gradient(130% 95% at 82% -12%, rgba(255, 140, 95, 0.42), transparent 58%),
-    radial-gradient(95% 75% at 0% 2%, rgba(255, 106, 68, 0.24), transparent 55%),
-    radial-gradient(100% 80% at 50% 112%, rgba(110, 123, 242, 0.10), transparent 60%),
-    linear-gradient(170deg, #1C1411, #0B0B0D 72%);
+    radial-gradient(135% 108% at 78% -24%, rgba(255, 122, 48, 0.88), transparent 62%),
+    radial-gradient(92% 82% at 10% -12%, rgba(240, 80, 30, 0.55), transparent 58%),
+    linear-gradient(178deg, #3A1608 0%, #1A0C06 44%, #0B0B0D 74%);
 
   /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
   --cat-persona1: #F0808A;
@@ -147,6 +146,9 @@
   /* ---- Tipografía ---- */
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-num: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  /* Fuente display estilizada (grotesk geométrica) para títulos/encabezados —
+     le da el carácter fintech de las referencias sin cargar assets nuevos. */
+  --font-display: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
 
   --fw-regular: 400;
   --fw-medium: 500;
