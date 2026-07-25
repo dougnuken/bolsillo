@@ -1,123 +1,148 @@
 /* ============================================================
    Bolsillo · Design tokens
-   Dirección: light minimalista "Naranja al frente"
-   Canvas cálido, un solo acento coral (solo acciones/estado activo),
-   el color de semáforo SOLO significa estado.
-   Todo el color/espaciado/motion vive aquí. Cero hex fuera
-   de este archivo (los .svg de assets son la única excepción).
+   Dirección: DARK fintech premium "Naranja al frente".
+   Canvas casi negro, containers bento translúcidos (glassmorphism),
+   un acento coral (acciones/estado activo) que es el extremo cálido
+   del gradiente firma naranja→blanco→azul-violeta (--grad-cta).
+   El color de semáforo SOLO significa estado financiero (verde=suma,
+   rojo=resta). Todo el color/espaciado/motion vive aquí. Cero hex
+   fuera de este archivo (los .svg de assets son la única excepción).
    ============================================================ */
 
 :root {
-  /* ---- Superficies (claro y aireado) ---- */
-  --bg-0: #FAF9F7;              /* canvas base de la app */
-  --bg-1: #FAF9F7;              /* fondo de página */
-  --bg-2: #FFFFFF;              /* superficie / tarjetas */
-  --scrim: rgba(40, 32, 20, 0.32); /* overlay de sheets/modales */
+  /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
+  --bg-0: #0B0B0D;              /* canvas base de la app */
+  --bg-1: #0B0B0D;              /* fondo de página */
+  --bg-2: #131316;             /* superficie / tarjetas (losa base) */
+  --bg-3: #1B1B1F;             /* losa anidada (icono de fila, tecla, celda) */
+  --scrim: rgba(0, 0, 0, 0.62); /* overlay de sheets/modales (negro sobre negro pide más) */
 
-  /* ---- Washes de ambiente (Liquid Glass claro) ----
+  /* ---- Washes de ambiente (Liquid Glass oscuro) ----
      Tinte MUY sutil sobre el canvas para que el vidrio flotante
-     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi blanco. */
-  --wash-coral: rgba(255, 120, 80, 0.10);
-  --wash-mint:  rgba(20, 150, 110, 0.08);
-  --wash-top:   rgba(255, 120, 80, 0.07);   /* tinte muy leve del borde superior (zona status/Dynamic Island) */
+     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi negro. */
+  --wash-coral: rgba(255, 106, 68, 0.10);
+  --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
+  --wash-top:   rgba(255, 106, 68, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
   --bg-app:
     linear-gradient(180deg, var(--wash-top), transparent 14%),
     radial-gradient(90% 55% at 82% 4%, var(--wash-coral), transparent 60%),
     radial-gradient(80% 50% at 8% 96%, var(--wash-mint), transparent 60%),
     var(--bg-0);
 
-  /* ---- "Glass" → rellenos neutros claros (compat: mismos nombres) ----
-     glass-1 = superficie base de campos/tarjetas (blanco)
-     glass-2 = hover sutil cálido
+  /* ---- Glass → rellenos translúcidos claros sobre oscuro (compat: mismos nombres) ----
+     glass-1 = superficie base de campos/tarjetas
+     glass-2 = hover sutil
      glass-3 = pressed / pista más marcada */
-  --glass-1: #FFFFFF;
-  --glass-2: #F4F2EF;
-  --glass-3: #ECE9E4;
-  --glass-tag: rgba(255, 255, 255, 0.55);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
-  --glass-nav: rgba(255, 255, 255, 0.60);    /* barra inferior: vidrio flotante */
-  --glass-nav-line: rgba(255, 255, 255, 0.75); /* borde del vidrio flotante */
-  --glass-header: rgba(255, 255, 255, 0.82);
-  --blur: 14px;                 /* backdrop-filter discreto */
-  --blur-strong: 18px;
-  --blur-nav: 26px;             /* esmerilado de la barra flotante */
+  --glass-1: rgba(255, 255, 255, 0.05);
+  --glass-2: rgba(255, 255, 255, 0.08);
+  --glass-3: rgba(255, 255, 255, 0.12);
+  --glass-tag: rgba(255, 255, 255, 0.06);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
+  --glass-nav: rgba(19, 19, 22, 0.72);       /* barra inferior: vidrio flotante oscuro */
+  --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
+  --glass-header: rgba(11, 11, 13, 0.78);
+  --glass-gloss: rgba(255, 255, 255, 0.08);  /* brillo especular sutil (sustituye los inset blancos .55/.7 del light) */
+  --switch-knob: #EDEDF0;       /* perilla del toggle: near-white opaca (visible sobre track oscuro) */
+  --blur: 16px;                 /* backdrop-filter discreto */
+  --blur-strong: 22px;
+  --blur-nav: 28px;             /* esmerilado de la barra flotante */
 
-  /* ---- Bordes hairline ---- */
-  --line-1: #F0EEEA;            /* soft line */
-  --line-2: #ECE9E4;            /* hairline */
-  --line-3: #E2DED7;            /* borde fuerte */
-  --line-accent: rgba(255, 90, 54, 0.48);  /* foco/seleccionado = coral */
+  /* ---- Bordes hairline (blanco-alpha: definen la forma en dark) ---- */
+  --line-1: rgba(255, 255, 255, 0.06);       /* soft line */
+  --line-2: rgba(255, 255, 255, 0.09);       /* hairline */
+  --line-3: rgba(255, 255, 255, 0.14);       /* borde fuerte / grip */
+  --line-accent: rgba(255, 106, 68, 0.55);   /* foco/seleccionado = coral */
 
   /* ---- Texto ---- */
-  --text-1: #17140F;            /* ink principal */
-  --text-2: #736E67;            /* muted secundario (AA sobre canvas) */
-  --text-3: #8C877F;            /* terciario / hints */
-  --text-inverse: #FFFFFF;      /* sobre coral/acento */
+  --text-1: #F5F5F7;            /* ink principal */
+  --text-2: rgba(235, 235, 245, 0.64);       /* muted secundario (AA sobre canvas) */
+  --text-3: rgba(235, 235, 245, 0.44);       /* terciario / hints */
+  --text-inverse: #17140F;      /* AHORA OSCURO: va sobre gradiente firma, pills claras y thumbs de color */
 
   /* ---- Acento de marca: CORAL (solo acciones / estado activo) ---- */
-  --accent: #FF5A36;
-  --accent-strong: #FF5A36;
+  --accent: #FF6A44;            /* lifted para AA sobre casi negro */
+  --accent-strong: #FF6A44;
   --accent-deep: #E8481F;       /* press */
-  --accent-light: #FF7A52;      /* brillo del FAB (highlight superior) */
-  --accent-soft: rgba(255, 90, 54, 0.12);
-  --accent-glow: rgba(255, 90, 54, 0.30);
-  --accent-grad: #FF5A36;       /* sólido: SOLO el orbe del asesor (.advisor-orb). Los .btn--primary usan --fab-grad. */
-  /* FAB: degradado sutil aprobado por Doug (Liquid Glass claro) */
-  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
-  /* Material glossy compartido FAB ↔ CTA primario (misma identidad) */
-  --fab-rim: rgba(255, 160, 120, 0.5);                 /* borde cálido que atrapa la luz */
-  --fab-hi: inset 0 1px 0 rgba(255, 255, 255, 0.45);   /* brillo especular superior */
+  --accent-light: #FF8A64;      /* brillo del FAB (highlight superior) */
+  --accent-soft: rgba(255, 106, 68, 0.14);
+  --accent-glow: rgba(255, 106, 68, 0.38);
 
-  /* Verde glossy: MISMO material que el FAB coral pero en verde (semántica SUMA)
+  /* ---- Gradiente firma IA: naranja cálido → blanco → azul-violeta ----
+     ESCASO por regla: solo CTA primario, FAB, CTA onboarding y orbe del asesor.
+     Texto encima = --text-inverse (oscuro). */
+  --grad-cta: linear-gradient(100deg, #FFB088 0%, #FFE7D6 26%, #F4F7FF 50%, #9DB4FF 74%, #6E7BF2 100%);
+  --grad-cta-border: linear-gradient(140deg, #FF9A6B, #6E7BF2); /* borde/glow de tarjeta destacada (asesor) */
+  --sh-ia: 0 12px 30px -10px rgba(110, 123, 242, 0.45), 0 8px 24px -12px rgba(255, 122, 82, 0.35);
+
+  /* El orbe del asesor toma el gradiente firma (momento IA) */
+  --accent-grad: var(--grad-cta);
+
+  /* FAB / micro-controles seleccionados: vidrio coral glossy (chips, switch on,
+     seg thumb, avatar de perfil). SE QUEDA CORAL — no es el gradiente firma. */
+  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
+  /* Material glossy compartido FAB ↔ micro-controles (misma identidad) */
+  --fab-rim: rgba(255, 160, 120, 0.45);                /* borde cálido que atrapa la luz */
+  --fab-hi: var(--glass-gloss);                        /* brillo especular superior (sutil en dark) */
+
+  /* Verde glossy: MISMO material que el coral pero en verde (semántica SUMA)
      — para el segment Ingreso (gradiente + rim + brillo, como Gasto). */
-  --verde-light: #34B15E;
-  --verde-deep: #0E6B30;
+  --verde-light: #4ADE80;
+  --verde-deep: #16A34A;
   --verde-grad: linear-gradient(150deg, var(--verde-light), var(--verde-deep));
-  --verde-rim: rgba(120, 220, 150, 0.55);
-  --verde-glow: rgba(21, 127, 59, 0.32);
+  --verde-rim: rgba(134, 239, 172, 0.45);
+  --verde-glow: rgba(74, 222, 128, 0.35);
   --sh-chip-sel-verde: 0 5px 12px -5px var(--verde-glow), var(--fab-hi);
 
-  /* ---- Semáforo financiero (light, AA) ----
-     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra.
-     El -text es el color legible sobre el tint (para pills). */
-  --semaforo-verde: #157F3B;
-  --semaforo-verde-text: #157F3B;
-  --semaforo-verde-bg: #E7F5EC;
-  --semaforo-verde-line: rgba(21, 127, 59, 0.28);
+  /* ---- Semáforo financiero (dark, AA sobre --bg-2) ----
+     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra/dot.
+     El -text es el color legible sobre el tint translúcido (para pills). */
+  --semaforo-verde: #4ADE80;
+  --semaforo-verde-text: #86EFAC;
+  --semaforo-verde-bg: rgba(74, 222, 128, 0.13);
+  --semaforo-verde-line: rgba(74, 222, 128, 0.35);
 
-  --semaforo-ambar: #C77E00;
-  --semaforo-ambar-text: #8A5A00;
-  --semaforo-ambar-bg: #FBEFD3;
-  --semaforo-ambar-line: rgba(199, 126, 0, 0.30);
+  --semaforo-ambar: #FBBF24;
+  --semaforo-ambar-text: #FCD34D;
+  --semaforo-ambar-bg: rgba(251, 191, 36, 0.13);
+  --semaforo-ambar-line: rgba(251, 191, 36, 0.35);
 
-  --semaforo-rojo: #D42A22;
-  --semaforo-rojo-text: #C4231C;
-  --semaforo-rojo-bg: #FCEBE9;
-  --semaforo-rojo-line: rgba(212, 42, 34, 0.28);
+  --semaforo-rojo: #F87171;
+  --semaforo-rojo-text: #FCA5A5;
+  --semaforo-rojo-bg: rgba(248, 113, 113, 0.13);
+  --semaforo-rojo-line: rgba(248, 113, 113, 0.35);
 
   /* ---- Barras neutras (categoría / cobertura) — NUNCA semáforo ---- */
-  --track: #F0EEEA;                                       /* pista */
-  --bar-ink: var(--text-1);                               /* relleno neutro */
-  --bar-coral: color-mix(in srgb, var(--accent) 30%, #D8D2C8); /* relleno coral-tint */
+  --track: rgba(255, 255, 255, 0.08);                    /* pista */
+  --bar-ink: #F5F5F7;                                     /* relleno neutro claro */
+  --bar-coral: color-mix(in srgb, var(--accent) 55%, #3A2A24); /* relleno coral-tint sobre oscuro */
+  --grad-gauge: linear-gradient(90deg, #FF6A44, #FFC444);      /* gauge naranja→amarillo (solo barras neutras, opcional) */
 
-  /* ---- Tints de categoría (solo editor de color; identidad, NO estado) ---- */
-  --cat-persona1: #E0666E;
-  --cat-persona2: #4E86C9;
-  --cat-persona3: #8E5FD6;
-  --cat-yo: #2FA98C;
-  --cat-vivienda: #5A7BE0;
-  --cat-servicios: #2E9FB8;
-  --cat-mercado: #5FA83F;
-  --cat-transporte: #C77E00;
-  --cat-colegio: #8E5FD6;
-  --cat-seguros: #2FA98C;
-  --cat-salud: #D4568A;
-  --cat-creditos: #4E6FC0;
-  --cat-comisiones: #7A8090;
-  --cat-ocio: #8B54D6;
-  --cat-restaurantes: #C97A3F;
-  --cat-hormiga: #B08A18;
-  --cat-negocios: #2E9BB8;
-  --cat-otros: #7A8090;
+  /* ---- Mesh del hero (Hoy / onboarding), tokenizado ----
+     Canvas oscuro con glow coral arriba + eco violeta abajo. */
+  --hero-mesh:
+    radial-gradient(120% 90% at 85% -10%, rgba(255, 138, 100, 0.28), transparent 55%),
+    radial-gradient(90% 70% at 0% 0%, rgba(255, 106, 68, 0.16), transparent 50%),
+    radial-gradient(100% 80% at 50% 110%, rgba(110, 123, 242, 0.10), transparent 60%),
+    linear-gradient(170deg, #141114, #0B0B0D 70%);
+
+  /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
+  --cat-persona1: #F0808A;
+  --cat-persona2: #6FA3E8;
+  --cat-persona3: #A87EEA;
+  --cat-yo: #4FC4A8;
+  --cat-vivienda: #7B97F0;
+  --cat-servicios: #4FBBD6;
+  --cat-mercado: #7FC55E;
+  --cat-transporte: #E8A03C;
+  --cat-colegio: #A87EEA;
+  --cat-seguros: #4FC4A8;
+  --cat-salud: #EE7AA8;
+  --cat-creditos: #7B92DE;
+  --cat-comisiones: #9AA2B4;
+  --cat-ocio: #A97CEA;
+  --cat-restaurantes: #E29A62;
+  --cat-hormiga: #D9AE2E;
+  --cat-negocios: #4FB8D6;
+  --cat-otros: #9AA2B4;
 
   /* ---- Tipografía ---- */
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
@@ -150,24 +175,25 @@
   --sp-9: 48px;
   --sp-10: 64px;
 
-  /* ---- Radios ---- */
+  /* ---- Radios (bump bento: losas muy redondeadas) ---- */
   --r-xs: 8px;
   --r-sm: 12px;
   --r-md: 16px;
-  --r-lg: 20px;
+  --r-lg: 22px;
   --r-xl: 28px;
   --r-2xl: 34px;
   --r-full: 999px;
 
-  /* ---- Sombras / elevación (claras) ---- */
-  --sh-sm: 0 1px 2px rgba(20, 16, 12, 0.06);
-  --sh-card: 0 1px 3px rgba(20, 16, 12, 0.05);
-  --sh-sheet: 0 -12px 40px -12px rgba(40, 32, 20, 0.22);
-  --sh-fab: 0 8px 20px -3px rgba(232, 67, 31, 0.5), var(--fab-hi);
-  --sh-cta: 0 10px 22px -8px var(--accent-glow), 0 2px 6px -2px rgba(232, 67, 31, 0.35), var(--fab-hi); /* CTA ancho: glow coral + mismo brillo especular del FAB */
+  /* ---- Sombras / elevación (dark) ----
+     En dark la elevación la dan borde blanco-alpha + glow; la sombra solo ancla. */
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --sh-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --sh-sheet: 0 -12px 48px -12px rgba(0, 0, 0, 0.60);
+  --sh-fab: 0 8px 24px -4px rgba(232, 67, 31, 0.55), var(--fab-hi);
+  --sh-cta: 0 10px 26px -8px var(--accent-glow), 0 2px 6px -2px rgba(0, 0, 0, 0.50), var(--fab-hi); /* CTA ancho: glow coral + brillo especular + ancla */
   --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
-  --sh-md: 0 8px 30px -8px rgba(40, 32, 20, 0.18);
-  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 10px 28px -8px rgba(60, 45, 35, 0.28); /* barra flotante */
+  --sh-md: 0 8px 30px -8px rgba(0, 0, 0, 0.50);
+  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px -8px rgba(0, 0, 0, 0.55); /* barra flotante */
 
   /* ---- Layout ---- */
   --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
@@ -190,5 +216,5 @@
   --z-sheet: 70;
   --z-toast: 90;
 
-  color-scheme: light;
+  color-scheme: dark;
 }

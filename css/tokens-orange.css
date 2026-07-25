@@ -1,0 +1,217 @@
+/* ============================================================
+   Bolsillo · Design tokens — PRESET "ORANGE" (light minimalista)
+   ------------------------------------------------------------
+   Skin ORIGINAL guardado, NO eliminado. Es la piel light "Naranja al
+   frente" (canvas cálido, coral #FF5A36) previa al re-skin dark.
+
+   Para reactivarlo: en index.html cambia
+     <link rel="stylesheet" href="./css/tokens.css" />
+   por
+     <link rel="stylesheet" href="./css/tokens-orange.css" />
+   (y sube meta theme-color/color-scheme + manifest a los valores light
+   #FAF9F7 / "light" si quieres el splash y la status bar claros).
+   ============================================================ */
+
+:root {
+  /* ---- Superficies (claro y aireado) ---- */
+  --bg-0: #FAF9F7;              /* canvas base de la app */
+  --bg-1: #FAF9F7;              /* fondo de página */
+  --bg-2: #FFFFFF;              /* superficie / tarjetas */
+  --bg-3: #F4F2EF;             /* losa anidada (paridad con el skin dark) */
+  --scrim: rgba(40, 32, 20, 0.32); /* overlay de sheets/modales */
+
+  /* ---- Washes de ambiente (Liquid Glass claro) ----
+     Tinte MUY sutil sobre el canvas para que el vidrio flotante
+     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi blanco. */
+  --wash-coral: rgba(255, 120, 80, 0.10);
+  --wash-mint:  rgba(20, 150, 110, 0.08);
+  --wash-top:   rgba(255, 120, 80, 0.07);   /* tinte muy leve del borde superior (zona status/Dynamic Island) */
+  --bg-app:
+    linear-gradient(180deg, var(--wash-top), transparent 14%),
+    radial-gradient(90% 55% at 82% 4%, var(--wash-coral), transparent 60%),
+    radial-gradient(80% 50% at 8% 96%, var(--wash-mint), transparent 60%),
+    var(--bg-0);
+
+  /* ---- "Glass" → rellenos neutros claros (compat: mismos nombres) ----
+     glass-1 = superficie base de campos/tarjetas (blanco)
+     glass-2 = hover sutil cálido
+     glass-3 = pressed / pista más marcada */
+  --glass-1: #FFFFFF;
+  --glass-2: #F4F2EF;
+  --glass-3: #ECE9E4;
+  --glass-tag: rgba(255, 255, 255, 0.55);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
+  --glass-nav: rgba(255, 255, 255, 0.60);    /* barra inferior: vidrio flotante */
+  --glass-nav-line: rgba(255, 255, 255, 0.75); /* borde del vidrio flotante */
+  --glass-header: rgba(255, 255, 255, 0.82);
+  --glass-gloss: rgba(255, 255, 255, 0.55);  /* brillo especular (inset) del vidrio claro */
+  --switch-knob: #FFFFFF;       /* perilla del toggle: blanca sobre track claro */
+  --blur: 14px;                 /* backdrop-filter discreto */
+  --blur-strong: 18px;
+  --blur-nav: 26px;             /* esmerilado de la barra flotante */
+
+  /* ---- Bordes hairline ---- */
+  --line-1: #F0EEEA;            /* soft line */
+  --line-2: #ECE9E4;            /* hairline */
+  --line-3: #E2DED7;            /* borde fuerte */
+  --line-accent: rgba(255, 90, 54, 0.48);  /* foco/seleccionado = coral */
+
+  /* ---- Texto ---- */
+  --text-1: #17140F;            /* ink principal */
+  --text-2: #736E67;            /* muted secundario (AA sobre canvas) */
+  --text-3: #8C877F;            /* terciario / hints */
+  --text-inverse: #FFFFFF;      /* sobre coral/acento */
+
+  /* ---- Acento de marca: CORAL (solo acciones / estado activo) ---- */
+  --accent: #FF5A36;
+  --accent-strong: #FF5A36;
+  --accent-deep: #E8481F;       /* press */
+  --accent-light: #FF7A52;      /* brillo del FAB (highlight superior) */
+  --accent-soft: rgba(255, 90, 54, 0.12);
+  --accent-glow: rgba(255, 90, 54, 0.30);
+  --accent-grad: #FF5A36;       /* sólido: SOLO el orbe del asesor (.advisor-orb). Los .btn--primary usan --fab-grad. */
+  /* FAB: degradado sutil aprobado por Doug (Liquid Glass claro) */
+  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
+
+  /* Compat con el skin dark: en Orange, el "gradiente firma" y su glow resuelven
+     al material coral original (CTA primario, FAB, CTA onboarding y orbe se ven coral). */
+  --grad-cta: var(--fab-grad);
+  --grad-cta-border: linear-gradient(140deg, var(--accent-light), var(--accent-deep));
+  --sh-ia: var(--sh-cta);
+  /* Material glossy compartido FAB ↔ CTA primario (misma identidad) */
+  --fab-rim: rgba(255, 160, 120, 0.5);                 /* borde cálido que atrapa la luz */
+  --fab-hi: inset 0 1px 0 rgba(255, 255, 255, 0.45);   /* brillo especular superior */
+
+  /* Verde glossy: MISMO material que el FAB coral pero en verde (semántica SUMA)
+     — para el segment Ingreso (gradiente + rim + brillo, como Gasto). */
+  --verde-light: #34B15E;
+  --verde-deep: #0E6B30;
+  --verde-grad: linear-gradient(150deg, var(--verde-light), var(--verde-deep));
+  --verde-rim: rgba(120, 220, 150, 0.55);
+  --verde-glow: rgba(21, 127, 59, 0.32);
+  --sh-chip-sel-verde: 0 5px 12px -5px var(--verde-glow), var(--fab-hi);
+
+  /* ---- Semáforo financiero (light, AA) ----
+     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra.
+     El -text es el color legible sobre el tint (para pills). */
+  --semaforo-verde: #157F3B;
+  --semaforo-verde-text: #157F3B;
+  --semaforo-verde-bg: #E7F5EC;
+  --semaforo-verde-line: rgba(21, 127, 59, 0.28);
+
+  --semaforo-ambar: #C77E00;
+  --semaforo-ambar-text: #8A5A00;
+  --semaforo-ambar-bg: #FBEFD3;
+  --semaforo-ambar-line: rgba(199, 126, 0, 0.30);
+
+  --semaforo-rojo: #D42A22;
+  --semaforo-rojo-text: #C4231C;
+  --semaforo-rojo-bg: #FCEBE9;
+  --semaforo-rojo-line: rgba(212, 42, 34, 0.28);
+
+  /* ---- Barras neutras (categoría / cobertura) — NUNCA semáforo ---- */
+  --track: #F0EEEA;                                       /* pista */
+  --bar-ink: var(--text-1);                               /* relleno neutro */
+  --bar-coral: color-mix(in srgb, var(--accent) 30%, #D8D2C8); /* relleno coral-tint */
+  --grad-gauge: linear-gradient(90deg, var(--accent), #F2A93C);           /* gauge naranja→amarillo (opcional) */
+
+  /* Hero mesh naranja original (Hoy + onboarding) — reproduce el bloque de marca light */
+  --hero-mesh:
+    radial-gradient(42% 36% at 100% 0%, #FF9E5C, transparent 60%),
+    radial-gradient(30% 26% at 0% 0%, #FF9A55, transparent 54%),
+    radial-gradient(50% 42% at 100% 30%, #D5451A, transparent 70%),
+    radial-gradient(46% 40% at 0% 32%, #DC481A, transparent 72%),
+    linear-gradient(160deg, #F26A2C 0%, #E5501C 58%, #DC471A 100%);
+
+  /* ---- Tints de categoría (solo editor de color; identidad, NO estado) ---- */
+  --cat-persona1: #E0666E;
+  --cat-persona2: #4E86C9;
+  --cat-persona3: #8E5FD6;
+  --cat-yo: #2FA98C;
+  --cat-vivienda: #5A7BE0;
+  --cat-servicios: #2E9FB8;
+  --cat-mercado: #5FA83F;
+  --cat-transporte: #C77E00;
+  --cat-colegio: #8E5FD6;
+  --cat-seguros: #2FA98C;
+  --cat-salud: #D4568A;
+  --cat-creditos: #4E6FC0;
+  --cat-comisiones: #7A8090;
+  --cat-ocio: #8B54D6;
+  --cat-restaurantes: #C97A3F;
+  --cat-hormiga: #B08A18;
+  --cat-negocios: #2E9BB8;
+  --cat-otros: #7A8090;
+
+  /* ---- Tipografía ---- */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-num: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* escala de texto: display fluido, UI fija (inputs >=16px anti-zoom iOS) */
+  --fs-display: clamp(2.6rem, 1.6rem + 5vw, 3.4rem);
+  --fs-h1: 1.5rem;      /* 24 */
+  --fs-h2: 1.1875rem;   /* 19 */
+  --fs-h3: 1.0625rem;   /* 17 */
+  --fs-body: 1rem;      /* 16 */
+  --fs-sm: 0.875rem;    /* 14 */
+  --fs-xs: 0.75rem;     /* 12 */
+  --fs-input: 1rem;     /* 16 - evita zoom de iOS */
+
+  /* ---- Espaciado ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+
+  /* ---- Radios ---- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-2xl: 34px;
+  --r-full: 999px;
+
+  /* ---- Sombras / elevación (claras) ---- */
+  --sh-sm: 0 1px 2px rgba(20, 16, 12, 0.06);
+  --sh-card: 0 1px 3px rgba(20, 16, 12, 0.05);
+  --sh-sheet: 0 -12px 40px -12px rgba(40, 32, 20, 0.22);
+  --sh-fab: 0 8px 20px -3px rgba(232, 67, 31, 0.5), var(--fab-hi);
+  --sh-cta: 0 10px 22px -8px var(--accent-glow), 0 2px 6px -2px rgba(232, 67, 31, 0.35), var(--fab-hi); /* CTA ancho: glow coral + mismo brillo especular del FAB */
+  --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
+  --sh-md: 0 8px 30px -8px rgba(40, 32, 20, 0.18);
+  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 10px 28px -8px rgba(60, 45, 35, 0.28); /* barra flotante */
+
+  /* ---- Layout ---- */
+  --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
+  --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
+  --header-h: 56px;
+  --page-max: 560px;            /* ancho máx. de contenido */
+
+  /* ---- Motion ---- */
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-fan: cubic-bezier(0.28, 1.08, 0.4, 1); /* leve pop al abrir el abanico del onboarding */
+
+  /* ---- Z-index ---- */
+  --z-nav: 40;
+  --z-fab: 50;
+  --z-scrim: 60;
+  --z-sheet: 70;
+  --z-toast: 90;
+
+  color-scheme: light;
+}
