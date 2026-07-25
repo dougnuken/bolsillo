@@ -38,6 +38,15 @@ function pct(frac) {
   return Math.round(frac * 100) + '%';
 }
 
+/** Atenúa el símbolo $ (y el signo) para la jerarquía tipo fintech: el "$"
+ *  va en gris y algo más pequeño, la cifra manda. "—" pasa igual. */
+function conDivisa(str) {
+  const s = String(str == null ? '' : str);
+  const m = s.match(/^([−+-]?)\s*\$(.*)$/);
+  if (m) return `<span class="cifra-cur">${m[1]}$</span>${esc(m[2])}`;
+  return esc(s);
+}
+
 /* ---- Hero naranja: avatar + saludo + campana + tabs + balance ---- */
 const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics'], ['recurrentes', 'Recurrentes']];
 
@@ -63,7 +72,7 @@ function saludoInfo() {
 
 function heroHTML(nombre, salario) {
   const s = saludoInfo();
-  const bal = salario != null && salario > 0 ? esc(formatCOP(salario)) : '—';
+  const bal = salario != null && salario > 0 ? conDivisa(formatCOP(salario)) : '—';
   const nom = String(nombre || '').trim();
   const ini = iniciales(nom);
   return `
@@ -192,12 +201,12 @@ function statRowHTML(e) {
     <div class="stat-row">
       <div class="card stat">
         <span class="stat__label">${ICON_DOWN} Disponible</span>
-        <span class="stat__value${dispClase} num">${formatCOP(disp)}</span>
+        <span class="stat__value${dispClase} num">${conDivisa(formatCOP(disp))}</span>
         <span class="stat__sub num">${formatCOP(e.disponiblePorDia)} por día</span>
       </div>
       <div class="card stat">
         <span class="stat__label">${ICON_UP} Gastado</span>
-        <span class="stat__value num">${formatCOP(e.variableGastado)}</span>
+        <span class="stat__value num">${conDivisa(formatCOP(e.variableGastado))}</span>
         <span class="stat__sub">variable este mes</span>
       </div>
     </div>`;
@@ -470,7 +479,7 @@ async function pintar(root) {
   if (!root.isConnected) return; // el usuario ya cambió de vista
 
   const balEl = root.querySelector('#hoy-balance');
-  if (balEl) balEl.textContent = salario > 0 ? formatCOP(salario) : '—';
+  if (balEl) balEl.innerHTML = salario > 0 ? conDivisa(formatCOP(salario)) : '—';
 
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
   const nom = String(nombre || '').trim();

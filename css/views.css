@@ -76,6 +76,16 @@ body[data-route="hoy"] .app-header { display: none; }
   font-size: 40px; font-weight: var(--fw-bold); letter-spacing: -0.02em; margin-top: 3px; line-height: 1.05;
 }
 
+/* Símbolo $ atenuado (jerarquía tipo fintech): el "$" en gris y más pequeño,
+   la cifra manda. Se usa en el balance del hero y en las stat cards. */
+.cifra-cur {
+  color: var(--text-3);
+  font-weight: var(--fw-semibold);
+  font-size: 0.66em;
+  margin-right: 0.05em;
+  letter-spacing: 0;
+}
+
 /* Tabs sutiles dentro del sheet (indicador deslizante), en cabecera sticky. */
 .hoy-sheet__head {
   position: sticky; top: 0; z-index: 3;
@@ -249,7 +259,7 @@ body[data-route="hoy"] .app-header { display: none; }
 .stat-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
+  gap: var(--sp-2);            /* bento apretado: losas contiguas */
   margin-top: var(--sp-4);
 }
 .stat {
@@ -518,7 +528,7 @@ body[data-route="hoy"] .app-header { display: none; }
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-  margin-top: var(--sp-3);
+  margin-top: var(--sp-2);    /* pegado a la fila de stats (cluster bento) */
   padding: var(--sp-4) var(--sp-5);
 }
 .fijos-card__label {
