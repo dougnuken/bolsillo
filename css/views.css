@@ -84,9 +84,7 @@ body[data-route="hoy"] .app-header { display: none; }
 /* Tabs sutiles dentro del sheet (indicador deslizante), en cabecera sticky. */
 .hoy-sheet__head {
   position: sticky; top: 0; z-index: 3;
-  background: rgba(255, 255, 255, 0.62);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: var(--bg-0);
   padding-top: 8px;
 }
 .hoy-tabs {
@@ -118,10 +116,7 @@ body[data-route="hoy"] .app-header { display: none; }
   flex: 1 1 auto; overflow: hidden auto; -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   margin-top: -34px;
-  /* vidrio: translúcido + blur → se ven los blobs naranjas por detrás */
-  background: rgba(255, 255, 255, 0.58);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-  backdrop-filter: blur(24px) saturate(1.6);
+  background: var(--bg-0);
   border-radius: 26px 26px 0 0;
 }
 .hoy-sheet {
@@ -132,9 +127,8 @@ body[data-route="hoy"] .app-header { display: none; }
 }
 .hoy-sheet__grip { width: 40px; height: 4px; border-radius: var(--r-full); background: var(--line-3); margin: 2px auto 12px; }
 .hoy-body { padding-top: var(--sp-4); }
-/* Cards planas y de VIDRIO en Hoy: sin elevación, translúcidas (dejan ver el
-   mesh detrás) pero opacas lo suficiente para que el texto oscuro contraste. */
-.hoy-sheet .card { box-shadow: none; background: rgba(255, 255, 255, 0.55); border-color: rgba(255, 255, 255, 0.6); }
+/* Cards planas en Hoy: sin elevación (conservan fondo blanco sólido + hairline). */
+.hoy-sheet .card { box-shadow: none; }
 .hoy-empty { text-align: center; color: var(--text-2); font-size: var(--fs-sm); padding: var(--sp-8) var(--sp-4); line-height: 1.5; }
 
 /* lista de gastos fijos (pestaña Recurrentes) */

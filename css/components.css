@@ -300,8 +300,8 @@ body.nav-min .fab {
 .icon-btn--notif:hover { background: var(--glass-3); color: var(--text-1); }
 .notif-badge {
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: -5px;
+  right: -5px;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
