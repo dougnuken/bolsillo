@@ -597,3 +597,52 @@ export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, 
     interesEstimado,
   });
 }
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/**
+ * Historial de AHORRO mes a mes (para el barchart de "cuánto ahorré").
+ * Ahorro del mes = ingresos − gastos, donde:
+ *   - ingresos = sueldo de empleo (constante; se usa el actual como referencia)
+ *     + ingresos de negocio REGISTRADOS ese mes.
+ *   - gastos = la porción del mes de cada gasto (monto completo; monto/N si va
+ *     a cuotas). Incluye fijos (materializados como movimientos).
+ * `tieneDatos` marca los meses con actividad real (para no mostrar como "ahorro"
+ * un mes sin registros previos = solo el sueldo). PURA.
+ *
+ * @param {{movimientos?:object[], ingresoEmpleo?:number, hoy:Date|string, meses?:number}} args
+ * @returns {Array<{anio:number, mes:number, label:string, ingresos:number, gastos:number, ahorro:number, tieneDatos:boolean, esActual:boolean}>}
+ */
+export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, hoy, meses = 6 } = {}) {
+  const movs = Array.isArray(movimientos) ? movimientos.filter(Boolean) : [];
+  const { anio, mes } = partes(hoy);
+  const salario = esEntero(ingresoEmpleo) && ingresoEmpleo > 0 ? ingresoEmpleo
+    : (Number.isFinite(ingresoEmpleo) && ingresoEmpleo > 0 ? Math.round(ingresoEmpleo) : 0);
+  const n = Number.isInteger(meses) && meses > 0 ? Math.min(meses, 24) : 6;
+
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    let a = anio, m = mes - i;
+    while (m < 1) { m += 12; a -= 1; }
+    const prefijo = `${a}-${String(m).padStart(2, '0')}`;
+    const ingMovs = redondear(
+      movs.filter((x) => x.tipo === 'ingreso' && enMes(x, prefijo))
+        .reduce((s, x) => s + (Number.isFinite(x.monto) ? x.monto : 0), 0),
+    );
+    const gastos = redondear(
+      movs.filter((x) => x.tipo === 'gasto').reduce((s, x) => s + porcionEnMes(x, a, m), 0),
+    );
+    const ingresos = redondear(salario + ingMovs);
+    out.push({
+      anio: a,
+      mes: m,
+      label: MESES_CORTOS[m - 1],
+      ingresos,
+      gastos,
+      ahorro: redondear(ingresos - gastos),
+      tieneDatos: gastos > 0 || ingMovs > 0,
+      esActual: a === anio && m === mes,
+    });
+  }
+  return out;
+}

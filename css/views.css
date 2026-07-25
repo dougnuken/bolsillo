@@ -518,6 +518,45 @@
 }
 
 /* ============================================================
+   Ahorro mes a mes (barchart que diverge desde una línea cero)
+   ============================================================ */
+.ahorro { margin-top: var(--sp-6); }
+.ahorro__insight {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin: var(--sp-1) 0 var(--sp-3);
+  line-height: 1.45;
+}
+.ahorro__insight strong { color: var(--text-1); font-weight: var(--fw-bold); }
+.ahorro__svg { display: block; width: 100%; height: auto; }
+.ahorro__bar { fill: var(--text-3); }          /* barras neutras */
+.ahorro__bar--now { fill: var(--accent); }      /* mes actual = acento */
+.ahorro__zeroline { stroke: var(--line-3); stroke-width: 1; }
+.ahorro__val {
+  fill: var(--text-3);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 9.5px;
+  font-weight: var(--fw-semibold);
+}
+.ahorro__val--now { fill: var(--accent-deep); font-weight: var(--fw-bold); }
+.ahorro__labels {
+  display: flex;
+  margin-top: 2px;
+  padding: 0 2.35%;   /* = padX (8) / viewBox (340): alinea con las barras */
+}
+.ahorro__lbl {
+  flex: 1 1 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-3);
+}
+.ahorro__lbl.is-now { color: var(--accent); }
+
+/* ============================================================
    "Tus negocios" — cobertura de créditos por fuente de ingreso
    ============================================================ */
 .negocios { margin-top: var(--sp-5); }
@@ -724,43 +763,89 @@
 .cfg-cta { margin-top: var(--sp-4); }
 .cfg-danger { margin-top: var(--sp-6); }
 
-/* Botón "leer del extracto" + nota de resultado */
-.cfg-extracto { margin-top: var(--sp-2); }
+/* Botón "leer del extracto": acción inteligente (importar del PDF con IA).
+   Tinte coral sutil — secundario al CTA primario "Guardar ciclo". */
+.cfg-extracto {
+  margin-top: var(--sp-2);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  border: 1.5px solid var(--line-accent);
+  font-weight: var(--fw-bold);
+}
+.cfg-extracto svg { color: var(--accent); }
+.cfg-extracto:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.cfg-extracto[disabled] { color: var(--text-3); border-color: var(--line-2); }
 .cfg-hint { margin: var(--sp-2) var(--sp-1) 0; font-size: var(--fs-xs); color: var(--text-2); line-height: 1.5; }
 .cfg-hint:empty { display: none; }
 .cfg-hint--err { color: var(--semaforo-rojo-text); }
 
-/* Resumen del ciclo de la tarjeta (este ciclo llevas $X, se paga el día Y) */
+/* Resumen del ciclo de la tarjeta: card limpia con jerarquía (monto héroe +
+   grid corte/pago + pill de cuotas + nota de financiación). */
 .tj-res {
   margin-top: var(--sp-5);
-  padding: var(--sp-4) var(--sp-5);
-  border-radius: var(--r-lg);
-  background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
+  padding: var(--sp-5);
+  border-radius: var(--r-xl);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--sh-card);
 }
 .tj-res__lbl {
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-2);
+  color: var(--text-3);
 }
 .tj-res__monto {
-  font-size: var(--fs-h1);
+  font-size: 1.75rem;
   font-weight: var(--fw-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   color: var(--text-1);
   margin-top: 2px;
 }
-.tj-res__meta { font-size: var(--fs-sm); color: var(--text-2); margin-top: var(--sp-2); line-height: 1.5; }
-.tj-res__cuotas { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--accent); margin-top: var(--sp-2); }
+.tj-res__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+.tj-res__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--glass-2);
+}
+.tj-res__k {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.tj-res__v { font-size: var(--fs-h3); font-weight: var(--fw-bold); color: var(--text-1); }
+.tj-res__d { font-size: var(--fs-xs); color: var(--text-2); }
+.tj-res__cell--muted .tj-res__v { color: var(--text-3); }
+.tj-res__cuotas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-4);
+  padding: 5px var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
 .tj-res__fin {
   font-size: var(--fs-sm);
   color: var(--text-2);
   line-height: 1.5;
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--line-accent);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-2);
 }
 .tj-res__fin strong { color: var(--text-1); font-weight: var(--fw-semibold); }
 

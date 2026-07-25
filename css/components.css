@@ -552,8 +552,10 @@ body.nav-min .fab {
 
 /* ---- captura por voz (dictado) ---- */
 .voz-field { display: block; margin-bottom: var(--sp-3); }
-.voz-field__input {
+/* especificidad 0,2,0 para ganarle al padding 0 vertical de .field__input */
+.voz-field .voz-field__input {
   min-height: 96px;
+  padding: var(--sp-3) var(--sp-4);   /* el placeholder no se pega arriba */
   resize: none;
   line-height: 1.45;
 }
@@ -1053,6 +1055,12 @@ body.nav-min .fab {
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--sp-2);
   margin-bottom: var(--sp-3);
+  /* edge-to-edge: rompe el padding lateral de .view para scrollear hasta el
+     borde de la pantalla (los chips ya no se cortan antes). */
+  margin-left: calc(-1 * max(var(--sp-5), env(safe-area-inset-left)));
+  margin-right: calc(-1 * max(var(--sp-5), env(safe-area-inset-right)));
+  padding-left: max(var(--sp-5), env(safe-area-inset-left));
+  padding-right: max(var(--sp-5), env(safe-area-inset-right));
 }
 .mov-filters::-webkit-scrollbar { display: none; }
 .mfilter {
@@ -1136,6 +1144,7 @@ body.nav-min .fab {
    Registrar — segmented Gasto/Ingreso + modo Ingreso
    ============================================================ */
 .seg {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3px;
@@ -1145,29 +1154,48 @@ body.nav-min .fab {
   background: var(--glass-2);
   border: 1px solid transparent;
 }
+/* Pill deslizante (posición/ancho por JS: colocarThumb). Material glossy coral
+   (Gasto) que se vuelve verde glossy (Ingreso) — mismo brillo/gradiente. */
+.seg__thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  border-radius: var(--r-full);
+  background: var(--fab-grad);
+  border: 1px solid var(--fab-rim);
+  box-shadow: var(--sh-chip-sel);
+  transform: translateX(0);
+  transition: transform var(--dur) var(--ease),
+              background var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease);
+  pointer-events: none;
+  z-index: 0;
+}
+.seg--ingreso .seg__thumb {
+  background: var(--verde-grad);
+  border-color: var(--verde-rim);
+  box-shadow: var(--sh-chip-sel-verde);
+}
 .seg__opt {
+  position: relative;
+  z-index: 1;
   min-height: 40px;
   border-radius: var(--r-full);
-  border: 1px solid transparent;   /* sin salto de layout al seleccionar */
+  border: none;
+  background: transparent;
   color: var(--text-2);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
-  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  transition: color var(--dur-fast) var(--ease);
 }
 .seg__opt:active { transform: scale(0.98); }
-/* seleccionado (Gasto) = vidrio coral glossy del FAB */
-.seg__opt.is-on {
-  background: var(--fab-grad);
-  border-color: var(--fab-rim);
-  color: var(--text-inverse);
-  box-shadow: var(--sh-chip-sel);
-}
-/* Ingreso conserva su semántica verde (SUMA) */
-.seg__opt--in.is-on {
-  background: var(--semaforo-verde-bg);
-  border-color: var(--semaforo-verde-line);
-  color: var(--semaforo-verde);
-  box-shadow: none;
+/* seleccionado: texto blanco sobre el pill glossy (coral o verde) */
+.seg__opt.is-on { color: var(--text-inverse); }
+@media (prefers-reduced-motion: reduce) {
+  .seg__thumb { transition: none; }
 }
 
 /* monto en modo Ingreso: verde para dejar claro que SUMA */

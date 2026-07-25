@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calcularEstado, diasEnMes, resumenNegocios } from '../js/budget.js';
+import { calcularEstado, diasEnMes, resumenNegocios, historialAhorro } from '../js/budget.js';
 import { crearMovimiento, crearRecurrente, crearCredito, crearIngreso } from '../js/model.js';
 
 /* ---- factories de apoyo ---- */
@@ -365,6 +365,36 @@ test('sin gastos hormiga: hormigaCount 0 y proyeccionHormiga 0', () => {
   assert.equal(e.totalHormiga, 0);
   assert.equal(e.hormigaCount, 0);
   assert.equal(e.proyeccionHormiga, 0);
+});
+
+/* ---- historialAhorro (barchart mes a mes) ---- */
+
+test('historialAhorro: ahorro = (sueldo + ingresos) − gastos del mes', () => {
+  const movs = [
+    gasto('2026-07-05', 500_000, { categoria: 'ocio' }),
+    ingresoMov('2026-07-10', 300_000),
+  ];
+  const h = historialAhorro({ movimientos: movs, ingresoEmpleo: 3_000_000, hoy: '2026-07-15', meses: 3 });
+  assert.equal(h.length, 3);
+  const jul = h[h.length - 1];
+  assert.equal(jul.esActual, true);
+  assert.equal(jul.label, 'jul');
+  assert.equal(jul.ingresos, 3_300_000);   // sueldo 3M + 300k negocio
+  assert.equal(jul.gastos, 500_000);
+  assert.equal(jul.ahorro, 2_800_000);     // 3.3M − 500k
+  assert.equal(jul.tieneDatos, true);
+});
+
+test('historialAhorro: mes sin actividad → tieneDatos false', () => {
+  const h = historialAhorro({ movimientos: [], ingresoEmpleo: 3_000_000, hoy: '2026-07-15', meses: 2 });
+  assert.equal(h.every((m) => m.tieneDatos === false), true);
+});
+
+test('historialAhorro: cuotas pesan monto/N; ahorro puede ser negativo', () => {
+  const movs = [gasto('2026-07-05', 600_000, { cuotas: 6, categoria: 'ocio' })];
+  const h = historialAhorro({ movimientos: movs, ingresoEmpleo: 0, hoy: '2026-07-15', meses: 1 });
+  assert.equal(h[0].gastos, 100_000);   // 600k / 6
+  assert.equal(h[0].ahorro, -100_000);  // 0 ingreso − 100k
 });
 
 test('proyección: variableGastado / avance, más los fijos', () => {

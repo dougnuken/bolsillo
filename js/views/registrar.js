@@ -137,6 +137,7 @@ function segmentedHTML() {
   const on = (t) => (STATE.tipo === t ? ' is-on' : '');
   return `
     <div class="seg" role="tablist" aria-label="Tipo de movimiento">
+      <span class="seg__thumb" aria-hidden="true"></span>
       <button type="button" class="seg__opt${on('gasto')}" role="tab" aria-selected="${STATE.tipo === 'gasto'}" data-tipo="gasto">Gasto</button>
       <button type="button" class="seg__opt seg__opt--in${on('ingreso')}" role="tab" aria-selected="${STATE.tipo === 'ingreso'}" data-tipo="ingreso">Ingreso</button>
     </div>`;
@@ -426,12 +427,77 @@ function renderForm() {
    Paint + binds
    ============================================================ */
 let lastPaintedScreen = null;
+let lastPaintedTipo = null;
+let segThumbPrevTipo = null;
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Coloca (y desliza) el pill del segmented Gasto/Ingreso bajo la opción activa.
+   Mide posiciones reales (FLIP) porque el sheet se repinta entero en cada paint. */
+function colocarThumb() {
+  if (!sheetRef) return;
+  const seg = sheetRef.querySelector('.seg');
+  if (!seg) { segThumbPrevTipo = null; return; }
+  const thumb = seg.querySelector('.seg__thumb');
+  const optOn = seg.querySelector('.seg__opt.is-on');
+  if (!thumb || !optOn) return;
+  const pos = (o) => ({ w: o.offsetWidth, x: o.offsetLeft });
+  const dest = pos(optOn);
+  const animar = !prefersReduced && segThumbPrevTipo != null && segThumbPrevTipo !== STATE.tipo && dest.w > 0;
+  if (animar) {
+    const optPrev = seg.querySelector(`.seg__opt[data-tipo="${segThumbPrevTipo}"]`);
+    const from = optPrev ? pos(optPrev) : dest;
+    // parte en la posición y COLOR del tipo previo, sin transición
+    seg.classList.toggle('seg--ingreso', segThumbPrevTipo === 'ingreso');
+    thumb.style.transition = 'none';
+    thumb.style.width = dest.w + 'px';
+    thumb.style.transform = `translateX(${from.x}px)`;
+    void thumb.offsetWidth; // reflow
+    // destino: color + posición del tipo actual → deslizan y hacen crossfade
+    thumb.style.transition = '';
+    seg.classList.toggle('seg--ingreso', STATE.tipo === 'ingreso');
+    thumb.style.transform = `translateX(${dest.x}px)`;
+  } else {
+    seg.classList.toggle('seg--ingreso', STATE.tipo === 'ingreso');
+    thumb.style.transition = 'none';
+    thumb.style.width = dest.w + 'px';
+    thumb.style.transform = `translateX(${dest.x}px)`;
+    void thumb.offsetWidth;
+    thumb.style.transition = '';
+  }
+  segThumbPrevTipo = STATE.tipo;
+}
+
+/* Anima suavemente el alto del sheet de h0 → h1 (al cambiar de tipo/pantalla). */
+function animarAlto(h0, h1) {
+  const el = sheetRef;
+  el.style.overflow = 'hidden';
+  el.style.transition = 'none';
+  el.style.height = h0 + 'px';
+  void el.offsetHeight; // reflow
+  el.style.transition = 'height 240ms cubic-bezier(0.16, 1, 0.3, 1)';
+  el.style.height = h1 + 'px';
+  const done = () => {
+    el.style.height = '';
+    el.style.transition = '';
+    el.style.overflow = '';
+    el.removeEventListener('transitionend', done);
+  };
+  el.addEventListener('transitionend', done, { once: true });
+  setTimeout(done, 500);
+}
+
+/* Reinicia el estado de animación (al abrir/cerrar el sheet: no anima de más). */
+function resetPaintAnim() { lastPaintedScreen = null; lastPaintedTipo = null; segThumbPrevTipo = null; }
+
 function paint() {
   if (!sheetRef) return;
   // Preserva el scroll en repintados de la MISMA pantalla (p. ej. tocar el
   // switch o un chip abajo no debe saltar arriba). Solo reinicia al cambiar.
   const mismaPantalla = STATE.screen === lastPaintedScreen;
+  const cambio = !mismaPantalla || STATE.tipo !== lastPaintedTipo;
+  const animAlto = !prefersReduced && lastPaintedScreen !== null && cambio;
   const prevScroll = sheetRef.scrollTop;
+  const h0 = animAlto ? sheetRef.offsetHeight : 0;
   sheetRef.innerHTML = STATE.screen === 'form' ? renderForm()
     : STATE.screen === 'foto-cargando' ? renderCargando()
       : STATE.screen === 'voz' ? renderVoz()
@@ -440,6 +506,12 @@ function paint() {
   bind();
   sheetRef.scrollTop = mismaPantalla ? prevScroll : 0;
   lastPaintedScreen = STATE.screen;
+  lastPaintedTipo = STATE.tipo;
+  colocarThumb();
+  if (animAlto && h0 > 0) {
+    const h1 = sheetRef.offsetHeight;
+    if (Math.abs(h1 - h0) > 6) animarAlto(h0, h1);
+  }
   if (STATE.screen === 'form' && STATE.modo === 'texto') {
     const ti = sheetRef.querySelector('#reg-texto');
     if (ti) setTimeout(() => ti.focus(), 60);
@@ -1055,6 +1127,7 @@ async function abrir(mov = null) {
     STATE.cuenta = cuentaDefault();
     draftPend = loadDraft();
   }
+  resetPaintAnim(); // apertura fresca: no animar alto/thumb desde estado viejo
   if (openRef) openRef();
   paint();
 }

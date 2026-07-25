@@ -9,7 +9,7 @@
    ============================================================ */
 
 import { getAll, getConfig } from '../db.js';
-import { calcularEstado, resumenNegocios } from '../budget.js';
+import { calcularEstado, resumenNegocios, historialAhorro } from '../budget.js';
 import { formatCOP } from '../money.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
@@ -27,8 +27,6 @@ const ICON_UP =
 const ICON_PIN =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-4l7-7"/><path d="m14 4 6 6-4 1-3 3-3-3 3-3 1-4Z"/></svg>';
 
-const CLASE_MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
@@ -41,11 +39,13 @@ function pct(frac) {
 }
 
 function greetHTML() {
-  const hoy = new Date();
-  const mes = CLASE_MES[hoy.getMonth()];
+  const h = new Date().getHours();
+  const saludo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const emoji = h < 12 ? '☀️' : h < 19 ? '👋' : '🌙';
   return `
     <header class="view-greet">
-      <h1 class="view-greet__title">Hoy</h1>
+      <p class="view-greet__eyebrow">${saludo}</p>
+      <h1 class="view-greet__title">Hola, Doug ${emoji}</h1>
     </header>`;
 }
 
@@ -231,10 +231,68 @@ function hormigaHTML(e) {
     </div>`;
 }
 
-function contenidoHTML(e, negocios) {
+/* Monto compacto para las etiquetas del barchart ($2,3M / $450k / −$300k). */
+function fmtCompacto(n) {
+  const a = Math.abs(Math.round(n));
+  const s = n < 0 ? '−' : '';
+  if (a >= 1_000_000) { const v = a / 1_000_000; return `${s}$${v >= 10 ? Math.round(v) : v.toFixed(1).replace('.', ',')}M`; }
+  if (a >= 1_000) return `${s}$${Math.round(a / 1_000)}k`;
+  return `${s}$${a}`;
+}
+
+/* Barchart de AHORRO mes a mes (diverge desde una línea cero: arriba = ahorraste,
+   abajo = gastaste de más). Barras neutras; el mes actual en acento. SVG (los
+   atributos de geometría no son inline-style → OK con el CSP). */
+function ahorroCardHTML(hist) {
+  const datos = (hist || []).filter((d) => d.tieneDatos);
+  if (datos.length < 2) return '';
+
+  // padTop/padBot dejan aire para las etiquetas de valor (arriba de barras
+  // positivas, abajo de negativas) sin que se corten en el viewBox.
+  const W = 340, H = 158, padX = 8, padTop = 20, padBot = 20;
+  const chartH = H - padTop - padBot;
+  const maxPos = Math.max(0, ...datos.map((d) => d.ahorro));
+  const maxNeg = Math.max(0, ...datos.map((d) => -d.ahorro));
+  const range = (maxPos + maxNeg) || 1;
+  const yZero = padTop + (maxPos / range) * chartH;
+  const n = datos.length;
+  const slot = (W - 2 * padX) / n;
+  const barW = Math.min(slot * 0.56, 44);
+
+  const bars = datos.map((d, i) => {
+    const cx = padX + slot * i + slot / 2;
+    const x = cx - barW / 2;
+    const h = Math.max(2, (Math.abs(d.ahorro) / range) * chartH);
+    const y = d.ahorro >= 0 ? yZero - h : yZero;
+    const barCls = 'ahorro__bar' + (d.esActual ? ' ahorro__bar--now' : '');
+    const valCls = 'ahorro__val' + (d.esActual ? ' ahorro__val--now' : '');
+    const vy = d.ahorro >= 0 ? y - 5 : y + h + 12;
+    return `<rect class="${barCls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4"></rect>`
+      + `<text class="${valCls}" x="${cx.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle">${esc(fmtCompacto(d.ahorro))}</text>`;
+  }).join('');
+  const zero = `<line class="ahorro__zeroline" x1="${padX}" y1="${yZero.toFixed(1)}" x2="${W - padX}" y2="${yZero.toFixed(1)}"></line>`;
+  const labels = datos.map((d) =>
+    `<span class="ahorro__lbl${d.esActual ? ' is-now' : ''}">${esc(d.label)}</span>`).join('');
+
+  const actual = datos[datos.length - 1];
+  const prom = Math.round(datos.reduce((s, d) => s + d.ahorro, 0) / datos.length);
+  const insight = `Este mes ${actual.ahorro >= 0 ? 'ahorras' : 'gastas de más'} <strong>${esc(fmtCompacto(actual.ahorro))}</strong> · promedio ${esc(fmtCompacto(prom))}`;
+
+  return `
+    <div class="ahorro">
+      <div class="section-head"><span class="section-head__title">Tu ahorro mes a mes</span></div>
+      <p class="ahorro__insight">${insight}</p>
+      <svg class="ahorro__svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ahorro por mes">
+        ${zero}${bars}
+      </svg>
+      <div class="ahorro__labels">${labels}</div>
+    </div>`;
+}
+
+function contenidoHTML(e, negocios, historial) {
   // El insight "hormiga" ahora vive dentro de "En qué se va" (categoriasHTML).
-  return gaugeCardHTML(e) + statRowHTML(e) + fijosCardHTML(e)
-    + negociosHTML(negocios) + categoriasHTML(e);
+  return gaugeCardHTML(e) + statRowHTML(e) + ahorroCardHTML(historial)
+    + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
 
 /* ---- animaciones (solo transform/opacity/stroke-dashoffset/width) ---- */
@@ -280,6 +338,7 @@ async function pintar(root) {
 
   let estado;
   let negocios = [];
+  let historial = [];
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -292,6 +351,7 @@ async function pintar(root) {
       movimientos, recurrentes, creditos, hoy, config,
     });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
+    historial = historialAhorro({ movimientos, ingresoEmpleo: empleo ? empleo.monto : 0, hoy, meses: 6 });
   } catch (err) {
     console.warn('[Bolsillo] no se pudo calcular el estado de Hoy:', err);
     body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus datos. Reintenta.</p>';
@@ -307,7 +367,7 @@ async function pintar(root) {
     return;
   }
 
-  body.innerHTML = contenidoHTML(estado, negocios);
+  body.innerHTML = contenidoHTML(estado, negocios, historial);
   animarAnillo(body, estado);
   aplicarBarras(body);
 }

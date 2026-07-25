@@ -118,9 +118,24 @@ function fmtFecha(iso) {
 /** Tarjeta-resumen del ciclo (solo si hay día de corte). */
 function resumenCicloHTML(r) {
   if (!r) return '';
-  const pago = r.pagoISO
-    ? `Se paga el ${fmtFecha(r.pagoISO)}${r.diasParaPago != null ? ` · en ${r.diasParaPago} día${r.diasParaPago !== 1 ? 's' : ''}` : ''}`
-    : 'Agrega el día límite de pago';
+  const dias = (n) => `en ${n} día${n !== 1 ? 's' : ''}`;
+  const corteCell = `
+    <div class="tj-res__cell">
+      <span class="tj-res__k">Corta</span>
+      <span class="tj-res__v num">${fmtFecha(r.corteISO)}</span>
+      <span class="tj-res__d">${dias(r.diasParaCorte)}</span>
+    </div>`;
+  const pagoCell = r.pagoISO
+    ? `<div class="tj-res__cell">
+        <span class="tj-res__k">Pago</span>
+        <span class="tj-res__v num">${fmtFecha(r.pagoISO)}</span>
+        <span class="tj-res__d">${r.diasParaPago != null ? dias(r.diasParaPago) : ''}</span>
+      </div>`
+    : `<div class="tj-res__cell tj-res__cell--muted">
+        <span class="tj-res__k">Pago</span>
+        <span class="tj-res__v">—</span>
+        <span class="tj-res__d">Agrega el límite</span>
+      </div>`;
   const cuotas = r.cuotasActivas > 0
     ? `<p class="tj-res__cuotas">${r.cuotasActivas} compra${r.cuotasActivas > 1 ? 's' : ''} a cuotas · ${esc(formatCOP(r.cuotasMensual))}/mes</p>`
     : '';
@@ -132,7 +147,7 @@ function resumenCicloHTML(r) {
     <div class="tj-res">
       <p class="tj-res__lbl">Este ciclo llevas</p>
       <p class="tj-res__monto num">${esc(formatCOP(r.acumulado))}</p>
-      <p class="tj-res__meta">Corta el ${fmtFecha(r.corteISO)} · en ${r.diasParaCorte} día${r.diasParaCorte !== 1 ? 's' : ''}<br/>${pago}</p>
+      <div class="tj-res__grid">${corteCell}${pagoCell}</div>
       ${cuotas}
       ${fin}
     </div>`;
@@ -273,7 +288,7 @@ export async function abrirCuentas({ onSaved } = {}) {
 
       const ciclo = cred ? `
         <p class="cfg-subhead">Ciclo de la tarjeta</p>
-        <button type="button" class="btn btn--ghost btn--block cfg-extracto" data-act="subir-extracto">${IC_PDF}<span>Leer del extracto (PDF)</span></button>
+        <button type="button" class="btn btn--block cfg-extracto" data-act="subir-extracto">${IC_PDF}<span>Leer del extracto (PDF)</span></button>
         <p class="cfg-hint" id="tj-extracto-nota"></p>
         <div class="cfg-form">
           <div class="field field--split cfg-field">

@@ -67,6 +67,15 @@
   --fab-rim: rgba(255, 160, 120, 0.5);                 /* borde cálido que atrapa la luz */
   --fab-hi: inset 0 1px 0 rgba(255, 255, 255, 0.45);   /* brillo especular superior */
 
+  /* Verde glossy: MISMO material que el FAB coral pero en verde (semántica SUMA)
+     — para el segment Ingreso (gradiente + rim + brillo, como Gasto). */
+  --verde-light: #34B15E;
+  --verde-deep: #0E6B30;
+  --verde-grad: linear-gradient(150deg, var(--verde-light), var(--verde-deep));
+  --verde-rim: rgba(120, 220, 150, 0.55);
+  --verde-glow: rgba(21, 127, 59, 0.32);
+  --sh-chip-sel-verde: 0 5px 12px -5px var(--verde-glow), var(--fab-hi);
+
   /* ---- Semáforo financiero (light, AA) ----
      El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra.
      El -text es el color legible sobre el tint (para pills). */
