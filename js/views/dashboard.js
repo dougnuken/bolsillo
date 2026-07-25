@@ -55,8 +55,6 @@ function saludoInfo() {
 
 function heroHTML(salario) {
   const s = saludoInfo();
-  const tabs = TABS.map(([id, label]) =>
-    `<button type="button" class="hoy-tab${tabActivo === id ? ' is-on' : ''}" role="tab" data-hoy-tab="${id}">${label}</button>`).join('');
   const bal = salario != null && salario > 0 ? esc(formatCOP(salario)) : '—';
   return `
     <header class="hoy-hero">
@@ -72,12 +70,31 @@ function heroHTML(salario) {
           ${ICON_BELL}<span class="notif-badge" hidden>0</span>
         </button>
       </div>
-      <nav class="hoy-tabs" role="tablist" aria-label="Secciones de Hoy">${tabs}</nav>
       <div class="hoy-balance">
         <p class="hoy-balance__lbl">Tu dinero</p>
         <p class="hoy-balance__amt num" id="hoy-balance">${bal}</p>
       </div>
     </header>`;
+}
+
+/* Tabs sutiles dentro del sheet, con indicador deslizante (se anima al cambiar). */
+function tabsHTML() {
+  const tabs = TABS.map(([id, label]) =>
+    `<button type="button" class="hoy-tab${tabActivo === id ? ' is-on' : ''}" role="tab" data-hoy-tab="${id}">${label}</button>`).join('');
+  return `<div class="hoy-tabs" role="tablist" aria-label="Secciones de Hoy">${tabs}<span class="hoy-tabs__ind" aria-hidden="true"></span></div>`;
+}
+
+/* Coloca (y desliza) el indicador bajo la pestaña activa. */
+function colocarIndicador(root, animar) {
+  const tabs = root.querySelector('.hoy-tabs');
+  if (!tabs) return;
+  const ind = tabs.querySelector('.hoy-tabs__ind');
+  const on = tabs.querySelector('.hoy-tab.is-on');
+  if (!ind || !on) return;
+  if (!animar) ind.style.transition = 'none';
+  ind.style.width = on.offsetWidth + 'px';
+  ind.style.transform = `translateX(${on.offsetLeft}px)`;
+  if (!animar) { void ind.offsetWidth; ind.style.transition = ''; }
 }
 
 /* Lista de gastos fijos (pestaña Recurrentes). */
@@ -392,9 +409,10 @@ function aplicarBarras(body) {
 /* ---- carga + pintado (async, tolerante a cambios de ruta) ---- */
 
 /* Pinta el contenido de la pestaña activa en el sheet (sin recargar datos). */
-function mostrarPanel(root, tab, datos) {
+function mostrarPanel(root, tab, datos, animar) {
   tabActivo = tab;
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => b.classList.toggle('is-on', b.dataset.hoyTab === tab));
+  colocarIndicador(root, animar);
   const body = root.querySelector('#hoy-body');
   if (!body) return;
   if (!datos.estado.configurado) {
@@ -444,9 +462,9 @@ async function pintar(root) {
 
   const datos = { estado, negocios, historial, recs };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
-    b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos));
+    b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos, true));
   });
-  mostrarPanel(root, tabActivo, datos);
+  mostrarPanel(root, tabActivo, datos, false);
 }
 
 export default {
@@ -458,7 +476,10 @@ export default {
         ${heroHTML(null)}
         <div class="hoy-sheet-scroll">
           <div class="hoy-sheet">
-            <div class="hoy-sheet__grip" aria-hidden="true"></div>
+            <div class="hoy-sheet__head">
+              <div class="hoy-sheet__grip" aria-hidden="true"></div>
+              ${tabsHTML()}
+            </div>
             <div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>
           </div>
         </div>
