@@ -49,6 +49,32 @@ test('acumulado: una compra a cuotas aporta su cuota, no el total', () => {
   assert.equal(r.cuotasMensual, 100_000);
 });
 
+test('interés estimado: contado del ciclo × tasa mensual; las cuotas NO cuentan', () => {
+  const movs = [
+    cargo('2026-07-08', 100_000),                 // contado en ventana → rota
+    cargo('2026-07-08', 600_000, { cuotas: 6 }),  // cuotas → NO entra al saldo rotativo
+  ];
+  const r = resumenTarjeta({ movimientos: movs, cuenta: 'Platino BDO', corteDia: 5, limiteDia: 25, tasa: 2.5, hoy: '2026-07-10' });
+  assert.equal(r.saldoRotativo, 100_000);   // solo el contado
+  assert.equal(r.interesEstimado, 2_500);   // 100.000 × 2.5%
+  assert.equal(r.tasa, 2.5);
+});
+
+test('solo cuotas → saldo rotativo 0 e interés 0 (la cuota ya trae su interés)', () => {
+  const movs = [cargo('2026-07-08', 600_000, { cuotas: 6 })];
+  const r = resumenTarjeta({ movimientos: movs, cuenta: 'Platino BDO', corteDia: 5, limiteDia: 25, tasa: 2.5, hoy: '2026-07-10' });
+  assert.equal(r.saldoRotativo, 0);
+  assert.equal(r.interesEstimado, 0);
+});
+
+test('sin tasa → interesEstimado null; el saldo rotativo se calcula igual', () => {
+  const movs = [cargo('2026-07-08', 100_000)];
+  const r = resumenTarjeta({ movimientos: movs, cuenta: 'Platino BDO', corteDia: 5, limiteDia: 25, hoy: '2026-07-10' });
+  assert.equal(r.saldoRotativo, 100_000);
+  assert.equal(r.interesEstimado, null);
+  assert.equal(r.tasa, null);
+});
+
 test('pago: si el límite es menor que el corte, cae el mes siguiente', () => {
   const r = resumenTarjeta({ movimientos: [], cuenta: 'Platino BDO', corteDia: 25, limiteDia: 10, hoy: '2026-07-10' });
   assert.equal(r.corteISO, '2026-07-25'); // hoy 10 < corte 25 → este mes

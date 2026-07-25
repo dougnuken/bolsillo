@@ -124,12 +124,17 @@ function resumenCicloHTML(r) {
   const cuotas = r.cuotasActivas > 0
     ? `<p class="tj-res__cuotas">${r.cuotasActivas} compra${r.cuotasActivas > 1 ? 's' : ''} a cuotas · ${esc(formatCOP(r.cuotasMensual))}/mes</p>`
     : '';
+  // Estimación de financiación: solo si hay tasa y algo de contado que rotaría.
+  const fin = (r.interesEstimado != null && r.saldoRotativo > 0)
+    ? `<p class="tj-res__fin">Si no pagas el total, rotar el contado (${esc(formatCOP(r.saldoRotativo))} a ${esc(String(r.tasa))}%) costaría <strong>~${esc(formatCOP(r.interesEstimado))}</strong> de interés el próximo mes.<br/>Pagándolo completo: <strong>$0</strong>.</p>`
+    : '';
   return `
     <div class="tj-res">
       <p class="tj-res__lbl">Este ciclo llevas</p>
       <p class="tj-res__monto num">${esc(formatCOP(r.acumulado))}</p>
       <p class="tj-res__meta">Corta el ${fmtFecha(r.corteISO)} · en ${r.diasParaCorte} día${r.diasParaCorte !== 1 ? 's' : ''}<br/>${pago}</p>
       ${cuotas}
+      ${fin}
     </div>`;
 }
 
@@ -260,7 +265,9 @@ export async function abrirCuentas({ onSaved } = {}) {
       if (cred && Number.isInteger(m.corte)) {
         resumen = resumenCicloHTML(resumenTarjeta({
           movimientos, cuenta: nombre, corteDia: m.corte,
-          limiteDia: Number.isInteger(m.limite) ? m.limite : undefined, hoy: new Date(),
+          limiteDia: Number.isInteger(m.limite) ? m.limite : undefined,
+          tasa: Number.isFinite(m.tasa) ? m.tasa : undefined,
+          hoy: new Date(),
         }));
       }
 

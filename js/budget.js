@@ -525,16 +525,21 @@ function diasEntreISO(aISO, bISO) {
  *   a cuotas.
  * - corteISO / pagoISO: próximo corte y su fecha límite de pago.
  * - cuotasActivas / cuotasMensual: planes de cuotas vivos este mes en la tarjeta.
+ * - saldoRotativo / interesEstimado: el CONTADO del ciclo (lo que rota si no
+ *   pagas el total) y su interés estimado del próximo mes (saldo × tasa mensual).
+ *   Las compras a cuotas se EXCLUYEN: ya traen su interés en cada cuota. Si pagas
+ *   el total antes del límite, el interés real es 0. Con tasa nula → interesEstimado=null.
  *
  * @param {object} args
  * @param {object[]}    args.movimientos
  * @param {string}      args.cuenta      nombre de la tarjeta
  * @param {number}      args.corteDia    día del mes del corte (1..31)
  * @param {number}      [args.limiteDia] día límite de pago (1..31)
+ * @param {number}      [args.tasa]      tasa mensual % (para estimar la financiación)
  * @param {Date|string} args.hoy
  * @returns {Readonly<object>|null} null si no hay día de corte válido
  */
-export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, hoy } = {}) {
+export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, tasa, hoy } = {}) {
   if (!Number.isInteger(corteDia) || corteDia < 1 || corteDia > 31) return null;
   const { anio, mes, dia } = partes(hoy);
   const hoyISO = isoDe(anio, mes, dia);
@@ -558,7 +563,7 @@ export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, 
     pagoISO = isoDe(pgA, pgM, diaClamp(pgA, pgM, lim));
   }
 
-  let acumulado = 0, cuotasActivas = 0, cuotasMensual = 0;
+  let acumulado = 0, contadoCiclo = 0, cuotasActivas = 0, cuotasMensual = 0;
   for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
     if (!m || m.tipo !== 'gasto' || m.cuenta !== cuenta) continue;
     const n = Number.isInteger(m.cuotas) && m.cuotas > 1 ? m.cuotas : 1;
@@ -566,9 +571,18 @@ export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, 
       acumulado += porcionEnMes(m, ncA, ncM); // la cuota que cae en el mes del corte
       if (porcionEnMes(m, anio, mes) > 0) { cuotasActivas += 1; cuotasMensual += Math.round(m.monto / n); }
     } else if (typeof m.fecha === 'string' && m.fecha > pcISO && m.fecha <= corteISO) {
-      acumulado += Number.isFinite(m.monto) ? m.monto : 0; // contado dentro de la ventana del ciclo
+      const monto = Number.isFinite(m.monto) ? m.monto : 0;
+      acumulado += monto;      // contado dentro de la ventana del ciclo
+      contadoCiclo += monto;   // ...y ese contado es lo que ROTA si no pagas el total
     }
   }
+
+  // Estimación de financiación (honesta): si NO pagas el total, el CONTADO del
+  // ciclo rota y genera ~tasa% el próximo mes. Las cuotas NO cuentan aquí (ya
+  // traen su interés). Pagando el total antes del límite, el interés real es 0.
+  const tasaMensual = Number.isFinite(tasa) && tasa > 0 ? tasa : null;
+  const saldoRotativo = redondear(contadoCiclo);
+  const interesEstimado = tasaMensual != null ? redondear(saldoRotativo * tasaMensual / 100) : null;
 
   return Object.freeze({
     acumulado: redondear(acumulado),
@@ -578,5 +592,8 @@ export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, 
     diasParaPago: pagoISO ? diasEntreISO(hoyISO, pagoISO) : null,
     cuotasActivas,
     cuotasMensual: redondear(cuotasMensual),
+    tasa: tasaMensual,
+    saldoRotativo,
+    interesEstimado,
   });
 }

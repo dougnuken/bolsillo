@@ -754,6 +754,15 @@
 }
 .tj-res__meta { font-size: var(--fs-sm); color: var(--text-2); margin-top: var(--sp-2); line-height: 1.5; }
 .tj-res__cuotas { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--accent); margin-top: var(--sp-2); }
+.tj-res__fin {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line-accent);
+}
+.tj-res__fin strong { color: var(--text-1); font-weight: var(--fw-semibold); }
 
 .cfg-empty {
   padding: var(--sp-5) var(--sp-4);
