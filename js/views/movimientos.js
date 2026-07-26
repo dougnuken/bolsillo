@@ -26,6 +26,10 @@ const ICON_TAG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
 const ICON_TRASH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>';
+const ICON_SEARCH =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+const ICON_X =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
@@ -36,7 +40,35 @@ function ayerISO() { const d = new Date(); d.setDate(d.getDate() - 1); return d.
 const FUENTE_LABEL = { manual: 'Manual', recurrente: 'Fijo', foto: 'Foto', pdf: 'PDF' };
 
 /* estado de filtros a nivel de sesión */
-const filtros = { categoria: '', cuenta: '', fuente: '', soloHormiga: false };
+const filtros = { categoria: '', cuenta: '', fuente: '', soloHormiga: false, q: '' };
+
+/* Coincidencia de búsqueda libre: concepto, categoría, cuenta, fuente o monto.
+   Sin acentos; el monto matchea por dígitos ("15000", "15.000" o "$15.000"). */
+function coincide(m, q) {
+  const qn = String(q).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  if (!qn) return true;
+  const c = categoriaPorId(m.categoria);
+  const texto = [m.comercio, c.label, m.cuenta, FUENTE_LABEL[m.fuente] || m.fuente]
+    .filter(Boolean).join(' ')
+    .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (texto.includes(qn)) return true;
+  const qd = qn.replace(/\D/g, '');
+  return !!qd && String(m.monto).includes(qd);
+}
+
+/* Empty state de la lista según el motivo (búsqueda vs filtros). */
+function sinResultadosHTML() {
+  if (filtros.q) {
+    return `
+      <div class="empty">
+        <div class="empty__art">${ICON_SEARCH}</div>
+        <h2 class="empty__title">Sin resultados</h2>
+        <p class="empty__text">No encontramos nada para «${esc(filtros.q)}». Prueba con otro concepto, categoría o monto.</p>
+        <button type="button" class="btn btn--ghost btn--sm" id="mov-clear">Limpiar búsqueda</button>
+      </div>`;
+  }
+  return `<div class="mov-nores"><p>Ningún movimiento coincide con los filtros.</p><button type="button" class="btn btn--ghost btn--sm" id="mov-clear">Limpiar filtros</button></div>`;
+}
 
 function etiquetaDia(iso) {
   if (iso === hoyISO()) return 'Hoy';
@@ -52,6 +84,7 @@ function aplicarFiltros(movs) {
     if (filtros.cuenta && m.cuenta !== filtros.cuenta) return false;
     if (filtros.fuente && m.fuente !== filtros.fuente) return false;
     if (filtros.soloHormiga && !m.esHormiga) return false;
+    if (filtros.q && !coincide(m, filtros.q)) return false;
     return true;
   });
 }
@@ -147,12 +180,28 @@ export default {
         <p class="view-greet__eyebrow">Historial</p>
         <h1 class="view-greet__title">Movimientos</h1>
       </header>
+      <div class="mov-search" hidden>
+        <span class="mov-search__ic" aria-hidden="true">${ICON_SEARCH}</span>
+        <input type="text" class="mov-search__input" id="mov-q" placeholder="Buscar concepto, monto, categoría…" autocomplete="off" enterkeyhint="search" aria-label="Buscar movimientos" />
+        <button type="button" class="mov-search__clear" id="mov-q-clear" aria-label="Limpiar búsqueda" hidden>${ICON_X}</button>
+      </div>
       <div id="mov-root" aria-busy="true"></div>`;
   },
 
   mount(root) {
     const cont = root.querySelector('#mov-root');
+    const searchBar = root.querySelector('.mov-search');
+    const input = root.querySelector('#mov-q');
+    const clearBtn = root.querySelector('#mov-q-clear');
     let todos = [];
+    let cfgActual = null;
+    let debeEnfocar = false;
+    try {
+      if (sessionStorage.getItem('bolsillo:openSearch')) {
+        sessionStorage.removeItem('bolsillo:openSearch');
+        debeEnfocar = true;
+      }
+    } catch { /* sessionStorage no disponible */ }
 
     async function recargar() {
       let cfg = null;
@@ -166,8 +215,10 @@ export default {
     }
 
     function pintar(cfg) {
+      cfgActual = cfg;
       cont.removeAttribute('aria-busy');
       if (!todos.length) {
+        if (searchBar) searchBar.hidden = true;
         cont.innerHTML = `
           <div class="empty">
             <div class="empty__art">${ART}</div>
@@ -179,15 +230,40 @@ export default {
         if (add) add.addEventListener('click', () => registrar.abrir());
         return;
       }
+      if (searchBar) searchBar.hidden = false;
+      if (debeEnfocar && input) { debeEnfocar = false; setTimeout(() => input.focus(), 50); }
       const orden = ordenar(todos);
       const filtrados = aplicarFiltros(orden);
       cont.innerHTML = `
         ${chipsFiltro(orden)}
         ${filtrados.length
           ? `<div class="mov-list">${listaHTML(filtrados)}</div>`
-          : `<div class="mov-nores"><p>Ningún movimiento coincide con los filtros.</p><button type="button" class="btn btn--ghost btn--sm" id="mov-clear">Limpiar filtros</button></div>`}`;
+          : sinResultadosHTML()}`;
       wire(cfg);
     }
+
+    function resetFiltros() {
+      filtros.categoria = ''; filtros.cuenta = ''; filtros.fuente = ''; filtros.soloHormiga = false; filtros.q = '';
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.hidden = true;
+    }
+
+    // Búsqueda: input persistente (fuera de #mov-root para no perder el foco al filtrar).
+    if (input) {
+      input.value = filtros.q;
+      if (clearBtn) clearBtn.hidden = !filtros.q;
+      input.addEventListener('input', () => {
+        filtros.q = input.value;
+        if (clearBtn) clearBtn.hidden = !input.value;
+        pintar(cfgActual);
+      });
+    }
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      filtros.q = '';
+      if (input) { input.value = ''; input.focus(); }
+      clearBtn.hidden = true;
+      pintar(cfgActual);
+    });
 
     function wire(cfg) {
       cont.querySelectorAll('.mfilter').forEach((b) => {
@@ -200,7 +276,7 @@ export default {
       });
       const clear = cont.querySelector('#mov-clear');
       if (clear) clear.addEventListener('click', () => {
-        filtros.categoria = ''; filtros.cuenta = ''; filtros.fuente = ''; filtros.soloHormiga = false;
+        resetFiltros();
         pintar(cfg);
       });
       // La fila NO abre edición al tocarla (evita ediciones accidentales al

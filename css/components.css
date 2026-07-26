@@ -414,13 +414,13 @@ body.nav-min .fab {
   gap: var(--sp-3);
   padding: var(--sp-4);
   border-radius: var(--r-lg);    /* losa bento redondeada */
-  background: var(--bg-3);       /* fill elevado, sin stroke */
+  background: var(--glass-2);    /* losa translúcida — coherente con .draft-bar y el glass del sheet */
   border: none;
   text-align: left;
   transition: transform var(--dur-fast) var(--ease),
               background var(--dur-fast) var(--ease);
 }
-.capture-opt:hover { background: color-mix(in srgb, var(--bg-3), var(--text-1) 7%); }
+.capture-opt:hover { background: var(--glass-3); }
 .capture-opt:active { transform: scale(0.97); }
 /* Opción "Foto" a lo ancho (horizontal, destacada). */
 .capture-opt--wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: var(--sp-4); }
@@ -448,7 +448,7 @@ body.nav-min .fab {
   display: grid; place-items: center;
   border-radius: var(--r-sm);
   color: var(--text-1);
-  background: var(--glass-3);     /* tile claro sobre la losa bg-3 */
+  background: var(--glass-3);     /* tile anidado — contrasta sobre la losa translúcida por apilamiento */
 }
 .capture-opt__icon svg { width: 22px; height: 22px; }
 .capture-opt__name {
@@ -527,7 +527,7 @@ body.nav-min .fab {
 
 /* opción de captura deshabilitada ("pronto") */
 .capture-opt.is-soon { opacity: 0.5; }
-.capture-opt.is-soon:hover { background: var(--bg-3); }
+.capture-opt.is-soon:hover { background: var(--glass-2); }
 .capture-opt__badge {
   align-self: flex-start;
   font-size: 10px;
@@ -552,8 +552,15 @@ body.nav-min .fab {
   background: var(--glass-2);
   border: none;
 }
-.draft-bar__ic { color: var(--text-2); flex: 0 0 auto; }
-.draft-bar__ic svg { width: 20px; height: 20px; }
+.draft-bar__ic {
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--accent);            /* alerta de acción pendiente: acento coral, no gris tenue */
+  background: var(--accent-soft);  /* relleno propio → deja de fundirse con la barra */
+}
+.draft-bar__ic svg { width: 18px; height: 18px; }
 .draft-bar__body { flex: 1 1 auto; min-width: 0; }
 .draft-bar__title { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text-1); }
 .draft-bar__text { font-size: var(--fs-xs); color: var(--text-2); margin-top: 1px; }
@@ -1059,8 +1066,50 @@ body.nav-min .fab {
 .date-actual::first-letter { text-transform: uppercase; }
 
 /* ============================================================
-   Movimientos — filtros + lista agrupada
+   Movimientos — búsqueda + filtros + lista agrupada
    ============================================================ */
+/* Campo de búsqueda libre (concepto, monto, categoría, cuenta). */
+.mov-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 46px;
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  margin-bottom: var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.mov-search[hidden] { display: none; }
+.mov-search:focus-within { border-color: var(--line-3); }
+.mov-search__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-3); }
+.mov-search__ic svg { width: 18px; height: 18px; }
+.mov-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--fs-input); /* >=16px: evita zoom iOS */
+}
+.mov-search__input::placeholder { color: var(--text-3); }
+.mov-search__clear {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-full);
+  color: var(--text-3);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.mov-search__clear:hover { color: var(--text-1); background: var(--glass-2); }
+.mov-search__clear[hidden] { display: none; }
+.mov-search__clear svg { width: 15px; height: 15px; }
+
 .mov-filters {
   display: flex;
   align-items: center;

@@ -66,10 +66,18 @@
   --accent-soft: rgba(255, 106, 68, 0.14);
   --accent-glow: rgba(255, 106, 68, 0.38);
 
-  /* ---- Gradiente firma IA: naranja cálido → blanco → azul-violeta ----
+  /* ---- Gradiente firma IA: MESH orgánico naranja cálido → morado → azul ----
+     No es un linear plano: 4 blobs radiales apilados sobre un colchón cálido→claro→azul.
+     Extremos saturados (naranja cálido a la izq, azul frío a la der), con un toque
+     morado en la transición baja y un naranja claro. Se lee orgánico (no franja diagonal).
      ESCASO por regla: solo CTA primario, FAB, CTA onboarding y orbe del asesor.
      Texto encima = --text-inverse (oscuro). */
-  --grad-cta: linear-gradient(100deg, #FFB088 0%, #FFE7D6 26%, #F4F7FF 50%, #9DB4FF 74%, #6E7BF2 100%);
+  --grad-cta:
+    radial-gradient(120% 130% at 0% 55%, #FF7A38 0%, rgba(255, 122, 56, 0) 42%),    /* naranja fuerte · extremo cálido */
+    radial-gradient(90% 120% at 22% 115%, #C060D8 0%, rgba(192, 96, 216, 0) 46%),   /* toque morado · transición baja */
+    radial-gradient(120% 130% at 100% 48%, #4F7BFF 0%, rgba(79, 123, 255, 0) 44%),  /* azul fuerte · extremo frío */
+    radial-gradient(85% 120% at 82% -12%, #8A7CF0 0%, rgba(138, 124, 240, 0) 50%),  /* azul-violeta · brillo superior */
+    linear-gradient(98deg, #FFCBA0 0%, #FCEFE4 36%, #ECF0FF 62%, #BFCEFF 100%);      /* colchón cálido→claro→azul */
   --grad-cta-border: linear-gradient(140deg, #FF9A6B, #6E7BF2); /* borde/glow de tarjeta destacada (asesor) */
   --sh-ia: 0 12px 30px -10px rgba(110, 123, 242, 0.45), 0 8px 24px -12px rgba(255, 122, 82, 0.35);
 
@@ -122,6 +130,18 @@
     radial-gradient(135% 108% at 78% -24%, rgba(255, 122, 48, 0.88), transparent 62%),
     radial-gradient(92% 82% at 10% -12%, rgba(240, 80, 30, 0.55), transparent 58%),
     linear-gradient(178deg, #3A1608 0%, #1A0C06 44%, #0B0B0D 74%);
+
+  /* ---- Destello del hero de Hoy (estilo Wavix) ----
+     Naranja intenso que emana de arriba-derecha (con núcleo más brillante) +
+     un eco radial sutil abajo-izquierda. Transparente: se pinta TRAS el
+     contenido de la vista Hoy y los containers glass lo dejan translucir. */
+  --hoy-glow:
+    radial-gradient(125% 90% at 86% -12%, rgba(255, 104, 36, 0.60), rgba(255, 104, 36, 0) 56%),
+    radial-gradient(56% 44% at 92% -2%, rgba(255, 142, 78, 0.36), transparent 52%),
+    radial-gradient(85% 62% at 0% 106%, rgba(255, 120, 60, 0.13), transparent 60%);
+  /* superficie glass OSCURA para los containers que flotan sobre el destello
+     (mantiene la cifra legible aunque detrás haya naranja intenso). */
+  --glass-hero: rgba(16, 15, 19, 0.50);
 
   /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
   --cat-persona1: #F0808A;

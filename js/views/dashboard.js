@@ -11,6 +11,7 @@
 import { getAll, getConfig } from '../db.js';
 import { calcularEstado, resumenNegocios, historialAhorro } from '../budget.js';
 import { formatCOP } from '../money.js';
+import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
 
@@ -47,8 +48,40 @@ function conDivisa(str) {
   return esc(s);
 }
 
-/* ---- Hero naranja: avatar + saludo + campana + tabs + balance ---- */
-const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics'], ['recurrentes', 'Recurrentes']];
+/* ---- Saludo + card de balance + tabs ---- */
+const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics']];
+
+const ICON_TREND_UP =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9.5 10.5l4 4L21 7"/><path d="M15 7h6v6"/></svg>';
+const ICON_TREND_DOWN =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 9.5 13.5l4-4L21 17"/><path d="M15 17h6v-6"/></svg>';
+const ICON_ARROW_UR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+const ICON_SEARCH =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+
+/* Métrica del día: neto de HOY (ingresos − gastos del día). Verde si entró
+   plata, rojo si se gastó, neutro si no hubo movimientos. */
+function metricaHoy(movimientos, hoy) {
+  const hISO = hoyISO(hoy);
+  let gasto = 0, ingreso = 0;
+  for (const m of (movimientos || [])) {
+    if (!m || m.fecha !== hISO) continue;
+    if (m.tipo === 'ingreso') ingreso += m.monto || 0;
+    else if (m.tipo === 'gasto') gasto += m.monto || 0;
+  }
+  return { gasto, ingreso, neto: ingreso - gasto };
+}
+function deltaClaseHoy(m) {
+  if (!m || (!m.gasto && !m.ingreso)) return 'bcard__delta--flat';
+  return m.neto >= 0 ? 'bcard__delta--up' : 'bcard__delta--down';
+}
+function deltaInnerHoy(m) {
+  if (!m || (!m.gasto && !m.ingreso)) return 'Sin movimientos hoy';
+  const up = m.neto >= 0;
+  const signo = up ? '+' : '−';
+  return `${up ? ICON_TREND_UP : ICON_TREND_DOWN}<span class="num">${signo}${esc(formatCOP(Math.abs(m.neto)))}</span><span class="bcard__delta-lbl">hoy</span>`;
+}
 
 /** Iniciales para el avatar: "Doug Vargas" → "DV". Vacío → ''. */
 function iniciales(nombre) {
@@ -70,30 +103,37 @@ function saludoInfo() {
   return { txt: 'Buenas noches,', emoji: '👋' };
 }
 
-function heroHTML(nombre, salario) {
+function greetHTML(nombre) {
   const s = saludoInfo();
-  const bal = salario != null && salario > 0 ? conDivisa(formatCOP(salario)) : '—';
   const nom = String(nombre || '').trim();
-  const ini = iniciales(nom);
   return `
-    <header class="hoy-hero">
-      <div class="hoy-hero__top">
-        <div class="hoy-hero__user">
-          <span class="hoy-hero__avatar" id="hoy-avatar" aria-hidden="true">${esc(ini)}</span>
-          <div>
-            <p class="hoy-hero__greet">${s.txt}</p>
-            <p class="hoy-hero__name" id="hoy-name">${nom ? esc(nom) + ' ' : ''}${s.emoji}</p>
-          </div>
-        </div>
-        <button type="button" class="hoy-hero__bell" id="hoy-bell" aria-label="Notificaciones">
+    <header class="hoy-greet">
+      <div class="hoy-greet__txt">
+        <p class="hoy-greet__hi">${s.txt}</p>
+        <p class="hoy-greet__name" id="hoy-name">${nom ? esc(nom) + ' ' : ''}${s.emoji}</p>
+      </div>
+      <div class="hoy-greet__actions">
+        <button type="button" class="icon-btn icon-btn--notif" id="hoy-search" aria-label="Buscar movimientos">
+          ${ICON_SEARCH}
+        </button>
+        <button type="button" class="icon-btn icon-btn--notif hoy-greet__bell" id="hoy-bell" aria-label="Notificaciones">
           ${ICON_BELL}<span class="notif-badge" hidden>0</span>
         </button>
       </div>
-      <div class="hoy-balance">
-        <p class="hoy-balance__lbl">Tu dinero</p>
-        <p class="hoy-balance__amt num" id="hoy-balance">${bal}</p>
-      </div>
     </header>`;
+}
+
+function balanceCardHTML(salario) {
+  const bal = salario != null && salario > 0 ? conDivisa(formatCOP(salario)) : '—';
+  return `
+    <section class="bcard">
+      <div class="bcard__top">
+        <span class="bcard__lbl">Tu dinero</span>
+        <span class="bcard__arrow" aria-hidden="true">${ICON_ARROW_UR}</span>
+      </div>
+      <p class="bcard__amt num" id="hoy-balance">${bal}</p>
+      <p class="bcard__delta bcard__delta--flat" id="hoy-daydelta">Sin movimientos hoy</p>
+    </section>`;
 }
 
 /* Tabs sutiles dentro del sheet, con indicador deslizante (se anima al cambiar). */
@@ -384,7 +424,6 @@ function ahorroCardHTML(hist) {
 /* Contenido de cada pestaña del Hoy. */
 function panelHTML(tab, e, negocios, historial, recs) {
   if (tab === 'analytics') return gaugeCardHTML(e) + ahorroCardHTML(historial);
-  if (tab === 'recurrentes') return recurrentesHTML(recs);
   // dashboard: disponible/gastado + fijos + negocios + en qué se va (+ hormiga)
   return statRowHTML(e) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
@@ -443,8 +482,8 @@ function mostrarPanel(root, tab, datos, animar) {
   body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs);
   if (tab === 'analytics') animarAnillo(body, datos.estado);
   aplicarBarras(body);
-  const scroll = root.querySelector('.hoy-sheet-scroll');
-  if (scroll) scroll.scrollTop = 0; // al cambiar de pestaña, vuelve arriba
+  const sc = root.closest('.view') || root;
+  if (sc) sc.scrollTop = 0; // al cambiar de pestaña, vuelve arriba
 }
 
 async function pintar(root) {
@@ -457,6 +496,7 @@ async function pintar(root) {
   let recs = [];
   let salario = 0;
   let nombre = '';
+  let metricaDia = null;
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -470,6 +510,7 @@ async function pintar(root) {
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
     historial = historialAhorro({ movimientos, ingresoEmpleo: salario, hoy, meses: 6 });
     recs = recurrentes || [];
+    metricaDia = metricaHoy(movimientos, hoy);
   } catch (err) {
     console.warn('[Bolsillo] no se pudo calcular el estado de Hoy:', err);
     body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus datos. Reintenta.</p>';
@@ -481,12 +522,17 @@ async function pintar(root) {
   const balEl = root.querySelector('#hoy-balance');
   if (balEl) balEl.innerHTML = salario > 0 ? conDivisa(formatCOP(salario)) : '—';
 
+  // Métrica del día bajo el balance (neto de hoy: verde entra / rojo se gasta).
+  const deltaEl = root.querySelector('#hoy-daydelta');
+  if (deltaEl) {
+    deltaEl.className = 'bcard__delta ' + deltaClaseHoy(metricaDia);
+    deltaEl.innerHTML = deltaInnerHoy(metricaDia);
+  }
+
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
   const nom = String(nombre || '').trim();
   const nameEl = root.querySelector('#hoy-name');
   if (nameEl) nameEl.textContent = (nom ? nom + ' ' : '') + saludoInfo().emoji;
-  const avEl = root.querySelector('#hoy-avatar');
-  if (avEl) avEl.textContent = iniciales(nom);
 
   const datos = { estado, negocios, historial, recs };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
@@ -500,23 +546,20 @@ export default {
 
   render() {
     return `
-      <div class="hoy-layout">
-        ${heroHTML('', null)}
-        <div class="hoy-sheet-scroll">
-          <div class="hoy-sheet">
-            <div class="hoy-sheet__head">
-              <div class="hoy-sheet__grip" aria-hidden="true"></div>
-              ${tabsHTML()}
-            </div>
-            <div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>
-          </div>
-        </div>
-      </div>`;
+      ${greetHTML('')}
+      ${balanceCardHTML(null)}
+      ${tabsHTML()}
+      <div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>`;
   },
 
   mount(root) {
     const bell = root.querySelector('#hoy-bell');
     if (bell) bell.addEventListener('click', () => document.dispatchEvent(new CustomEvent('bolsillo:notif')));
+    const search = root.querySelector('#hoy-search');
+    if (search) search.addEventListener('click', () => {
+      try { sessionStorage.setItem('bolsillo:openSearch', '1'); } catch { /* noop */ }
+      location.hash = '#/movimientos';
+    });
     pintar(root); // async, no bloquea el primer render
   },
 };
