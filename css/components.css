@@ -66,11 +66,11 @@
 /* ---- Cards glass ---- */
 .card {
   position: relative;
-  background: var(--bg-2);
-  border: none;                 /* sin stroke: la losa se define por su fill elevado */
+  background: var(--glass-1);    /* estilo unificado (como .settings-list de Perfil) */
+  border: 1px solid var(--line-1);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
-  box-shadow: var(--sh-card);
+  box-shadow: none;             /* se define por el hairline, no por sombra (sobre el destello) */
 }
 /* (dirección clara: tarjeta plana con hairline; sin borde gradient) */
 .card::before { content: none; }
@@ -1082,7 +1082,7 @@ body.nav-min .fab {
   transition: border-color var(--dur-fast) var(--ease);
 }
 .mov-search[hidden] { display: none; }
-.mov-search:focus-within { border-color: var(--line-3); }
+/* sin realce de borde al enfocar (el auto-focus no debe "marcar" el campo) */
 .mov-search__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-3); }
 .mov-search__ic svg { width: 18px; height: 18px; }
 .mov-search__input {

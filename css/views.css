@@ -53,12 +53,13 @@ body[data-route="hoy"] .app-header { display: none; }
 .hoy-greet__bell { position: relative; }
 
 /* ============================================================
-   Hero de Hoy · destello naranja (estilo Wavix)
-   Un glow naranja intenso arriba-derecha + eco sutil abajo-izquierda,
-   pintado TRAS el contenido y SOLO en la vista Hoy (:has). Los containers
-   de Hoy pasan a glass oscuro translúcido para dejarlo translucir.
+   Destello naranja GLOBAL (estilo Wavix) — en TODAS las páginas
+   Glow naranja intenso arriba-derecha + eco sutil abajo-izquierda, pintado en
+   el stage TRAS el contenido de cada vista. Los containers de toda la app son
+   glass claro (mismo estilo que .settings-list de Perfil) para dejarlo
+   translucir de forma consistente.
    ============================================================ */
-.view-stage:has(.view.is-active[data-route="hoy"])::before {
+.view-stage::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -66,20 +67,13 @@ body[data-route="hoy"] .app-header { display: none; }
   z-index: 0;                     /* tras el contenido de la vista (que se pinta después) */
   background: var(--hoy-glow);
 }
-/* el contenido de Hoy va por encima del destello */
-.view[data-route="hoy"] .view-inner { position: relative; z-index: 1; }
-/* containers glass: translúcidos + blur para que el destello se traluzca */
-.view[data-route="hoy"] .bcard,
-.view[data-route="hoy"] .card {
-  background: var(--glass-hero);
-  -webkit-backdrop-filter: blur(var(--blur));
-  backdrop-filter: blur(var(--blur));
-  border: 1px solid var(--line-2);
-}
+/* el contenido de cada vista va por encima del destello */
+.view-inner { position: relative; z-index: 1; }
 
 /* --- Card de balance (tipo Finora): label + flecha, cifra grande, métrica del día --- */
 .bcard {
-  background: var(--bg-2);
+  background: var(--glass-1);      /* estilo unificado (como .settings-list de Perfil) */
+  border: 1px solid var(--line-1);
   border-radius: var(--r-xl);
   padding: var(--sp-5);
   margin-bottom: var(--sp-3);
@@ -1677,8 +1671,8 @@ body[data-route="hoy"] .app-header { display: none; }
 .personas-grid { display: flex; flex-direction: column; gap: var(--sp-3); }
 
 .persona-card {
-  background: var(--bg-2);
-  border: none;
+  background: var(--glass-1);      /* estilo unificado (como .settings-list de Perfil) */
+  border: 1px solid var(--line-1);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
 }
@@ -1722,8 +1716,8 @@ body[data-route="hoy"] .app-header { display: none; }
 /* Bonus — el gasto NO fijo #1 del mes */
 .bonus-card {
   margin-top: var(--sp-6);
-  background: var(--bg-3);
-  border: none;
+  background: var(--glass-1);      /* estilo unificado (como .settings-list de Perfil) */
+  border: 1px solid var(--line-1);
   border-radius: var(--r-lg);
   padding: var(--sp-4);
 }

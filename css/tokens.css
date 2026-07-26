@@ -131,17 +131,16 @@
     radial-gradient(92% 82% at 10% -12%, rgba(240, 80, 30, 0.55), transparent 58%),
     linear-gradient(178deg, #3A1608 0%, #1A0C06 44%, #0B0B0D 74%);
 
-  /* ---- Destello del hero de Hoy (estilo Wavix) ----
-     Naranja intenso que emana de arriba-derecha (con núcleo más brillante) +
-     un eco radial sutil abajo-izquierda. Transparente: se pinta TRAS el
-     contenido de la vista Hoy y los containers glass lo dejan translucir. */
+  /* ---- Destello naranja global de la app (estilo Wavix) ----
+     Naranja intenso y BRILLANTE que emana de arriba-derecha (con núcleo más
+     luminoso) + un eco radial sutil abajo-izquierda. Transparente: se pinta en
+     el stage TRAS el contenido de CADA vista; los containers glass claro
+     (--glass-1, mismo estilo que .settings-list de Perfil) lo dejan translucir
+     de forma consistente en toda la app. */
   --hoy-glow:
-    radial-gradient(125% 90% at 86% -12%, rgba(255, 104, 36, 0.60), rgba(255, 104, 36, 0) 56%),
-    radial-gradient(56% 44% at 92% -2%, rgba(255, 142, 78, 0.36), transparent 52%),
-    radial-gradient(70% 56% at 2% 99%, rgba(255, 120, 58, 0.22), transparent 58%);
-  /* superficie glass OSCURA para los containers que flotan sobre el destello
-     (mantiene la cifra legible aunque detrás haya naranja intenso). */
-  --glass-hero: rgba(16, 15, 19, 0.50);
+    radial-gradient(125% 90% at 86% -12%, rgba(255, 112, 44, 0.82), rgba(255, 112, 44, 0) 58%),
+    radial-gradient(58% 46% at 91% -2%, rgba(255, 158, 96, 0.54), transparent 54%),
+    radial-gradient(70% 56% at 2% 99%, rgba(255, 126, 64, 0.30), transparent 58%);
 
   /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
   --cat-persona1: #F0808A;
