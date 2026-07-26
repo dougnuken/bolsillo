@@ -138,7 +138,7 @@
   --hoy-glow:
     radial-gradient(125% 90% at 86% -12%, rgba(255, 104, 36, 0.60), rgba(255, 104, 36, 0) 56%),
     radial-gradient(56% 44% at 92% -2%, rgba(255, 142, 78, 0.36), transparent 52%),
-    radial-gradient(85% 62% at 0% 106%, rgba(255, 120, 60, 0.13), transparent 60%);
+    radial-gradient(70% 56% at 2% 99%, rgba(255, 120, 58, 0.22), transparent 58%);
   /* superficie glass OSCURA para los containers que flotan sobre el destello
      (mantiene la cifra legible aunque detrás haya naranja intenso). */
   --glass-hero: rgba(16, 15, 19, 0.50);

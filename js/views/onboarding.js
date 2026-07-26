@@ -515,31 +515,53 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
     if (st.fase === 'intro') { pintarIntro(); return; }
 
     const { html, foot, bind } = PASOS[st.paso]();
-    const puntos = Array.from({ length: TOTAL_PASOS }, (_, i) =>
-      `<span class="ob__dot${i === st.paso ? ' is-on' : ''}${i < st.paso ? ' is-done' : ''}"></span>`).join('');
 
     // Back visible en todos los pasos menos el resumen final. En el primer paso
-    // (sueldo) retrocede a la intro; en los demás, al paso anterior.
+    // (nombre) retrocede a la intro; en los demás, al paso anterior.
     const mostrarBack = st.paso < TOTAL_PASOS - 1;
 
-    raiz.innerHTML = `
-      <div class="ob__bar">
-        ${mostrarBack
-    ? `<button type="button" class="icon-btn ob__back" data-act="atras" aria-label="Volver">${IC.back}</button>`
-    : '<span class="ob__back-spacer"></span>'}
-        <div class="ob__dots" role="progressbar" aria-valuenow="${st.paso + 1}" aria-valuemin="1"
-          aria-valuemax="${TOTAL_PASOS}" aria-label="Paso ${st.paso + 1} de ${TOTAL_PASOS}">${puntos}</div>
-        <span class="ob__back-spacer"></span>
-      </div>
-      <div class="ob__scroll"><div class="ob__step">${html}</div></div>
-      ${foot ? `<div class="ob__foot">${foot}</div>` : ''}`;
+    // Armazón persistente: se construye una sola vez al entrar a la config. Mantener
+    // vivos los dots (no recrearlos) deja que animen el pill↔círculo entre pasos.
+    let shell = raiz.querySelector('.ob__shell');
+    if (!shell) {
+      raiz.innerHTML = `
+        <div class="ob__shell">
+          <div class="ob__bar"></div>
+          <div class="ob__scroll"></div>
+          <div class="ob__foot">
+            <div class="ob__steps" role="progressbar" aria-valuemin="1" aria-valuemax="${TOTAL_PASOS}">${
+  Array.from({ length: TOTAL_PASOS }, () => '<span class="ob__dot"></span>').join('')}</div>
+            <div class="ob__foot-actions"></div>
+          </div>
+        </div>`;
+      shell = raiz.querySelector('.ob__shell');
+    }
 
-    const cont = raiz.querySelector('.ob__step');
+    // Barra superior: solo el back (o vacía en el resumen final).
+    shell.querySelector('.ob__bar').innerHTML = mostrarBack
+      ? `<button type="button" class="icon-btn ob__back" data-act="atras" aria-label="Volver">${IC.back}</button>`
+      : '';
+
+    // Dots: solo togglear clases → la transición CSS anima el pill↔círculo.
+    const steps = shell.querySelector('.ob__steps');
+    steps.setAttribute('aria-valuenow', String(st.paso + 1));
+    steps.setAttribute('aria-label', `Paso ${st.paso + 1} de ${TOTAL_PASOS}`);
+    steps.querySelectorAll('.ob__dot').forEach((d, i) => {
+      d.classList.toggle('is-on', i === st.paso);
+      d.classList.toggle('is-done', i < st.paso);
+    });
+
+    // Contenido del paso: elemento nuevo cada vez → entra limpio (fade + rise).
+    shell.querySelector('.ob__scroll').innerHTML = `<div class="ob__step">${html}</div>`;
+    const cont = shell.querySelector('.ob__step');
     if (!prefersReduced) {
       requestAnimationFrame(() => cont.classList.add('is-in'));
     } else {
       cont.classList.add('is-in');
     }
+
+    // Acciones del footer (CTA + saltar).
+    shell.querySelector('.ob__foot-actions').innerHTML = foot || '';
 
     const atras = raiz.querySelector('[data-act="atras"]');
     if (atras) atras.addEventListener('click', () => {

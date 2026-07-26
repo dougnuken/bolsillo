@@ -52,6 +52,31 @@ body[data-route="hoy"] .app-header { display: none; }
 .hoy-greet__actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }
 
+/* ============================================================
+   Hero de Hoy · destello naranja (estilo Wavix)
+   Un glow naranja intenso arriba-derecha + eco sutil abajo-izquierda,
+   pintado TRAS el contenido y SOLO en la vista Hoy (:has). Los containers
+   de Hoy pasan a glass oscuro translúcido para dejarlo translucir.
+   ============================================================ */
+.view-stage:has(.view.is-active[data-route="hoy"])::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;                     /* tras el contenido de la vista (que se pinta después) */
+  background: var(--hoy-glow);
+}
+/* el contenido de Hoy va por encima del destello */
+.view[data-route="hoy"] .view-inner { position: relative; z-index: 1; }
+/* containers glass: translúcidos + blur para que el destello se traluzca */
+.view[data-route="hoy"] .bcard,
+.view[data-route="hoy"] .card {
+  background: var(--glass-hero);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--line-2);
+}
+
 /* --- Card de balance (tipo Finora): label + flecha, cifra grande, métrica del día --- */
 .bcard {
   background: var(--bg-2);
