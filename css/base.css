@@ -14,9 +14,18 @@
 @font-face {
   font-family: 'Space Grotesk';
   font-style: normal;
-  font-weight: 300 700;   /* rango completo del variable: sirve para body (400/500) y display (700) */
+  font-weight: 300 700;
   font-display: swap;
   src: url('../fonts/spacegrotesk-latin-var.woff2') format('woff2');
+}
+/* Fuente estilizada de referencia (geométrica moderna, look fintech de los
+   ejemplos): Plus Jakarta Sans variable, self-hosted. Es la fuente general. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('../fonts/plusjakarta-latin-var.woff2') format('woff2');
 }
 
 /* ---- Reset acotado ---- */
@@ -82,16 +91,17 @@ textarea,
   touch-action: manipulation;
 }
 
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--text-2); text-decoration: none; }
 
 svg { display: block; }
 
 img { max-width: 100%; display: block; }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--text-1);
   outline-offset: 2px;
   border-radius: var(--r-xs);
+  box-shadow: 0 0 0 3px var(--glass-3);
 }
 
 /* ============================================================

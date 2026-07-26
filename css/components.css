@@ -105,7 +105,7 @@
 .section-head__link {
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
-  color: var(--accent);
+  color: var(--text-2);
 }
 
 /* ---- Badges / pills de estado (semáforo) ---- */
@@ -129,7 +129,7 @@
 .pill--rojo  { color: var(--semaforo-rojo-text);  background: var(--semaforo-rojo-bg);  border-color: var(--semaforo-rojo-line); }
 .pill--rojo .pill__dot { background: var(--semaforo-rojo); }
 .pill--neutral { color: var(--text-2); background: var(--glass-2); border-color: var(--line-2); }
-.pill--accent { color: var(--accent); background: var(--accent-soft); border-color: var(--line-accent); }
+.pill--accent { color: var(--text-1); background: var(--glass-2); border-color: var(--line-2); }
 
 /* ---- Estado vacío ---- */
 .empty {
@@ -436,7 +436,7 @@ body.nav-min .fab {
 }
 .foto-loading__spin {
   width: 42px; height: 42px; border-radius: var(--r-full);
-  border: 3px solid var(--line-2); border-top-color: var(--accent);
+  border: 3px solid var(--line-2); border-top-color: var(--text-1);
   animation: bolsillo-spin 0.8s linear infinite; margin-bottom: var(--sp-3);
 }
 .foto-loading__txt { font-size: var(--fs-h3); font-weight: var(--fw-semibold); color: var(--text-1); }
@@ -549,10 +549,10 @@ body.nav-min .fab {
   padding: var(--sp-3) var(--sp-4);
   margin-bottom: var(--sp-4);
   border-radius: var(--r-md);
-  background: var(--accent-soft);
+  background: var(--glass-2);
   border: none;
 }
-.draft-bar__ic { color: var(--accent); flex: 0 0 auto; }
+.draft-bar__ic { color: var(--text-2); flex: 0 0 auto; }
 .draft-bar__ic svg { width: 20px; height: 20px; }
 .draft-bar__body { flex: 1 1 auto; min-width: 0; }
 .draft-bar__title { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text-1); }
@@ -603,17 +603,17 @@ body.nav-min .fab {
   margin-bottom: var(--sp-4);
   border-radius: var(--r-md);
   text-align: left;
-  background: var(--accent-soft);
+  background: var(--bg-3);
   border: none;
   transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.voz-cta:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.voz-cta:hover { background: color-mix(in srgb, var(--bg-3), var(--text-1) 7%); }
 .voz-cta:active { transform: scale(0.98); }
 .voz-cta__ic {
   flex: 0 0 auto; width: 44px; height: 44px;
   display: grid; place-items: center;
   border-radius: var(--r-full);
-  color: var(--text-inverse); background: var(--accent);
+  color: var(--text-1); background: var(--glass-3);
 }
 .voz-cta__ic svg { width: 24px; height: 24px; }
 .voz-cta__body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -630,7 +630,7 @@ body.nav-min .fab {
 .voz-listen__wave { display: flex; align-items: center; gap: 5px; height: 44px; }
 .voz-listen__wave span {
   width: 5px; height: 14px; border-radius: var(--r-full);
-  background: var(--accent);
+  background: var(--text-1);
   animation: vozWave 1s var(--ease-in-out) infinite;
 }
 .voz-listen__wave span:nth-child(2) { animation-delay: 0.12s; }
@@ -785,7 +785,7 @@ body.nav-min .fab {
   box-shadow: var(--sh-sm);
   font-weight: var(--fw-semibold);
 }
-.acct-chip--add { color: var(--accent); border-style: dashed; }
+.acct-chip--add { color: var(--text-2); border-color: var(--line-3); border-style: dashed; }
 .acct-chip--add svg { width: 16px; height: 16px; }
 .acct-new { display: flex; gap: var(--sp-2); width: 100%; margin-top: var(--sp-2); }
 .acct-new .field__input { flex: 1 1 auto; }
@@ -816,8 +816,8 @@ body.nav-min .fab {
 .field__input::placeholder { color: var(--text-3); }
 .field__input:focus {
   outline: none;
-  border-color: var(--line-accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--line-3);
+  box-shadow: 0 0 0 3px var(--glass-3);
 }
 .field__textarea { min-height: 62px; padding: var(--sp-3) var(--sp-4); resize: vertical; line-height: 1.4; }
 
@@ -864,7 +864,7 @@ body.nav-min .fab {
   text-align: left;
   transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.date-trigger:hover { border-color: var(--line-accent); }
+.date-trigger:hover { border-color: var(--line-3); }
 .date-trigger:active { transform: scale(0.99); }
 .date-trigger__val { font-weight: var(--fw-medium); }
 .date-trigger__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-3); }
