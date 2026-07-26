@@ -144,10 +144,11 @@
   --cat-otros: #9AA2B4;
 
   /* ---- Tipografía ---- */
-  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* Fuente general = Space Grotesk (grotesk geométrica estilizada) en TODO el UI,
+     con Inter de respaldo. Le da el carácter fintech de las referencias sin
+     cargar assets nuevos (ya está self-hosted). */
+  --font-ui: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
   --font-num: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
-  /* Fuente display estilizada (grotesk geométrica) para títulos/encabezados —
-     le da el carácter fintech de las referencias sin cargar assets nuevos. */
   --font-display: 'Space Grotesk', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
 
   --fw-regular: 400;

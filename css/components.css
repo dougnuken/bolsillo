@@ -405,7 +405,7 @@ body.nav-min .fab {
 .capture-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
+  gap: var(--sp-2);              /* bento apretado */
 }
 .capture-opt {
   display: flex;
@@ -413,15 +413,14 @@ body.nav-min .fab {
   align-items: flex-start;
   gap: var(--sp-3);
   padding: var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--glass-1);
-  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);    /* losa bento redondeada */
+  background: var(--bg-3);       /* fill elevado, sin stroke */
+  border: none;
   text-align: left;
   transition: transform var(--dur-fast) var(--ease),
-              background var(--dur-fast) var(--ease),
-              border-color var(--dur-fast) var(--ease);
+              background var(--dur-fast) var(--ease);
 }
-.capture-opt:hover { background: var(--glass-2); border-color: var(--line-accent); }
+.capture-opt:hover { background: color-mix(in srgb, var(--bg-3), var(--text-1) 7%); }
 .capture-opt:active { transform: scale(0.97); }
 /* Opción "Foto" a lo ancho (horizontal, destacada). */
 .capture-opt--wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: var(--sp-4); }
@@ -449,7 +448,7 @@ body.nav-min .fab {
   display: grid; place-items: center;
   border-radius: var(--r-sm);
   color: var(--text-1);
-  background: var(--bg-3);
+  background: var(--glass-3);     /* tile claro sobre la losa bg-3 */
 }
 .capture-opt__icon svg { width: 22px; height: 22px; }
 .capture-opt__name {
@@ -528,7 +527,7 @@ body.nav-min .fab {
 
 /* opción de captura deshabilitada ("pronto") */
 .capture-opt.is-soon { opacity: 0.5; }
-.capture-opt.is-soon:hover { background: var(--glass-1); border-color: var(--line-2); }
+.capture-opt.is-soon:hover { background: var(--bg-3); }
 .capture-opt__badge {
   align-self: flex-start;
   font-size: 10px;
@@ -551,7 +550,7 @@ body.nav-min .fab {
   margin-bottom: var(--sp-4);
   border-radius: var(--r-md);
   background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
+  border: none;
 }
 .draft-bar__ic { color: var(--accent); flex: 0 0 auto; }
 .draft-bar__ic svg { width: 20px; height: 20px; }
@@ -605,7 +604,7 @@ body.nav-min .fab {
   border-radius: var(--r-md);
   text-align: left;
   background: var(--accent-soft);
-  border: 1px solid var(--line-accent);
+  border: none;
   transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
 .voz-cta:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
@@ -682,8 +681,8 @@ body.nav-min .fab {
 .keypad__key {
   min-height: 54px;
   border-radius: var(--r-md);
-  background: var(--glass-1);
-  border: 1px solid var(--line-1);
+  background: var(--bg-3);
+  border: none;
   color: var(--text-1);
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
@@ -722,10 +721,10 @@ body.nav-min .fab {
   min-height: 78px;
   padding: var(--sp-3) var(--sp-2);
   border-radius: var(--r-md);
-  /* no seleccionado = superficie de vidrio translúcida con brillo superior */
-  background: var(--glass-tag);
-  border: 1px solid var(--line-1);
-  box-shadow: inset 0 1px 0 var(--glass-gloss);
+  /* no seleccionado = losa bg-3 sin borde (bento) */
+  background: var(--bg-3);
+  border: none;
+  box-shadow: none;
   transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 .cat-chip:active { transform: scale(0.96); }

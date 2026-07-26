@@ -14,7 +14,7 @@
 @font-face {
   font-family: 'Space Grotesk';
   font-style: normal;
-  font-weight: 500 700;
+  font-weight: 300 700;   /* rango completo del variable: sirve para body (400/500) y display (700) */
   font-display: swap;
   src: url('../fonts/spacegrotesk-latin-var.woff2') format('woff2');
 }
