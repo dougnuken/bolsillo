@@ -16,7 +16,7 @@ import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
 const CUENTAS_SUGERIDAS = ['Efectivo', 'Nequi', 'Bancolombia'];
-const INTRO_TOTAL = 3;      // 3 slides de bienvenida (split: hero 3D + copy)
+const INTRO_TOTAL = 4;      // 4 slides de venta (split: hero 3D a sangre + copy)
 const TOTAL_PASOS = 5;      // nombre → sueldo → cuentas → fijos → listo
 
 // Confeti del cierre (paso "listo"): 14 piezas cuya posición/color/tiempo viven
@@ -57,7 +57,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   // Estado local del flujo (se persiste paso a paso, no al final).
   const st = {
     fase: 'intro',   // 'intro' (3 slides split) | 'config' (nombre/sueldo/cuentas/fijos/listo)
-    introPaso: 0,    // 0=ahorro 1=registro 2=semáforo
+    introPaso: 0,    // 0=control 1=registro 2=claridad 3=semáforo
     paso: 0,         // índice en PASOS (config)
     nombre: typeof config.nombre === 'string' ? config.nombre : '',
     empleo: ingresos.find((i) => i && i.fuente === 'empleo') || null,
@@ -114,22 +114,29 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
      ("Empezar") continúa a la configuración real (pasoNombre).
      ============================================================ */
 
-  // Íconos de cada slide. PLACEHOLDER swappable: hoy emoji con pedestal; el día
-  // que existan los renders 3D, artHTML devuelve <img src="./img/onboarding/…">.
+  // Slides de venta: hero 3D a sangre completa + copy (título con <b> de énfasis).
+  // Cada imagen calza con su funcionalidad; el arco vende control en tiempo real y
+  // "que no se te escape ni un peso": cerdo (control) → captura → claridad → semáforo.
+  // Renders v3 (set oscuro, alto contraste, barridos de luz) en img/brand-3d/.
   const SLIDES = [
-    { art: 'ahorro',   emoji: '🐷', title: 'Tu plata, <b>clara y en calma.</b>',
-      text: 'Bolsillo te muestra en qué se va tu mes, sin hojas de cálculo ni enredos.' },
-    { art: 'registro', emoji: '🎙️', title: '<b>Regístralo</b> hablando o con una <b>foto.</b>',
-      text: 'Un audio corto o una foto del recibo y Bolsillo lo entiende por ti.' },
-    { art: 'semaforo', emoji: '🚦', title: 'Un <b>semáforo</b> te dice si vas bien.',
-      text: 'Verde, ámbar o rojo según tu ritmo real del mes. Sabes al instante cómo vas.' },
+    { img: '10-piggy', title: 'Que no se te <b>escape</b> ni un peso.',
+      text: 'Bolsillo te da el control de tu plata en tiempo real. Cada gasto queda registrado antes de que se te olvide.' },
+    { img: '15-coins', title: '<b>Captura</b> el gasto en 3 segundos.',
+      text: 'Háblale o tómale una foto al recibo y Bolsillo lo anota por ti. Ni una compra se te vuelve a escapar.' },
+    { img: '16-coin-spiral', title: 'Mira <b>en qué se va</b> tu mes.',
+      text: 'Cada gasto ordenado por categoría y cuenta. En segundos ves a dónde se va tu plata de verdad.' },
+    { img: '13-gauge', title: 'Tu ritmo del mes, <b>en vivo.</b>',
+      text: 'Un semáforo en tiempo real —verde, ámbar o rojo— te dice al instante cuánto puedes gastar sin tocar lo que viene.' },
   ];
 
-  // Arte 3D del hero de cada slide (render generado, fondo recortado). Imagen
-  // decorativa → alt="" (el título + texto comunican el significado).
-  // draggable=false: el swipe no debe iniciar un arrastre nativo de la imagen.
+  // Precarga los renders del hero: al deslizar no se ve el fondo un instante.
+  SLIDES.forEach((s) => { const im = new Image(); im.src = `./img/brand-3d/${s.img}.jpg`; });
+
+  // Arte 3D a sangre completa del hero (render con su propio fondo de estudio,
+  // object-fit: cover). Imagen decorativa → alt="" (el título + texto comunican el
+  // significado). draggable=false: el swipe no debe iniciar un arrastre nativo.
   function artHTML(slide) {
-    return `<img class="ob2__img" src="./img/onboarding/${slide.art}.png" alt="" draggable="false" />`;
+    return `<img class="ob2__img" src="./img/brand-3d/${slide.img}.jpg" alt="" draggable="false" />`;
   }
 
   // Cambia de slide dentro de [0, INTRO_TOTAL-1]; re-pinta (con anim de entrada).
