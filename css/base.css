@@ -43,10 +43,12 @@ html {
 html, body {
   height: 100%;
 }
-/* El ambiente (--bg-app) vive en <html> para pintar TODO el viewport, incluidas
-   las safe-areas de iOS. Así no queda la franja negra bajo la barra flotante
-   (el home indicator queda cubierto por el mismo glow, sin corte). */
-html { background: var(--bg-app); }
+/* iOS pinta el canvas, el overscroll y las safe-areas (incluida la franja del
+   home indicator) SOLO con el background-COLOR sólido del root — nunca con un
+   background-IMAGE (gradiente). Por eso <html> lleva un color sólido cálido-
+   oscuro como red de seguridad, y el gradiente de ambiente se pinta aparte en
+   una capa fija a pantalla completa (body::before, más abajo). */
+html { background-color: var(--bg-root); }
 
 body {
   font-family: var(--font-ui);
@@ -59,6 +61,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
+}
+
+/* Capa de ambiente a PANTALLA COMPLETA. position:fixed + inset:0 con
+   viewport-fit=cover se ancla a los cuatro bordes del viewport visual —incluida
+   la franja del home indicator y el notch—, así el gradiente cálido llega hasta
+   el borde físico inferior y desaparece la banda negra. Es un elemento REAL
+   pintado (no depende de la propagación de background-image al canvas, que iOS
+   no hace). z-index:-1 la deja detrás de todo el shell (transparente encima). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-app);
+  pointer-events: none;
 }
 
 /* toda cifra usa tabular-nums */

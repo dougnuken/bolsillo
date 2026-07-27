@@ -12,6 +12,7 @@
 :root {
   /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
   --bg-0: #0B0B0D;              /* canvas base de la app */
+  --bg-root: #120C0A;           /* color SÓLIDO de respaldo del root: iOS pinta canvas/overscroll/safe-areas del background-COLOR (nunca de un gradiente). Cálido-oscuro para que la franja del home-indicator jamás quede negra */
   --bg-1: #0B0B0D;              /* fondo de página */
   --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
   --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
