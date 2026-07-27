@@ -1080,6 +1080,7 @@ body[data-route="hoy"] .app-header { display: none; }
 }
 .cat-ico-opt {
   aspect-ratio: 1;
+  padding: 0;                 /* el <button> trae padding por defecto → descentra el glifo */
   display: grid;
   place-items: center;
   border-radius: var(--r-sm);
@@ -1104,8 +1105,9 @@ body[data-route="hoy"] .app-header { display: none; }
   margin-top: var(--sp-2);
 }
 .cat-tint-opt {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  padding: 0;                 /* el <button> trae padding por defecto → descentra el dot respecto al ring */
   display: grid;
   place-items: center;
   border-radius: var(--r-full);

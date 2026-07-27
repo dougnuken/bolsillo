@@ -43,6 +43,10 @@ html {
 html, body {
   height: 100%;
 }
+/* El ambiente (--bg-app) vive en <html> para pintar TODO el viewport, incluidas
+   las safe-areas de iOS. Así no queda la franja negra bajo la barra flotante
+   (el home indicator queda cubierto por el mismo glow, sin corte). */
+html { background: var(--bg-app); }
 
 body {
   font-family: var(--font-ui);
@@ -50,7 +54,7 @@ body {
   font-weight: var(--fw-regular);
   line-height: 1.45;
   color: var(--text-1);
-  background: var(--bg-0);
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
@@ -115,7 +119,7 @@ img { max-width: 100%; display: block; }
   flex-direction: column;
   overflow: hidden;
   overscroll-behavior-y: none;
-  background: var(--bg-app); /* canvas claro + washes de ambiente */
+  background: transparent; /* el ambiente lo pinta <html> para cubrir las safe-areas */
 }
 
 /* ---- Header (respeta el notch / Dynamic Island) ----

@@ -28,12 +28,12 @@ const ICONOS = {
   servicios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>',
   factura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-1.6-3 1.6-3-1.6L6 21V3Z"/><path d="M9 8h6M9 12h6"/></svg>',
   mercado: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h15l-1.6 9a2 2 0 0 1-2 1.7H8.6a2 2 0 0 1-2-1.7L5 4H3"/><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>',
-  auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5l2-5.5A2 2 0 0 1 6.9 6h10.2a2 2 0 0 1 1.9 1.5L21 13v5a1 1 0 0 1-1 1h0a1 1 0 0 1-1-1v-2"/><path d="M3 13h18"/><circle cx="7.5" cy="16" r="1.1"/><circle cx="16.5" cy="16" r="1.1"/></svg>',
+  auto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H4a1 1 0 0 1-1-1v-3.3a2 2 0 0 1 .2-.9l1.7-3.4A2 2 0 0 1 6.7 7h10.6a2 2 0 0 1 1.8 1.1l1.7 3.4a2 2 0 0 1 .2.9V16a1 1 0 0 1-1 1h-1"/><path d="M3.5 12h17"/><circle cx="7.5" cy="17" r="1.9"/><circle cx="16.5" cy="17" r="1.9"/><path d="M9.4 17h5.2"/></svg>',
   salidas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7Z"/><path d="M14 5v14"/></svg>',
   suscripciones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"/><path d="M4 20v-4h4"/></svg>',
   colegio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 9-4 9 4-9 4-9-4Z"/><path d="M7 10.5V15c0 1.2 2.2 2.5 5 2.5s5-1.3 5-2.5v-4.5"/><path d="M21 8v5"/></svg>',
   seguros: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 3 6.8 7 8 4-1.2 7-4 7-8V6l-7-3Z"/><path d="m9.2 12 2 2 3.6-4"/></svg>',
-  salud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.3-7-9.4A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.6C19 15.7 12 20 12 20Z"/><path d="M9 11h2V9h2v2h2v2h-2v2h-2v-2H9v-2Z"/></svg>',
+  salud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.49 4.04 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/></svg>',
   creditos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 14.5h4"/></svg>',
   comisiones: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/></svg>',
   ocio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V8Z"/><path d="M14 5v14" stroke-dasharray="2 2"/></svg>',
@@ -41,6 +41,20 @@ const ICONOS = {
   hormiga: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6.5" r="2.2"/><circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="18" r="2.4"/><path d="M9.6 11 5 9M14.4 11 19 9M9.4 17 5 19M14.6 17 19 19M11 5 9 3M13 5l2-2"/></svg>',
   negocios: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>',
   otros: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>',
+  cafe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h11v4.5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V9Z"/><path d="M16 10.5h2.5a2 2 0 0 1 0 4H16"/><path d="M8 3v2.2M11 3v2.2"/></svg>',
+  gasolina: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v15"/><path d="M3 21h10"/><path d="M4.5 11h7"/><path d="M12 9h3.5a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9.8a2 2 0 0 0-.6-1.4L17 6"/></svg>',
+  viaje: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10.2A6 6 0 0 1 18 10.8C18 15.7 12 21 12 21Z"/><circle cx="12" cy="10.8" r="2.3"/></svg>',
+  avion: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 3 3.5 10.5l6 2 2 6L21.5 3Z"/><path d="M9.5 12.5 13 9"/></svg>',
+  telefono: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.6"/><path d="M10.5 18.5h3"/></svg>',
+  dispositivo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.6"/><path d="M2.5 19.5h19"/></svg>',
+  libro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.4 5.1 8 4.6 5 5.2v12.6c3-.6 5.4-.1 7 1.4 1.6-1.5 4-2 7-1.4V5.2c-3-.6-5.4-.1-7 1.3Z"/><path d="M12 6.5V19"/></svg>',
+  gimnasio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v8M7 6v12M17 6v12M20 8v8M7 12h10"/></svg>',
+  belleza: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6.5" r="2.5"/><circle cx="6" cy="17.5" r="2.5"/><path d="M8.2 7.8 20 16M8.2 16.2 20 8"/></svg>',
+  ropa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4 3.8 7.4l1.9 2.3L7 8.6V20h10V8.6l1.3 1.1 1.9-2.3L16 4c-.9 1.3-2.3 1.9-4 1.9S8.9 5.3 8 4Z"/></svg>',
+  mascota: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="12.5" r="1.7"/><circle cx="10" cy="8.5" r="1.7"/><circle cx="14" cy="8.5" r="1.7"/><circle cx="17.5" cy="12.5" r="1.7"/><path d="M12 13.5c-1.6 0-2.8 1.1-3.4 2.4-.6 1.3-.3 2.8 1.1 3.1.9.2 1.4-.3 2.3-.3s1.4.5 2.3.3c1.4-.3 1.7-1.8 1.1-3.1-.6-1.3-1.8-2.4-3.4-2.4Z"/></svg>',
+  regalo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="4" rx="1"/><path d="M12 9v12"/><path d="M18 13v5.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 18.5V13"/><path d="M8.5 9a2.5 2.5 0 0 1 0-5C11 4 12 9 12 9s1-5 3.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
+  musica: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V5l10-2v12"/><circle cx="6" cy="17" r="3"/><circle cx="16" cy="15" r="3"/></svg>',
+  ahorro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8.4A6.5 6.5 0 0 0 14 8h-4a6 6 0 0 0-6 6c0 1.8.9 3.4 2.2 4.6l.6 1.4c.1.3.4.5.7.5h1.3c.4 0 .7-.3.8-.6a8 8 0 0 0 3.8 0c.1.3.4.6.8.6h1.3c.3 0 .6-.2.7-.5l.6-1.3c.7-.6 1.2-1.4 1.5-2.3H21a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1.4a6 6 0 0 0-1.6-2.6Z"/><path d="M10 8c-.5-1.4.2-3 1.6-3.6"/><circle cx="14.5" cy="12" r=".8"/></svg>',
 };
 
 const ICONO_FALLBACK = 'otros';
@@ -48,9 +62,12 @@ const TINT_FALLBACK = 'otros';
 
 /** Íconos ofrecidos en el selector de categoría (orden curado). */
 export const ICONOS_PICKER = Object.freeze([
-  'persona', 'yo', 'corazon', 'hogar', 'mercado', 'auto', 'servicios', 'factura',
-  'colegio', 'seguros', 'salud', 'creditos', 'salidas', 'ocio', 'restaurantes',
-  'suscripciones', 'hormiga', 'negocios', 'comisiones', 'otros',
+  'persona', 'yo', 'corazon', 'hogar', 'mercado', 'restaurantes', 'cafe',
+  'auto', 'gasolina', 'viaje', 'avion', 'servicios', 'factura',
+  'telefono', 'dispositivo', 'colegio', 'libro', 'seguros', 'salud',
+  'gimnasio', 'belleza', 'ropa', 'mascota', 'regalo', 'ocio', 'musica',
+  'salidas', 'suscripciones', 'ahorro', 'creditos', 'negocios',
+  'comisiones', 'hormiga', 'otros',
 ].map((key) => Object.freeze({ key, svg: ICONOS[key] })));
 
 /** Tints ofrecidos en el selector (cada uno con clase .cat--<key> en CSS). */
