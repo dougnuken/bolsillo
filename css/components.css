@@ -335,8 +335,17 @@ body.nav-min .fab {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
-/* Barrido de vidrio inferior: difumina lo que pasa por detrás de la barra
-   flotante (sobre el contenido, bajo la barra) para no perder legibilidad. */
+/* PISO del dock (antes solo "barrido de vidrio", que quedó vacío en la v14
+   porque su backdrop-filter pintaba una franja oscura sobre el safe-area).
+   Ahora sí pinta: degradado a sangre completa que termina SÓLIDO en
+   var(--bg-root) —el mismo color con que iOS pinta la banda del home
+   indicator—, así que la banda deja de leerse como sobrante y pasa a ser este
+   piso saliéndose por el borde de la pantalla. La píldora sigue flotando 8pt
+   encima: lectura de dock nativo (objeto apoyado en una superficie), no de
+   objeto suelto en el vacío. Recupera además la función original (legibilidad
+   de lo que pasa por detrás) sin backdrop-filter, que era la causa del bug.
+   El stop final al 88% de 110px deja los últimos ~13px sólidos: empalme exacto
+   con la banda, sin costura. */
 .nav-blur {
   position: absolute;
   left: 0;
@@ -345,9 +354,11 @@ body.nav-min .fab {
   height: calc(var(--safe-b) + var(--nav-h) + var(--sp-9));
   z-index: 35;
   pointer-events: none;
-  /* SIN backdrop-filter NI fondo oscuro: en iOS ambos pintaban una franja
-     oscura sobre el safe-area inferior. El pill de la barra ya tiene su propio
-     vidrio; aquí se deja ver el ambiente cálido de <html> hasta el borde. */
+  background: linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--bg-root) 40%, transparent) 42%,
+    color-mix(in srgb, var(--bg-root) 88%, transparent) 72%,
+    var(--bg-root) 88%);
 }
 
 /* ============================================================

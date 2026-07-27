@@ -225,10 +225,13 @@
   --page-max: 560px;            /* ancho máx. de contenido */
   /* Reserva inferior del contenido. En el navegador el viewport llega al borde
      físico y hay que descontar el home indicator uno mismo. Instalada como PWA,
-     iOS YA recorta el viewport por encima de esa zona (medido en dispositivo:
-     el layout termina ~63pt arriba del borde) y volver a sumar el inset lo
-     contaba DOS VECES — de ahí que la barra flotara a 105pt del borde. */
+     iOS recorta el VIEWPORT 62pt por encima del borde (MEDIDO: un elemento
+     position:fixed con bottom:82pt aterrizó a 144pt del borde físico → el fondo
+     del viewport está a 62pt). Esa zona ya cubre el home indicator, así que
+     volver a descontar el inset lo contaba DOS VECES y dejaba la barra a 105pt. */
   --safe-b: env(safe-area-inset-bottom);
+  /* Solo diagnóstico: el inset real sin overrides, para leerlo desde JS. */
+  --safe-b-raw: env(safe-area-inset-bottom);
 
   /* ---- Motion ---- */
   --dur-fast: 140ms;
@@ -248,9 +251,10 @@
   color-scheme: dark;
 }
 
-/* PWA instalada: iOS ya reserva la zona del home indicator fuera del viewport,
-   así que el contenido no debe descontarla otra vez. En el navegador el token
+/* PWA instalada: iOS ya deja la zona del home indicator FUERA del viewport, así
+   que el contenido no debe descontarla otra vez. En el navegador el token
    conserva el inset real. */
 @media (display-mode: standalone) {
   :root { --safe-b: 0px; }
 }
+

@@ -82,27 +82,12 @@ body::before {
   pointer-events: none;
 }
 
-/* Puente del home indicator: funde los últimos 40px del layout hacia el color
-   sólido con que iOS pinta la franja inferior (--bg-root). El borde inferior
-   renderizado NO es uniforme (glow cálido a la izquierda, sombras del centro),
-   así que ningún sólido puede coincidir por sí solo: el corte se percibe como
-   banda (medido en dispositivo: seam en el borde del layout). z-index JUSTO
-   BAJO la barra (--z-nav 40): al quitar la doble reserva del safe-area la barra
-   bajó hasta el rango del puente, y por encima le teñía de marrón la mitad
-   inferior. Debajo, funde el fondo igual pero no toca la barra ni el FAB.
-   Durante el onboarding el overlay .ob (z-toast) lo tapa — ahí la franja se
-   funde con el sheet vía data-ob-fase. */
-body::after {
-  content: "";
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 40px;
-  z-index: 38;
-  background: linear-gradient(to bottom, transparent, var(--bg-root));
-  pointer-events: none;
-}
+/* (Sin puente body::after. La v22 pintaba aquí una rampa de 40px hacia
+   --bg-root para disimular la costura, pero una rampa seguida de meseta es
+   justo la firma con la que el ojo LOCALIZA un borde: en vez de esconder el
+   corte lo señalaba, y 40pt antes del corte real, agrandando la zona que se lee
+   como muerta. Lo sustituye el piso sólido de .nav-blur, que termina en el
+   mismo --bg-root y empalma sin rampa.) */
 
 /* toda cifra usa tabular-nums */
 .num,
@@ -157,7 +142,11 @@ img { max-width: 100%; display: block; }
 .app-shell {
   position: fixed;
   inset: 0;
-  height: 100dvh;
+  /* SIN height: 'inset:0' ya lo estira a los cuatro bordes del viewport visual.
+     Añadir 'height:100dvh' lo SOBRE-RESTRINGÍA: con top:0 + height explícito el
+     bottom:0 se ignora, y en la PWA instalada 100dvh resuelve 62pt más corto que
+     la pantalla (medido en dispositivo: 894 vs 956). El shell se cortaba solo
+     antes del borde y la barra, anclada a él, quedaba flotando lejos. */
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -494,23 +494,28 @@ function registerSW() {
    confirma o descarta los ~63pt que no alcanza ningún elemento CSS.
    Quitar (junto con .diag-ver en components.css y el div de index.html) cuando
    se cierre el tema. */
-const BUILD = 'v24';
+const BUILD = 'v25';
 function initDiag() {
   const el = document.getElementById('diag-ver');
   if (!el) return;
   const pintar = () => {
-    const pwa = window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone === true;
-    const safeB = getComputedStyle(document.documentElement)
-      .getPropertyValue('--safe-b').trim() || '?';
+    const cs = getComputedStyle(document.documentElement);
+    const safeB = (cs.getPropertyValue('--safe-b-raw').trim() || '?').replace('px', '');
+    const shell = document.querySelector('.app-shell');
+    // ash = alto REAL del shell. Si iguala a sh, el layout llega al borde físico.
+    const ash = shell ? Math.round(shell.getBoundingClientRect().height) : '?';
     const tb = document.getElementById('tabbar');
-    const nav = tb ? Math.round(window.innerHeight - tb.getBoundingClientRect().bottom) : '?';
-    const ih = Math.round(window.innerHeight);
+    // Aire entre el pie de la barra y el pie del shell.
+    const nav = (tb && shell)
+      ? Math.round(shell.getBoundingClientRect().bottom - tb.getBoundingClientRect().bottom)
+      : '?';
     const sh = Math.round(window.screen.height);
-    el.textContent = `${BUILD}·${pwa ? 'pwa' : 'web'}·sa${safeB.replace('px', '')}·nav${nav}·${ih}/${sh}`;
+    el.textContent = `${BUILD}·ash${ash}/sh${sh}·sa${safeB}·nav${nav}`;
   };
-  pintar();
+  // Tras el primer layout: medir en boot() devolvía alto 0 (caja aún sin asentar).
+  requestAnimationFrame(() => requestAnimationFrame(pintar));
   window.addEventListener('resize', pintar, { passive: true });
+  window.addEventListener('load', pintar, { passive: true });
 }
 
 /* ---- init ---- */
