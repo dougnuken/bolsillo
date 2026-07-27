@@ -28,11 +28,14 @@
   <link rel="preload" href="./fonts/plusjakarta-latin-var.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="./fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin />
 
-  <!-- Estilos -->
-  <link rel="stylesheet" href="./css/tokens.css" />
-  <link rel="stylesheet" href="./css/base.css" />
-  <link rel="stylesheet" href="./css/components.css" />
-  <link rel="stylesheet" href="./css/views.css" />
+  <!-- Estilos — cache-buster versionado (?v=): iOS/WebKit cachea el CSS (max-age
+       600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
+       (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
+       cambio de CSS junto con CACHE del sw.js. -->
+  <link rel="stylesheet" href="./css/tokens.css?v=16" />
+  <link rel="stylesheet" href="./css/base.css?v=16" />
+  <link rel="stylesheet" href="./css/components.css?v=16" />
+  <link rel="stylesheet" href="./css/views.css?v=16" />
 </head>
 <body>
   <div class="app-shell">
