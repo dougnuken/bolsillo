@@ -12,7 +12,7 @@
 :root {
   /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
   --bg-0: #0B0B0D;              /* canvas base de la app */
-  --bg-root: #FF0000;           /* SONDA DIAGNÓSTICA (temporal): rojo. Si la franja inferior se pone ROJA, la pinta el background-color de <html>. Restaurar a #120C0A después. */
+  --bg-root: #41241A;           /* CLAVE iOS: el safe-area del home-indicator lo pinta el background-COLOR sólido de <html> (la capa fija con gradiente NO llega ahí). Este valor = el borde inferior del ambiente (bg-0 + wash-bottom) para que la tira del home-indicator se funda con el contenido, sin escalón oscuro. */
   --bg-1: #0B0B0D;              /* fondo de página */
   --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
   --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
@@ -28,7 +28,6 @@
   --bg-app:
     linear-gradient(180deg, var(--wash-top), transparent 15%),
     linear-gradient(0deg, var(--wash-bottom), transparent 30%),
-    radial-gradient(60% 16% at 50% 100%, rgba(255, 124, 72, 0.16), transparent 70%),
     radial-gradient(95% 52% at 80% 0%, var(--wash-coral), transparent 60%),
     var(--bg-0);
 
