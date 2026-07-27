@@ -49,6 +49,10 @@ html, body {
    oscuro como red de seguridad, y el gradiente de ambiente se pinta aparte en
    una capa fija a pantalla completa (body::before, más abajo). */
 html { background-color: var(--bg-root); }
+/* Durante la INTRO del onboarding el borde inferior visible es el sheet neutro
+   (--bg-2), no el ambiente cálido: el root cambia de color para que la franja
+   del home indicator se funda con el sheet (el JS marca la fase en <html>). */
+html[data-ob-fase='intro'] { background-color: var(--bg-2); }
 
 body {
   font-family: var(--font-ui);

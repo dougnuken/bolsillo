@@ -89,6 +89,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   function cerrar() {
     raiz.classList.remove('is-open');
     delete document.body.dataset.ob;
+    delete document.documentElement.dataset.obFase;
     const quitar = () => raiz.remove();
     if (prefersReduced) quitar();
     else { raiz.addEventListener('transitionend', quitar, { once: true }); setTimeout(quitar, 400); }
@@ -513,6 +514,10 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
 
   /* ---- pintado ---- */
   function pintar() {
+    // iOS pinta el safe-area del home indicator con el background-color de <html>;
+    // la fase en <html> deja que base.css lo funda con el fondo real de cada fase
+    // (intro = sheet --bg-2 neutro; config = ambiente cálido --bg-root).
+    document.documentElement.dataset.obFase = st.fase;
     if (st.fase === 'intro') { pintarIntro(); return; }
 
     const { html, foot, bind } = PASOS[st.paso]();
