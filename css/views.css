@@ -1413,91 +1413,88 @@ body[data-route="hoy"] .app-header { display: none; }
    ============================================================ */
 .ob__celebra {
   position: relative;
-  height: 132px;
+  height: 200px;
   margin-bottom: var(--sp-5);
   display: grid;
   place-items: center;
   overflow: hidden;              /* contiene el confeti a la zona */
 }
-/* glow radial naranja detrás de la moneda (estalla y se asienta) */
+/* glow radial premium: halo cálido amplio + núcleo brillante, con pulso suave */
 .ob__celebra-ring {
   position: absolute;
   z-index: 1;
-  width: 140px; height: 140px;
+  width: 250px; height: 250px;
   border-radius: var(--r-full);
-  background: radial-gradient(circle, rgba(255, 122, 44, 0.38), rgba(255, 122, 44, 0) 66%);
-  animation: obRing 0.9s var(--ease) both 0.12s;
+  background:
+    radial-gradient(circle, rgba(255, 150, 74, 0.50), rgba(255, 150, 74, 0) 40%),
+    radial-gradient(circle, rgba(255, 110, 30, 0.26), rgba(255, 110, 30, 0) 66%);
+  filter: blur(6px);
+  animation: obRing 0.9s var(--ease) both 0.1s, obRingPulse 3.4s var(--ease) infinite 1.05s;
 }
 @keyframes obRing {
-  0%   { opacity: 0; transform: scale(0.5); }
-  55%  { opacity: 1; transform: scale(1.06); }
-  100% { opacity: 0.72; transform: scale(1); }
+  0%   { opacity: 0; transform: scale(0.55); }
+  60%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 0.85; transform: scale(1); }
 }
-/* moneda con check: pop de entrada premium (overshoot + asentado) */
+@keyframes obRingPulse {
+  0%, 100% { opacity: 0.72; transform: scale(0.98); }
+  50%      { opacity: 0.95; transform: scale(1.05); }
+}
+/* moneda con check: SALE desde abajo con fade (0→100) + leve overshoot; grande */
 .ob__celebra-coin {
   position: relative;
   z-index: 2;
-  width: 100px; height: 100px;
+  width: 152px; height: 152px;
   object-fit: contain;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
-  animation: obCoinIn 0.72s var(--ease-fan) both 0.1s;
+  filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.6));
+  animation: obCoinIn 0.8s var(--ease) both 0.12s;
 }
 @keyframes obCoinIn {
-  0%   { opacity: 0; transform: scale(0.35) translateY(10px); }
-  58%  { opacity: 1; transform: scale(1.1) translateY(-2px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+  0%   { opacity: 0; transform: translateY(40px) scale(0.9); }
+  70%  { opacity: 1; transform: translateY(-5px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* confeti premium: lluvia con vaivén desde detrás de la moneda */
+/* confeti premium: BURST desde detrás de la moneda (no cae desde un borde) */
 .ob__confeti { position: absolute; inset: 0; pointer-events: none; }
 .ob__conf {
   position: absolute;
-  top: 30%;
+  top: 42%; left: 50%;
   width: 8px; height: 8px;
   border-radius: 2px;
   opacity: 0;
   will-change: transform, opacity;
-  animation: obFallA 1.25s var(--ease) both;
+  animation: obBurst 1.25s var(--ease) both 0.14s;
 }
-@keyframes obFallA {
-  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
-  12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(118px) translateX(16px) rotate(340deg); }
+@keyframes obBurst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotate(0deg) scale(0.5); }
+  16%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)) scale(1); }
 }
-@keyframes obFallB {
-  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
-  12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(118px) translateX(-16px) rotate(-340deg); }
-}
-@keyframes obFallC {
-  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
-  12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(122px) translateX(2px) rotate(180deg); }
-}
-/* posición, color, forma, dirección y retardo por pieza (CSP: sin inline).
+/* dirección/deriva (--tx,--ty,--rot), color, forma y retardo por pieza (CSP: sin inline).
    Paleta premium cohesiva con el CTA (durazno→lavanda) + molten platinum. */
-.ob__conf--1  { left: 8%;  background: #FF7A2C; animation-name: obFallB; animation-delay: 0.16s; }
-.ob__conf--2  { left: 15%; background: #FFC79A; animation-delay: 0.30s; border-radius: var(--r-full); }
-.ob__conf--3  { left: 22%; background: #EAECEF; animation-name: obFallC; animation-delay: 0.08s; width: 7px; height: 11px; }
-.ob__conf--4  { left: 29%; background: #BAC9FF; animation-delay: 0.40s; }
-.ob__conf--5  { left: 36%; background: #FFB25E; animation-name: obFallB; animation-delay: 0.22s; width: 9px; height: 9px; border-radius: var(--r-full); }
-.ob__conf--6  { left: 43%; background: #FF7A2C; animation-delay: 0.04s; }
-.ob__conf--7  { left: 50%; background: #FCEFE4; animation-name: obFallC; animation-delay: 0.34s; width: 7px; height: 11px; }
-.ob__conf--8  { left: 57%; background: #BAC9FF; animation-delay: 0.14s; border-radius: var(--r-full); }
-.ob__conf--9  { left: 64%; background: #FFB25E; animation-name: obFallB; animation-delay: 0.28s; }
-.ob__conf--10 { left: 71%; background: #EAECEF; animation-delay: 0.44s; width: 9px; height: 9px; }
-.ob__conf--11 { left: 78%; background: #FF7A2C; animation-name: obFallC; animation-delay: 0.12s; }
-.ob__conf--12 { left: 85%; background: #FFC79A; animation-delay: 0.50s; width: 7px; height: 11px; border-radius: var(--r-full); }
-.ob__conf--13 { left: 92%; background: #BAC9FF; animation-name: obFallB; animation-delay: 0.58s; }
-.ob__conf--14 { left: 12%; background: #FFB25E; animation-delay: 0.54s; }
-.ob__conf--15 { left: 26%; background: #FF7A2C; animation-name: obFallC; animation-delay: 0.62s; border-radius: var(--r-full); }
-.ob__conf--16 { left: 40%; background: #EAECEF; animation-name: obFallB; animation-delay: 0.20s; width: 7px; height: 11px; }
-.ob__conf--17 { left: 54%; background: #FFC79A; animation-delay: 0.66s; }
-.ob__conf--18 { left: 68%; background: #BAC9FF; animation-name: obFallC; animation-delay: 0.24s; width: 9px; height: 9px; border-radius: var(--r-full); }
-.ob__conf--19 { left: 82%; background: #FF7A2C; animation-delay: 0.36s; }
-.ob__conf--20 { left: 33%; background: #FCEFE4; animation-name: obFallB; animation-delay: 0.70s; }
-.ob__conf--21 { left: 60%; background: #FFB25E; animation-delay: 0.10s; width: 7px; height: 11px; }
-.ob__conf--22 { left: 88%; background: #EAECEF; animation-name: obFallC; animation-delay: 0.46s; border-radius: var(--r-full); }
+.ob__conf--1  { --tx:-80px;  --ty:62px;  --rot:300deg;  background:#FF7A2C; animation-delay:.04s; }
+.ob__conf--2  { --tx:-58px;  --ty:92px;  --rot:-220deg; background:#FFC79A; animation-delay:.12s; border-radius:var(--r-full); }
+.ob__conf--3  { --tx:-98px;  --ty:30px;  --rot:260deg;  background:#EAECEF; animation-delay:.02s; width:7px; height:11px; }
+.ob__conf--4  { --tx:-42px;  --ty:104px; --rot:180deg;  background:#BAC9FF; animation-delay:.20s; }
+.ob__conf--5  { --tx:-102px; --ty:-16px; --rot:320deg;  background:#FFB25E; animation-delay:.08s; width:9px; height:9px; border-radius:var(--r-full); }
+.ob__conf--6  { --tx:-20px;  --ty:112px; --rot:140deg;  background:#FF7A2C; animation-delay:.16s; }
+.ob__conf--7  { --tx:-70px;  --ty:-42px; --rot:240deg;  background:#FCEFE4; animation-delay:.24s; width:7px; height:11px; }
+.ob__conf--8  { --tx:-48px;  --ty:44px;  --rot:-180deg; background:#BAC9FF; animation-delay:.06s; border-radius:var(--r-full); }
+.ob__conf--9  { --tx:22px;   --ty:110px; --rot:160deg;  background:#FFB25E; animation-delay:.18s; }
+.ob__conf--10 { --tx:56px;   --ty:92px;  --rot:-260deg; background:#EAECEF; animation-delay:.10s; width:9px; height:9px; }
+.ob__conf--11 { --tx:84px;   --ty:58px;  --rot:300deg;  background:#FF7A2C; animation-delay:.03s; }
+.ob__conf--12 { --tx:100px;  --ty:26px;  --rot:-220deg; background:#FFC79A; animation-delay:.22s; width:7px; height:11px; border-radius:var(--r-full); }
+.ob__conf--13 { --tx:104px;  --ty:-14px; --rot:280deg;  background:#BAC9FF; animation-delay:.14s; }
+.ob__conf--14 { --tx:40px;   --ty:104px; --rot:200deg;  background:#FFB25E; animation-delay:.26s; }
+.ob__conf--15 { --tx:70px;   --ty:-42px; --rot:260deg;  background:#FF7A2C; animation-delay:.09s; border-radius:var(--r-full); }
+.ob__conf--16 { --tx:30px;   --ty:-58px; --rot:-240deg; background:#EAECEF; animation-delay:.20s; width:7px; height:11px; }
+.ob__conf--17 { --tx:-30px;  --ty:-62px; --rot:220deg;  background:#FFC79A; animation-delay:.28s; }
+.ob__conf--18 { --tx:12px;   --ty:116px; --rot:180deg;  background:#BAC9FF; animation-delay:.05s; width:9px; height:9px; border-radius:var(--r-full); }
+.ob__conf--19 { --tx:90px;   --ty:44px;  --rot:-300deg; background:#FF7A2C; animation-delay:.15s; }
+.ob__conf--20 { --tx:-12px;  --ty:120px; --rot:160deg;  background:#FCEFE4; animation-delay:.30s; }
+.ob__conf--21 { --tx:62px;   --ty:74px;  --rot:240deg;  background:#FFB25E; animation-delay:.11s; width:7px; height:11px; }
+.ob__conf--22 { --tx:-90px;  --ty:48px;  --rot:-280deg; background:#EAECEF; animation-delay:.19s; border-radius:var(--r-full); }
 
 @media (prefers-reduced-motion: reduce) {
   .ob__celebra-coin { animation: none; }
