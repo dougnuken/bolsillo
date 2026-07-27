@@ -24,10 +24,11 @@
   --wash-coral: rgba(255, 106, 68, 0.10);    /* glow cálido superior (bajo la isla dinámica) */
   --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
   --wash-top:   rgba(255, 106, 68, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
-  --wash-bottom: rgba(255, 118, 68, 0.12);   /* glow cálido inferior (mirror del superior): el borde de abajo también glow, sin negro plano */
+  --wash-bottom: rgba(255, 124, 72, 0.22);   /* glow cálido inferior (mirror del superior): sube para que el safe-area del home-indicator brille parejo, no solo en las esquinas */
   --bg-app:
     linear-gradient(180deg, var(--wash-top), transparent 15%),
-    linear-gradient(0deg, var(--wash-bottom), transparent 22%),
+    linear-gradient(0deg, var(--wash-bottom), transparent 30%),
+    radial-gradient(60% 16% at 50% 100%, rgba(255, 124, 72, 0.16), transparent 70%),
     radial-gradient(95% 52% at 80% 0%, var(--wash-coral), transparent 60%),
     var(--bg-0);
 
@@ -216,7 +217,7 @@
   --sh-cta: 0 10px 26px -8px var(--accent-glow), 0 2px 6px -2px rgba(0, 0, 0, 0.50), var(--fab-hi); /* CTA ancho: glow coral + brillo especular + ancla */
   --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
   --sh-md: 0 8px 30px -8px rgba(0, 0, 0, 0.50);
-  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px -8px rgba(0, 0, 0, 0.55); /* barra flotante */
+  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 16px -10px rgba(0, 0, 0, 0.32); /* barra flotante: sombra suave; la grande y oscura ensombrecía el safe-area del home-indicator */
 
   /* ---- Layout ---- */
   --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
