@@ -323,12 +323,9 @@ body.nav-min .fab {
   height: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-9));
   z-index: 35;
   pointer-events: none;
-  /* SIN backdrop-filter: en iOS un blur sobre el safe-area inferior (sin
-     contenido detrás) se renderiza como una FRANJA NEGRA sólida. El pill de la
-     barra ya tiene su propio vidrio, así que aquí basta un velo de gradiente
-     muy suave del canvas para asentar la barra flotante — sin oscurecer el
-     ambiente cálido ni el bug de la franja. */
-  background: linear-gradient(to top, rgba(11, 11, 13, 0.28), transparent 82%);
+  /* SIN backdrop-filter NI fondo oscuro: en iOS ambos pintaban una franja
+     oscura sobre el safe-area inferior. El pill de la barra ya tiene su propio
+     vidrio; aquí se deja ver el ambiente cálido de <html> hasta el borde. */
 }
 
 /* ============================================================

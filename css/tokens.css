@@ -23,11 +23,11 @@
   --wash-coral: rgba(255, 106, 68, 0.10);    /* glow cálido superior (bajo la isla dinámica) */
   --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
   --wash-top:   rgba(255, 106, 68, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
-  --wash-bottom: rgba(255, 112, 66, 0.09);   /* glow cálido inferior: equilibra el vignette, evita el negro plano y da refracción a la barra flotante */
+  --wash-bottom: rgba(255, 118, 68, 0.12);   /* glow cálido inferior (mirror del superior): el borde de abajo también glow, sin negro plano */
   --bg-app:
-    linear-gradient(180deg, var(--wash-top), transparent 14%),
-    radial-gradient(90% 52% at 82% 2%, var(--wash-coral), transparent 60%),
-    radial-gradient(125% 48% at 40% 110%, var(--wash-bottom), transparent 62%),
+    linear-gradient(180deg, var(--wash-top), transparent 15%),
+    linear-gradient(0deg, var(--wash-bottom), transparent 22%),
+    radial-gradient(95% 52% at 80% 0%, var(--wash-coral), transparent 60%),
     var(--bg-0);
 
   /* ---- Glass → rellenos translúcidos claros sobre oscuro (compat: mismos nombres) ----
