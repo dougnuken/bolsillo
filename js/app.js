@@ -486,11 +486,39 @@ function registerSW() {
   });
 }
 
+/* ---- DIAGNÓSTICO TEMPORAL de la franja inferior ----
+   Pinta un sello con lo único que no podemos ver desde fuera del dispositivo:
+   qué build corre, si la media query de PWA instalada aplicó, cuánto vale el
+   safe-area resuelto, a qué altura quedó la barra y —lo decisivo— si el viewport
+   de layout es más CORTO que la pantalla física (ih/sh). Esa última cifra
+   confirma o descarta los ~63pt que no alcanza ningún elemento CSS.
+   Quitar (junto con .diag-ver en components.css y el div de index.html) cuando
+   se cierre el tema. */
+const BUILD = 'v24';
+function initDiag() {
+  const el = document.getElementById('diag-ver');
+  if (!el) return;
+  const pintar = () => {
+    const pwa = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    const safeB = getComputedStyle(document.documentElement)
+      .getPropertyValue('--safe-b').trim() || '?';
+    const tb = document.getElementById('tabbar');
+    const nav = tb ? Math.round(window.innerHeight - tb.getBoundingClientRect().bottom) : '?';
+    const ih = Math.round(window.innerHeight);
+    const sh = Math.round(window.screen.height);
+    el.textContent = `${BUILD}·${pwa ? 'pwa' : 'web'}·sa${safeB.replace('px', '')}·nav${nav}·${ih}/${sh}`;
+  };
+  pintar();
+  window.addEventListener('resize', pintar, { passive: true });
+}
+
 /* ---- init ---- */
 function boot() {
   initTabbar();
   initHeader();
   initSheet();
+  initDiag();
 
   // Scroll dentro de las vistas → colapsa/expande la barra (captura, no burbujea).
   stage.addEventListener('scroll', onStageScroll, { passive: true, capture: true });

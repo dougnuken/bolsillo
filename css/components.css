@@ -313,6 +313,28 @@ body.nav-min .fab {
 }
 .notif-badge[hidden] { display: none; }
 
+/* DIAGNÓSTICO TEMPORAL: sello con build, modo (pwa/web), safe-area resuelto,
+   altura de la barra y viewport-vs-pantalla. Lo llena initDiag() en app.js.
+   Quitar junto con initDiag y el div #diag-ver de index.html. */
+.diag-ver {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-b) + var(--nav-h) + var(--sp-5));
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 3px 10px;
+  font-family: var(--font-num);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: #ffffff;
+  background: #d64500;
+  border-radius: var(--r-full);
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
 /* Barrido de vidrio inferior: difumina lo que pasa por detrás de la barra
    flotante (sobre el contenido, bajo la barra) para no perder legibilidad. */
 .nav-blur {
