@@ -20,13 +20,14 @@
   /* ---- Washes de ambiente (Liquid Glass oscuro) ----
      Tinte MUY sutil sobre el canvas para que el vidrio flotante
      (barra + FAB) refracte algo. Aditivo: el fondo sigue casi negro. */
-  --wash-coral: rgba(255, 106, 68, 0.10);
+  --wash-coral: rgba(255, 106, 68, 0.10);    /* glow cálido superior (bajo la isla dinámica) */
   --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
   --wash-top:   rgba(255, 106, 68, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
+  --wash-bottom: rgba(255, 112, 66, 0.09);   /* glow cálido inferior: equilibra el vignette, evita el negro plano y da refracción a la barra flotante */
   --bg-app:
     linear-gradient(180deg, var(--wash-top), transparent 14%),
-    radial-gradient(90% 55% at 82% 4%, var(--wash-coral), transparent 60%),
-    radial-gradient(80% 50% at 8% 96%, var(--wash-mint), transparent 60%),
+    radial-gradient(90% 52% at 82% 2%, var(--wash-coral), transparent 60%),
+    radial-gradient(125% 48% at 40% 110%, var(--wash-bottom), transparent 62%),
     var(--bg-0);
 
   /* ---- Glass → rellenos translúcidos claros sobre oscuro (compat: mismos nombres) ----
