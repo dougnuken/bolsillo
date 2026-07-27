@@ -82,6 +82,26 @@ body::before {
   pointer-events: none;
 }
 
+/* Puente del home indicator: funde los últimos 40px del layout hacia el color
+   sólido con que iOS pinta la franja inferior (--bg-root). El borde inferior
+   renderizado NO es uniforme (glow cálido a la izquierda, sombras del centro),
+   así que ningún sólido puede coincidir por sí solo: el corte se percibe como
+   banda (medido en dispositivo: seam en el borde del layout). z-index sobre
+   barra y FAB (sus sombras cruzan el borde) y bajo scrim/sheet. Durante el
+   onboarding el overlay .ob (z-toast) lo tapa — ahí la franja se funde con el
+   sheet vía data-ob-fase. */
+body::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40px;
+  z-index: 55;
+  background: linear-gradient(to bottom, transparent, var(--bg-root));
+  pointer-events: none;
+}
+
 /* toda cifra usa tabular-nums */
 .num,
 input[inputmode="decimal"],
