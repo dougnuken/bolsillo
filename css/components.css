@@ -173,7 +173,7 @@
   position: absolute;
   left: max(var(--sp-4), env(safe-area-inset-left));
   right: max(var(--sp-4), env(safe-area-inset-right));
-  bottom: calc(var(--sp-2) + env(safe-area-inset-bottom));
+  bottom: calc(var(--sp-2) + var(--safe-b));
   z-index: var(--z-nav);
   height: var(--nav-h);
   display: grid;
@@ -228,7 +228,7 @@
   z-index: var(--z-fab);
   left: 50%;
   /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
-  bottom: calc(env(safe-area-inset-bottom) + var(--sp-2) + var(--nav-h) - 30px);
+  bottom: calc(var(--safe-b) + var(--sp-2) + var(--nav-h) - 30px);
   transform: translateX(-50%);
   width: 60px;
   height: 60px;
@@ -278,7 +278,7 @@ body.nav-min .tab__label { opacity: 0; max-height: 0; }
 /* la barrita naranja del activo también encoge */
 body.nav-min .tab.is-active::before { width: 13px; height: 2px; }
 body.nav-min .fab {
-  bottom: calc(env(safe-area-inset-bottom) + var(--sp-2) + var(--nav-h-min) - 30px);
+  bottom: calc(var(--safe-b) + var(--sp-2) + var(--nav-h-min) - 30px);
 }
 @media (prefers-reduced-motion: reduce) {
   .tabbar, .tab__label, .fab, .tab.is-active::before { transition: none; }
@@ -320,7 +320,7 @@ body.nav-min .fab {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-9));
+  height: calc(var(--safe-b) + var(--nav-h) + var(--sp-9));
   z-index: 35;
   pointer-events: none;
   /* SIN backdrop-filter NI fondo oscuro: en iOS ambos pintaban una franja
@@ -355,7 +355,7 @@ body.nav-min .fab {
   border-top: 1px solid var(--line-2);
   box-shadow: var(--sh-sheet);
   padding: var(--sp-3) max(var(--sp-5), env(safe-area-inset-left))
-           calc(env(safe-area-inset-bottom) + var(--sp-6))
+           calc(var(--safe-b) + var(--sp-6))
            max(var(--sp-5), env(safe-area-inset-right));
   transform: translateY(100%);
   transition: transform var(--dur-slow) var(--ease);
@@ -941,7 +941,7 @@ body.nav-min .fab {
   /* Por ENCIMA del FAB (que cabalga la barra flotante). El FAB corona a
      (nav-h + sp-4 + 30px) desde el borde inferior; sumamos sp-4 de aire para
      que el toast lo despeje con claridad y el FAB siga tappable. */
-  bottom: calc(env(safe-area-inset-bottom) + var(--nav-h) + var(--sp-4) + 30px + var(--sp-4));
+  bottom: calc(var(--safe-b) + var(--nav-h) + var(--sp-4) + 30px + var(--sp-4));
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;
@@ -993,7 +993,7 @@ body.nav-min .fab {
   border-top: 1px solid var(--line-2);
   box-shadow: var(--sh-sheet);
   padding: var(--sp-3) max(var(--sp-5), env(safe-area-inset-left))
-           calc(env(safe-area-inset-bottom) + var(--sp-5)) max(var(--sp-5), env(safe-area-inset-right));
+           calc(var(--safe-b) + var(--sp-5)) max(var(--sp-5), env(safe-area-inset-right));
   max-height: 80dvh;
   overflow-y: auto;
   transform: translateY(100%);

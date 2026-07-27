@@ -86,10 +86,12 @@ body::before {
    sólido con que iOS pinta la franja inferior (--bg-root). El borde inferior
    renderizado NO es uniforme (glow cálido a la izquierda, sombras del centro),
    así que ningún sólido puede coincidir por sí solo: el corte se percibe como
-   banda (medido en dispositivo: seam en el borde del layout). z-index sobre
-   barra y FAB (sus sombras cruzan el borde) y bajo scrim/sheet. Durante el
-   onboarding el overlay .ob (z-toast) lo tapa — ahí la franja se funde con el
-   sheet vía data-ob-fase. */
+   banda (medido en dispositivo: seam en el borde del layout). z-index JUSTO
+   BAJO la barra (--z-nav 40): al quitar la doble reserva del safe-area la barra
+   bajó hasta el rango del puente, y por encima le teñía de marrón la mitad
+   inferior. Debajo, funde el fondo igual pero no toca la barra ni el FAB.
+   Durante el onboarding el overlay .ob (z-toast) lo tapa — ahí la franja se
+   funde con el sheet vía data-ob-fase. */
 body::after {
   content: "";
   position: fixed;
@@ -97,7 +99,7 @@ body::after {
   right: 0;
   bottom: 0;
   height: 40px;
-  z-index: 55;
+  z-index: 38;
   background: linear-gradient(to bottom, transparent, var(--bg-root));
   pointer-events: none;
 }
@@ -249,7 +251,7 @@ img { max-width: 100%; display: block; }
      bottom +sp-4: la barra flota (16px sobre el borde inferior). */
   padding: calc(env(safe-area-inset-top) + var(--header-h) + var(--sp-3))
            max(var(--sp-5), env(safe-area-inset-left))
-           calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-4) + var(--sp-8))
+           calc(var(--nav-h) + var(--safe-b) + var(--sp-4) + var(--sp-8))
            max(var(--sp-5), env(safe-area-inset-right));
   opacity: 0;
   visibility: hidden;

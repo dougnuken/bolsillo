@@ -32,7 +32,7 @@ body[data-route="hoy"] .app-header { display: none; }
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))
            max(var(--sp-5), env(safe-area-inset-left))
-           calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--sp-4) + var(--sp-8))
+           calc(var(--nav-h) + var(--safe-b) + var(--sp-4) + var(--sp-8))
            max(var(--sp-5), env(safe-area-inset-right));
 }
 
@@ -1319,7 +1319,7 @@ body[data-route="hoy"] .app-header { display: none; }
   flex: 0 0 auto;
   border-top: 1px solid var(--line-1);
   padding: var(--sp-4) max(var(--sp-5), env(safe-area-inset-left))
-           calc(env(safe-area-inset-bottom) + var(--sp-4)) max(var(--sp-5), env(safe-area-inset-right));
+           calc(var(--safe-b) + var(--sp-4)) max(var(--sp-5), env(safe-area-inset-right));
   animation: obFootIn var(--dur) var(--ease) both;
 }
 @keyframes obFootIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -1584,7 +1584,7 @@ body[data-route="hoy"] .app-header { display: none; }
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   background: var(--bg-2);
   padding: var(--sp-6) max(var(--sp-6), env(safe-area-inset-left))
-           calc(env(safe-area-inset-bottom) + var(--sp-6)) max(var(--sp-6), env(safe-area-inset-right));
+           calc(var(--safe-b) + var(--sp-6)) max(var(--sp-6), env(safe-area-inset-right));
   box-shadow: var(--sh-sheet);
 }
 .ob2__dots { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-5); }
