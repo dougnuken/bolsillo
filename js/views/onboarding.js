@@ -19,10 +19,10 @@ const CUENTAS_SUGERIDAS = ['Efectivo', 'Nequi', 'Bancolombia'];
 const INTRO_TOTAL = 4;      // 4 slides de venta (split: hero 3D a sangre + copy)
 const TOTAL_PASOS = 5;      // nombre → sueldo → cuentas → fijos → listo
 
-// Confeti del cierre (paso "listo"): 14 piezas cuya posición/color/tiempo viven
+// Confeti del cierre (paso "listo"): 22 piezas cuya posición/color/tiempo viven
 // en clases .ob__conf--N de views.css (CSP style-src 'self' bloquea style="").
 // Respeta prefers-reduced-motion (allí se ocultan sin animación).
-const CONFETI = Array.from({ length: 14 }, (_, i) => `<i class="ob__conf ob__conf--${i + 1}"></i>`).join('');
+const CONFETI = Array.from({ length: 22 }, (_, i) => `<i class="ob__conf ob__conf--${i + 1}"></i>`).join('');
 
 const IC = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
@@ -436,7 +436,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
       html: `
         <div class="ob__celebra">
           <span class="ob__confeti" aria-hidden="true">${CONFETI}</span>
-          <span class="ob__emoji" role="img" aria-label="Celebración">🎉</span>
+          <span class="ob__celebra-ring" aria-hidden="true"></span>
+          <img class="ob__celebra-coin" src="./img/empty-states/coin-check.png" alt="" aria-hidden="true" />
         </div>
         <h1 class="ob__title">¡Listo${st.nombre ? ', ' + esc(st.nombre) : ''}! Ya puedes empezar</h1>
         <p class="ob__text">Con esto el semáforo ya sabe calcular tu ritmo del mes.</p>

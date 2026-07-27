@@ -1407,70 +1407,101 @@ body[data-route="hoy"] .app-header { display: none; }
 }
 
 /* ============================================================
-   Onboarding · cierre "listo" — confeti + emoji animado
+   Onboarding · cierre "listo" — moneda ✓ + confeti premium
    Solo transform/opacity. Confeti propio (sin librerías, es PWA).
    Contenido a la zona (overflow hidden). Respeta reduced-motion.
    ============================================================ */
 .ob__celebra {
   position: relative;
-  height: 104px;
+  height: 132px;
   margin-bottom: var(--sp-5);
   display: grid;
   place-items: center;
   overflow: hidden;              /* contiene el confeti a la zona */
 }
-.ob__emoji {
-  position: relative;
+/* glow radial naranja detrás de la moneda (estalla y se asienta) */
+.ob__celebra-ring {
+  position: absolute;
   z-index: 1;
-  font-size: 62px;
-  line-height: 1;
-  animation: obEmojiPop 0.6s var(--ease-fan) both 0.12s;
+  width: 140px; height: 140px;
+  border-radius: var(--r-full);
+  background: radial-gradient(circle, rgba(255, 122, 44, 0.38), rgba(255, 122, 44, 0) 66%);
+  animation: obRing 0.9s var(--ease) both 0.12s;
 }
-@keyframes obEmojiPop {
-  0%   { opacity: 0; transform: scale(0.3) rotate(-14deg); }
-  55%  { opacity: 1; transform: scale(1.16) rotate(7deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0); }
+@keyframes obRing {
+  0%   { opacity: 0; transform: scale(0.5); }
+  55%  { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0.72; transform: scale(1); }
+}
+/* moneda con check: pop de entrada premium (overshoot + asentado) */
+.ob__celebra-coin {
+  position: relative;
+  z-index: 2;
+  width: 100px; height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55));
+  animation: obCoinIn 0.72s var(--ease-fan) both 0.1s;
+}
+@keyframes obCoinIn {
+  0%   { opacity: 0; transform: scale(0.35) translateY(10px); }
+  58%  { opacity: 1; transform: scale(1.1) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* confeti: lluvia con vaivén desde detrás del emoji */
+/* confeti premium: lluvia con vaivén desde detrás de la moneda */
 .ob__confeti { position: absolute; inset: 0; pointer-events: none; }
 .ob__conf {
   position: absolute;
-  top: 38%;
+  top: 30%;
   width: 8px; height: 8px;
   border-radius: 2px;
   opacity: 0;
   will-change: transform, opacity;
-  animation: obFallA 1.15s var(--ease) both;
+  animation: obFallA 1.25s var(--ease) both;
 }
 @keyframes obFallA {
   0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
   12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(96px) translateX(14px) rotate(320deg); }
+  100% { opacity: 0; transform: translateY(118px) translateX(16px) rotate(340deg); }
 }
 @keyframes obFallB {
   0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
   12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(96px) translateX(-14px) rotate(-320deg); }
+  100% { opacity: 0; transform: translateY(118px) translateX(-16px) rotate(-340deg); }
 }
-/* posición, color, forma, dirección y retardo por pieza (CSP: sin inline) */
-.ob__conf--1  { left: 10%; background: var(--accent);         animation-name: obFallB; animation-delay: 0.20s; }
-.ob__conf--2  { left: 18%; background: var(--semaforo-verde); animation-delay: 0.34s; }
-.ob__conf--3  { left: 26%; background: var(--accent-light);   animation-name: obFallB; animation-delay: 0.10s; width: 7px; height: 11px; }
-.ob__conf--4  { left: 34%; background: var(--cat-ocio);       animation-delay: 0.42s; }
-.ob__conf--5  { left: 42%; background: var(--semaforo-ambar); animation-name: obFallB; animation-delay: 0.26s; width: 9px; height: 9px; }
-.ob__conf--6  { left: 50%; background: var(--accent);         animation-delay: 0.05s; }
-.ob__conf--7  { left: 58%; background: var(--cat-salud);      animation-name: obFallB; animation-delay: 0.38s; width: 7px; height: 11px; }
-.ob__conf--8  { left: 66%; background: var(--semaforo-verde); animation-delay: 0.16s; }
-.ob__conf--9  { left: 74%; background: var(--accent-light);   animation-name: obFallB; animation-delay: 0.30s; }
-.ob__conf--10 { left: 82%; background: var(--semaforo-ambar); animation-delay: 0.46s; width: 9px; height: 9px; }
-.ob__conf--11 { left: 90%; background: var(--cat-ocio);       animation-name: obFallB; animation-delay: 0.14s; }
-.ob__conf--12 { left: 14%; background: var(--semaforo-verde); animation-delay: 0.52s; width: 7px; height: 11px; }
-.ob__conf--13 { left: 38%; background: var(--accent);         animation-name: obFallB; animation-delay: 0.60s; }
-.ob__conf--14 { left: 70%; background: var(--cat-salud);      animation-delay: 0.56s; }
+@keyframes obFallC {
+  0%   { opacity: 0; transform: translateY(-16px) rotate(0deg); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(122px) translateX(2px) rotate(180deg); }
+}
+/* posición, color, forma, dirección y retardo por pieza (CSP: sin inline).
+   Paleta premium cohesiva con el CTA (durazno→lavanda) + molten platinum. */
+.ob__conf--1  { left: 8%;  background: #FF7A2C; animation-name: obFallB; animation-delay: 0.16s; }
+.ob__conf--2  { left: 15%; background: #FFC79A; animation-delay: 0.30s; border-radius: var(--r-full); }
+.ob__conf--3  { left: 22%; background: #EAECEF; animation-name: obFallC; animation-delay: 0.08s; width: 7px; height: 11px; }
+.ob__conf--4  { left: 29%; background: #BAC9FF; animation-delay: 0.40s; }
+.ob__conf--5  { left: 36%; background: #FFB25E; animation-name: obFallB; animation-delay: 0.22s; width: 9px; height: 9px; border-radius: var(--r-full); }
+.ob__conf--6  { left: 43%; background: #FF7A2C; animation-delay: 0.04s; }
+.ob__conf--7  { left: 50%; background: #FCEFE4; animation-name: obFallC; animation-delay: 0.34s; width: 7px; height: 11px; }
+.ob__conf--8  { left: 57%; background: #BAC9FF; animation-delay: 0.14s; border-radius: var(--r-full); }
+.ob__conf--9  { left: 64%; background: #FFB25E; animation-name: obFallB; animation-delay: 0.28s; }
+.ob__conf--10 { left: 71%; background: #EAECEF; animation-delay: 0.44s; width: 9px; height: 9px; }
+.ob__conf--11 { left: 78%; background: #FF7A2C; animation-name: obFallC; animation-delay: 0.12s; }
+.ob__conf--12 { left: 85%; background: #FFC79A; animation-delay: 0.50s; width: 7px; height: 11px; border-radius: var(--r-full); }
+.ob__conf--13 { left: 92%; background: #BAC9FF; animation-name: obFallB; animation-delay: 0.58s; }
+.ob__conf--14 { left: 12%; background: #FFB25E; animation-delay: 0.54s; }
+.ob__conf--15 { left: 26%; background: #FF7A2C; animation-name: obFallC; animation-delay: 0.62s; border-radius: var(--r-full); }
+.ob__conf--16 { left: 40%; background: #EAECEF; animation-name: obFallB; animation-delay: 0.20s; width: 7px; height: 11px; }
+.ob__conf--17 { left: 54%; background: #FFC79A; animation-delay: 0.66s; }
+.ob__conf--18 { left: 68%; background: #BAC9FF; animation-name: obFallC; animation-delay: 0.24s; width: 9px; height: 9px; border-radius: var(--r-full); }
+.ob__conf--19 { left: 82%; background: #FF7A2C; animation-delay: 0.36s; }
+.ob__conf--20 { left: 33%; background: #FCEFE4; animation-name: obFallB; animation-delay: 0.70s; }
+.ob__conf--21 { left: 60%; background: #FFB25E; animation-delay: 0.10s; width: 7px; height: 11px; }
+.ob__conf--22 { left: 88%; background: #EAECEF; animation-name: obFallC; animation-delay: 0.46s; border-radius: var(--r-full); }
 
 @media (prefers-reduced-motion: reduce) {
-  .ob__emoji { animation: none; }
+  .ob__celebra-coin { animation: none; }
+  .ob__celebra-ring { animation: none; opacity: 0.5; }
   .ob__conf { animation: none; opacity: 0; }   /* sin confeti en reduced-motion */
 }
 
