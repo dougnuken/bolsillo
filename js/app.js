@@ -494,7 +494,7 @@ function registerSW() {
    confirma o descarta los ~63pt que no alcanza ningún elemento CSS.
    Quitar (junto con .diag-ver en components.css y el div de index.html) cuando
    se cierre el tema. */
-const BUILD = 'v25';
+const BUILD = 'v26';
 function initDiag() {
   const el = document.getElementById('diag-ver');
   if (!el) return;

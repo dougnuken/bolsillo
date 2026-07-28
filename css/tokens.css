@@ -12,7 +12,19 @@
 :root {
   /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
   --bg-0: #0B0B0D;              /* canvas base de la app */
-  --bg-root: #41241A;           /* CLAVE iOS: el safe-area del home-indicator lo pinta el background-COLOR sólido de <html> (la capa fija con gradiente NO llega ahí). Este valor = el borde inferior del ambiente (bg-0 + wash-bottom) para que la tira del home-indicator se funda con el contenido, sin escalón oscuro. */
+  /* CLAVE iOS: el safe-area del home-indicator lo pinta el background-COLOR
+     sólido de <html> (la capa fija con gradiente NO llega ahí).
+     IGUAL a --bg-0, a propósito. De la v20 a la v25 este token fue #41241A: el
+     valor exacto de wash-bottom(0.22) compuesto sobre el canvas, para que la
+     banda "igualara" el ambiente. La costura sí cerraba, pero el color con que
+     cerraba era café claro sobre una app casi negra: se leía como una losa
+     marrón grande, que es peor que la costura que evitaba.
+     Ahora el borde inferior de la app se resuelve a casi-negro (ver
+     --wash-bottom) y la banda usa ese mismo casi-negro. Dos valores oscuros que
+     difieran un poco son indistinguibles —la discriminación de contraste se
+     desploma en sombra profunda—, así que el empalme no depende de acertarle al
+     píxel, y sobre todo NO hay marrón que mirar. */
+  --bg-root: #0B0B0D;
   --bg-1: #0B0B0D;              /* fondo de página */
   --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
   --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
@@ -24,10 +36,17 @@
   --wash-coral: rgba(255, 106, 68, 0.10);    /* glow cálido superior (bajo la isla dinámica) */
   --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
   --wash-top:   rgba(255, 106, 68, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
-  --wash-bottom: rgba(255, 124, 72, 0.22);   /* glow cálido inferior (mirror del superior): sube para que el safe-area del home-indicator brille parejo, no solo en las esquinas */
+  --wash-bottom: rgba(255, 124, 72, 0.14);   /* glow cálido inferior: HALO detrás del dock, no lavado que sangra por el borde (ver --bg-app) */
   --bg-app:
     linear-gradient(180deg, var(--wash-top), transparent 15%),
-    linear-gradient(0deg, var(--wash-bottom), transparent 30%),
+    /* El glow inferior arranca TRANSPARENTE en el borde y hace pico por encima
+       del dock. Antes era 'wash-bottom → transparent 30%' con 0deg: full al
+       borde, es decir el último píxel de la app era #40241A café. Ese lavado se
+       subió en la v18 justo para que la banda del home-indicator "brillara
+       parejo" — y fue el origen del marrón. Como halo el calor se conserva
+       (refracta bajo la píldora de vidrio) pero el borde inferior vuelve a ser
+       canvas puro, idéntico a --bg-root. */
+    linear-gradient(0deg, transparent 0%, var(--wash-bottom) 10%, transparent 34%),
     radial-gradient(95% 52% at 80% 0%, var(--wash-coral), transparent 60%),
     var(--bg-0);
 

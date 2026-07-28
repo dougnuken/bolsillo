@@ -335,17 +335,15 @@ body.nav-min .fab {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
-/* PISO del dock (antes solo "barrido de vidrio", que quedó vacío en la v14
-   porque su backdrop-filter pintaba una franja oscura sobre el safe-area).
-   Ahora sí pinta: degradado a sangre completa que termina SÓLIDO en
-   var(--bg-root) —el mismo color con que iOS pinta la banda del home
-   indicator—, así que la banda deja de leerse como sobrante y pasa a ser este
-   piso saliéndose por el borde de la pantalla. La píldora sigue flotando 8pt
-   encima: lectura de dock nativo (objeto apoyado en una superficie), no de
-   objeto suelto en el vacío. Recupera además la función original (legibilidad
-   de lo que pasa por detrás) sin backdrop-filter, que era la causa del bug.
-   El stop final al 88% de 110px deja los últimos ~13px sólidos: empalme exacto
-   con la banda, sin costura. */
+/* Piso del dock: funde el contenido que se va por detrás de la barra flotante.
+   La v25 lo terminaba en var(--bg-root) cuando ese token era #41241A, así que
+   pintaba ~30px de café sólido a lo ancho — el bulto más visible del "espacio
+   marrón". Ahora termina en var(--bg-0), que es a la vez el canvas y (por
+   diseño) --bg-root: el piso, el fondo de la app y la banda que pinta iOS son
+   EL MISMO color, así que no hay losa que ver ni costura que disimular. Contra
+   el fondo vacío el degradado es invisible; solo aparece cuando hay contenido
+   pasando por detrás, que es su función original (la v14 la perdió al quitarle
+   el backdrop-filter, que en iOS teñía el safe-area). */
 .nav-blur {
   position: absolute;
   left: 0;
@@ -356,9 +354,9 @@ body.nav-min .fab {
   pointer-events: none;
   background: linear-gradient(180deg,
     transparent 0%,
-    color-mix(in srgb, var(--bg-root) 40%, transparent) 42%,
-    color-mix(in srgb, var(--bg-root) 88%, transparent) 72%,
-    var(--bg-root) 88%);
+    color-mix(in srgb, var(--bg-0) 45%, transparent) 45%,
+    color-mix(in srgb, var(--bg-0) 90%, transparent) 76%,
+    var(--bg-0) 92%);
 }
 
 /* ============================================================
