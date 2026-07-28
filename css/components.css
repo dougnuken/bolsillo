@@ -173,7 +173,7 @@
   position: absolute;
   left: max(var(--sp-4), env(safe-area-inset-left));
   right: max(var(--sp-4), env(safe-area-inset-right));
-  bottom: calc(var(--sp-2) + var(--safe-b));
+  bottom: var(--dock-b);
   z-index: var(--z-nav);
   height: var(--nav-h);
   display: grid;
@@ -228,7 +228,7 @@
   z-index: var(--z-fab);
   left: 50%;
   /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
-  bottom: calc(var(--safe-b) + var(--sp-2) + var(--nav-h) - 30px);
+  bottom: calc(var(--dock-b) + var(--nav-h) - 30px);
   transform: translateX(-50%);
   width: 60px;
   height: 60px;
@@ -278,7 +278,7 @@ body.nav-min .tab__label { opacity: 0; max-height: 0; }
 /* la barrita naranja del activo también encoge */
 body.nav-min .tab.is-active::before { width: 13px; height: 2px; }
 body.nav-min .fab {
-  bottom: calc(var(--safe-b) + var(--sp-2) + var(--nav-h-min) - 30px);
+  bottom: calc(var(--dock-b) + var(--nav-h-min) - 30px);
 }
 @media (prefers-reduced-motion: reduce) {
   .tabbar, .tab__label, .fab, .tab.is-active::before { transition: none; }
@@ -313,28 +313,6 @@ body.nav-min .fab {
 }
 .notif-badge[hidden] { display: none; }
 
-/* DIAGNÓSTICO TEMPORAL: sello con build, modo (pwa/web), safe-area resuelto,
-   altura de la barra y viewport-vs-pantalla. Lo llena initDiag() en app.js.
-   Quitar junto con initDiag y el div #diag-ver de index.html. */
-.diag-ver {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--safe-b) + var(--nav-h) + var(--sp-5));
-  transform: translateX(-50%);
-  z-index: 9999;
-  padding: 3px 10px;
-  font-family: var(--font-num);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  color: #ffffff;
-  background: #d64500;
-  border-radius: var(--r-full);
-  pointer-events: none;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-
 /* Piso del dock: funde el contenido que se va por detrás de la barra flotante.
    La v25 lo terminaba en var(--bg-root) cuando ese token era #41241A, así que
    pintaba ~30px de café sólido a lo ancho — el bulto más visible del "espacio
@@ -349,7 +327,7 @@ body.nav-min .fab {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--safe-b) + var(--nav-h) + var(--sp-9));
+  height: calc(var(--dock-b) + var(--nav-h) + var(--sp-9));
   z-index: 35;
   pointer-events: none;
   background: linear-gradient(180deg,
@@ -972,7 +950,7 @@ body.nav-min .fab {
   /* Por ENCIMA del FAB (que cabalga la barra flotante). El FAB corona a
      (nav-h + sp-4 + 30px) desde el borde inferior; sumamos sp-4 de aire para
      que el toast lo despeje con claridad y el FAB siga tappable. */
-  bottom: calc(var(--safe-b) + var(--nav-h) + var(--sp-4) + 30px + var(--sp-4));
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4));
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;

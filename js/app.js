@@ -486,55 +486,11 @@ function registerSW() {
   });
 }
 
-/* ---- DIAGNÓSTICO TEMPORAL de la franja inferior ----
-   Pinta un sello con lo único que no podemos ver desde fuera del dispositivo:
-   qué build corre, si la media query de PWA instalada aplicó, cuánto vale el
-   safe-area resuelto, a qué altura quedó la barra y —lo decisivo— si el viewport
-   de layout es más CORTO que la pantalla física (ih/sh). Esa última cifra
-   confirma o descarta los ~63pt que no alcanza ningún elemento CSS.
-   Quitar (junto con .diag-ver en components.css y el div de index.html) cuando
-   se cierre el tema. */
-const BUILD = 'v28';
-function initDiag() {
-  const el = document.getElementById('diag-ver');
-  if (!el) return;
-  const pintar = () => {
-    const cs = getComputedStyle(document.documentElement);
-    const safeB = (cs.getPropertyValue('--safe-b-raw').trim() || '?').replace('px', '');
-    const shell = document.querySelector('.app-shell');
-    const tb = document.getElementById('tabbar');
-    /* MODO: lo que la v25 borró del sello y sin lo cual NADA de lo demás se puede
-       interpretar. Un mismo par ash/sh significa cosas opuestas en Safari (el
-       chrome del navegador se come ~160pt) y en la PWA instalada (ahí sí sería
-       recorte del viewport). Sospecha fuerte de que parte de las mediciones
-       v17→v25 se tomaron en un modo y parte en el otro: eso explicaría por qué
-       doce intentos nunca convergieron. */
-    const pwa = window.matchMedia('(display-mode: standalone)').matches
-      || window.navigator.standalone === true;
-    // a = shell · i = viewport de layout · v = viewport visual (delata la toolbar
-    // de Safari, que solapa sin cambiar innerHeight) · s = pantalla física.
-    const a = shell ? Math.round(shell.getBoundingClientRect().height) : '?';
-    const i = Math.round(window.innerHeight);
-    const v = window.visualViewport ? Math.round(window.visualViewport.height) : '?';
-    const s = Math.round(window.screen.height);
-    // Aire entre el pie de la barra y el pie del shell.
-    const n = (tb && shell)
-      ? Math.round(shell.getBoundingClientRect().bottom - tb.getBoundingClientRect().bottom)
-      : '?';
-    el.textContent = `${BUILD}·${pwa ? 'PWA' : 'web'}·a${a}·i${i}·v${v}·s${s}·sa${safeB}·n${n}`;
-  };
-  // Tras el primer layout: medir en boot() devolvía alto 0 (caja aún sin asentar).
-  requestAnimationFrame(() => requestAnimationFrame(pintar));
-  window.addEventListener('resize', pintar, { passive: true });
-  window.addEventListener('load', pintar, { passive: true });
-}
-
 /* ---- init ---- */
 function boot() {
   initTabbar();
   initHeader();
   initSheet();
-  initDiag();
 
   // Scroll dentro de las vistas → colapsa/expande la barra (captura, no burbujea).
   stage.addEventListener('scroll', onStageScroll, { passive: true, capture: true });

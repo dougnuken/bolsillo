@@ -261,8 +261,15 @@
      inset SÍ vale ~34pt; forzarlo a 0 dejaba el dock encima del home indicator.
      Ese bug nunca se vio porque nadie probó la app instalada. */
   --safe-b: env(safe-area-inset-bottom);
-  /* Solo diagnóstico: el inset real sin overrides, para leerlo desde JS. */
-  --safe-b-raw: env(safe-area-inset-bottom);
+  /* Anclaje inferior del CHROME FLOTANTE (dock, FAB, toast). MAX, no suma:
+     el inset del home indicator YA es aire visual, así que sumarle sp-2 encima
+     alejaba la píldora 8pt de más del borde. Con max() la píldora se apoya justo
+     en el tope de la zona del indicador —lectura de dock nativo, pegado— y en
+     navegador (inset 0) conserva los 8pt de siempre.
+     OJO: esto es solo para lo que FLOTA. El padding de CONTENIDO sigue sumando
+     --safe-b aparte, porque el contenido sí tiene que despejar dock e indicador
+     a la vez. */
+  --dock-b: max(var(--sp-2), var(--safe-b));
 
   /* ---- Motion ---- */
   --dur-fast: 140ms;

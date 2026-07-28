@@ -32,10 +32,10 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=28" />
-  <link rel="stylesheet" href="./css/base.css?v=28" />
-  <link rel="stylesheet" href="./css/components.css?v=28" />
-  <link rel="stylesheet" href="./css/views.css?v=28" />
+  <link rel="stylesheet" href="./css/tokens.css?v=29" />
+  <link rel="stylesheet" href="./css/base.css?v=29" />
+  <link rel="stylesheet" href="./css/components.css?v=29" />
+  <link rel="stylesheet" href="./css/views.css?v=29" />
 </head>
 <body>
   <div class="app-shell">
@@ -89,16 +89,12 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
 
-    <!-- DIAGNÓSTICO TEMPORAL: sello de build + métricas del borde inferior
-         (ver initDiag en js/app.js y .diag-ver en components.css). -->
-    <div class="diag-ver" id="diag-ver" aria-hidden="true"></div>
-
     <!-- Bottom sheet: Registrar -->
     <div class="scrim" id="scrim" aria-hidden="true"></div>
     <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Registrar movimiento"></div>
 
   </div>
 
-  <script type="module" src="./js/app.js?v=28"></script>
+  <script type="module" src="./js/app.js?v=29"></script>
 </body>
 </html>
