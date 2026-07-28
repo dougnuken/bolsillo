@@ -242,12 +242,24 @@
   --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
   --header-h: 56px;
   --page-max: 560px;            /* ancho máx. de contenido */
-  /* Reserva inferior del contenido. En el navegador el viewport llega al borde
-     físico y hay que descontar el home indicator uno mismo. Instalada como PWA,
-     iOS recorta el VIEWPORT 62pt por encima del borde (MEDIDO: un elemento
-     position:fixed con bottom:82pt aterrizó a 144pt del borde físico → el fondo
-     del viewport está a 62pt). Esa zona ya cubre el home indicator, así que
-     volver a descontar el inset lo contaba DOS VECES y dejaba la barra a 105pt. */
+  /* Reserva inferior del contenido: el inset real, sin trucos. Comportamiento
+     estándar y correcto en los dos modos.
+
+     De la v23 a la v26 esto llevaba un override a 0px bajo
+     @media (display-mode: standalone), justificado con dos mediciones que
+     resultaron estar CONTAMINADAS por haberse tomado en Safari y no en la app
+     instalada (confirmado: el sello v26 reportó a796/s956 y el usuario estaba en
+     Safari). Las dos cuadran al pt con el chrome del navegador:
+       · "elemento fixed con bottom:82 aterrizó a 144 del borde" → 144-82 = 62pt
+         = la toolbar inferior de Safari, no un recorte del viewport de iOS.
+       · "la barra quedó a 105pt del borde" → 8 (sp-2) + 34 (env) + 62 (toolbar)
+         = 104. En Safari env(safe-area-inset-bottom) además ALTERNA entre 0 y
+         ~34 según la toolbar esté desplegada o minimizada, así que lecturas
+         tomadas en distinto estado de scroll daban cifras distintas: otra razón
+         por la que doce versiones nunca convergieron.
+     En la PWA instalada de verdad el viewport SÍ llega al borde físico y el
+     inset SÍ vale ~34pt; forzarlo a 0 dejaba el dock encima del home indicator.
+     Ese bug nunca se vio porque nadie probó la app instalada. */
   --safe-b: env(safe-area-inset-bottom);
   /* Solo diagnóstico: el inset real sin overrides, para leerlo desde JS. */
   --safe-b-raw: env(safe-area-inset-bottom);
@@ -270,10 +282,12 @@
   color-scheme: dark;
 }
 
-/* PWA instalada: iOS ya deja la zona del home indicator FUERA del viewport, así
-   que el contenido no debe descontarla otra vez. En el navegador el token
-   conserva el inset real. */
-@media (display-mode: standalone) {
-  :root { --safe-b: 0px; }
-}
+/* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
+   creyendo que iOS dejaba el home indicator fuera del viewport en la PWA
+   instalada; esa creencia venía de mediciones hechas en Safari —ver la nota
+   larga junto a --safe-b—. El sello v27 la desmintió: a796·i796·v796 en Safari,
+   o sea el shell llena su viewport EXACTO, sin recorte ni zona muerta. Los 160pt
+   que faltaban hasta s956 son el chrome de Safari, que no es parte de la página.
+   Forzar el token a 0 solo servía para meter el dock bajo el home indicator en
+   la app instalada.) */
 
