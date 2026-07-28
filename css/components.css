@@ -327,7 +327,11 @@ body.nav-min .fab {
   left: 0;
   right: 0;
   bottom: 0;
-  height: calc(var(--dock-b) + var(--nav-h) + var(--sp-9));
+  /* Alto = la MISMA reserva del contenido (--view-b). Antes era
+     dock-b + nav-h + sp-9 (48) = 118px y mordía ~28px del CTA "Configurar mi
+     sueldo" en reposo. Alineado a --view-b (80px) cubre exactamente la zona por
+     detrás del dock —lo que debe difuminar— y suelta la zona de acción. */
+  height: var(--view-b);
   z-index: 35;
   pointer-events: none;
   background: linear-gradient(180deg,

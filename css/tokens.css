@@ -238,7 +238,13 @@
   --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 16px -10px rgba(0, 0, 0, 0.32); /* barra flotante: sombra suave; la grande y oscura ensombrecía el safe-area del home-indicator */
 
   /* ---- Layout ---- */
-  --nav-h: 62px;                /* alto de la tab bar (sin safe-area) */
+  --nav-h: 52px;                /* alto de la tab bar (sin safe-area). 62px llevaba
+                                   26px de aire interno alrededor de 34px de tinta
+                                   (icono 22 + gap 2 + label 10); la tab bar nativa
+                                   de iOS mide 49pt. A 52px la caja de contacto = 50px
+                                   (>44pt HIG) y el aire baja a 8/8. A ≤52px el radio
+                                   --r-xl 28px > h/2, así que la píldora pasa a cápsula
+                                   pura (dock nativo), en vez de rectángulo redondeado. */
   --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
   --header-h: 56px;
   --page-max: 560px;            /* ancho máx. de contenido */
@@ -270,6 +276,18 @@
      --safe-b aparte, porque el contenido sí tiene que despejar dock e indicador
      a la vez. */
   --dock-b: max(var(--sp-2), var(--safe-b));
+
+  /* Reserva inferior del CONTENIDO (padding-bottom de .view). FUENTE ÚNICA:
+     antes se declaraba a mano en base.css Y en views.css con la fórmula
+     nav-h + safe-b + sp-4 + sp-8, y encima estaba DUPLICADA (arreglar una no
+     tocaba la otra). Sobre todo, ese +sp-8 (40px) dejaba ~48px de hueco vacío
+     por encima del dock: el contenido terminaba muy arriba y quedaba una banda
+     muerta —lo que se leía como "espacio perdido abajo".
+     Ahora = geometría del dock (dock-b + nav-h) + UN aire de sp-5 (20px). El
+     contenido despeja el dock exacto y deja 20px de respiro, no 48. Usa --dock-b
+     (no --safe-b) para que en la PWA instalada la reserva crezca con el inset,
+     igual que el dock. */
+  --view-b: calc(var(--dock-b) + var(--nav-h) + var(--sp-5));
 
   /* ---- Motion ---- */
   --dur-fast: 140ms;

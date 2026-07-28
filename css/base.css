@@ -240,7 +240,7 @@ img { max-width: 100%; display: block; }
      bottom +sp-4: la barra flota (16px sobre el borde inferior). */
   padding: calc(env(safe-area-inset-top) + var(--header-h) + var(--sp-3))
            max(var(--sp-5), env(safe-area-inset-left))
-           calc(var(--nav-h) + var(--safe-b) + var(--sp-4) + var(--sp-8))
+           var(--view-b)
            max(var(--sp-5), env(safe-area-inset-right));
   opacity: 0;
   visibility: hidden;

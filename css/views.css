@@ -32,7 +32,7 @@ body[data-route="hoy"] .app-header { display: none; }
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))
            max(var(--sp-5), env(safe-area-inset-left))
-           calc(var(--nav-h) + var(--safe-b) + var(--sp-4) + var(--sp-8))
+           var(--view-b)
            max(var(--sp-5), env(safe-area-inset-right));
 }
 
