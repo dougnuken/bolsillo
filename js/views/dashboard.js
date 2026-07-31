@@ -9,7 +9,7 @@
    ============================================================ */
 
 import { getAll, getConfig } from '../db.js';
-import { calcularEstado, resumenNegocios, historialAhorro } from '../budget.js';
+import { calcularEstado, resumenNegocios, historialAhorro, gastoCategoriasComparado } from '../budget.js';
 import { formatCOP } from '../money.js';
 import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
@@ -459,9 +459,47 @@ function flujoCardHTML(hist) {
     </div>`;
 }
 
+/* "En qué se va, mes a mes": top categorías de ESTE mes con barra + delta vs el
+   mes pasado. OJO: en GASTO, subir es MALO → ↑ en rojo, ↓ en verde. */
+function categoriasMesHTML(cc) {
+  if (!cc || !Array.isArray(cc.filas) || !cc.filas.length) return '';
+  const max = Math.max(...cc.filas.map((f) => f.actual), 1);
+  const filas = cc.filas.map((f) => {
+    const cat = categoriaPorId(f.categoriaId);
+    const w = Math.max(4, Math.round((f.actual / max) * 100));
+    let chip = '';
+    if (cc.hayPasado) {
+      if (f.deltaPct === null) chip = '<span class="catmes__delta catmes__delta--new">nuevo</span>';
+      else if (Math.abs(f.deltaPct) < 0.005) chip = '<span class="catmes__delta catmes__delta--flat">igual</span>';
+      else {
+        const up = f.deltaPct > 0;
+        chip = `<span class="catmes__delta catmes__delta--${up ? 'up' : 'down'}">${up ? '↑' : '↓'}${Math.round(Math.abs(f.deltaPct) * 100)}%</span>`;
+      }
+    }
+    return `
+      <div class="catmes-row ${cat.cls}">
+        <span class="catmes__ic">${cat.icon}</span>
+        <div class="catmes__body">
+          <div class="catmes__head">
+            <span class="catmes__label">${esc(cat.label)}</span>
+            <span class="catmes__amt num">${esc(formatCOP(f.actual))}</span>
+          </div>
+          <span class="catmes__track"><span class="catmes__fill" data-w="${w}"></span></span>
+        </div>
+        ${chip}
+      </div>`;
+  }).join('');
+  return `
+    <div class="catmes">
+      <div class="section-head"><span class="section-head__title">En qué se va, mes a mes</span></div>
+      <p class="catmes__sub">${cc.hayPasado ? 'La flecha compara con el mes pasado' : 'Este mes'}</p>
+      <div class="catmes-list">${filas}</div>
+    </div>`;
+}
+
 /* Contenido de cada pestaña del Hoy. */
-function panelHTML(tab, e, negocios, historial, recs) {
-  if (tab === 'analytics') return gaugeCardHTML(e) + flujoCardHTML(historial);
+function panelHTML(tab, e, negocios, historial, recs, catComp) {
+  if (tab === 'analytics') return gaugeCardHTML(e) + flujoCardHTML(historial) + categoriasMesHTML(catComp);
   // dashboard: disponible/gastado + fijos + negocios + en qué se va (+ hormiga)
   return statRowHTML(e) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
@@ -495,7 +533,7 @@ function animarAnillo(body, e) {
 }
 
 function aplicarBarras(body) {
-  body.querySelectorAll('.catbar__fill, .negocio__fill').forEach((fill) => {
+  body.querySelectorAll('.catbar__fill, .negocio__fill, .catmes__fill').forEach((fill) => {
     const w = fill.dataset.w || '0';
     if (prefersReduced) { fill.style.width = w + '%'; return; }
     requestAnimationFrame(() => { fill.style.width = w + '%'; });
@@ -517,7 +555,7 @@ function mostrarPanel(root, tab, datos, animar) {
     if (cta) cta.addEventListener('click', () => abrirSueldo({ onSaved: () => pintar(root) }));
     return;
   }
-  body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs);
+  body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs, datos.catComp);
   if (tab === 'analytics') animarAnillo(body, datos.estado);
   aplicarBarras(body);
   const sc = root.closest('.view') || root;
@@ -535,6 +573,7 @@ async function pintar(root) {
   let salario = 0;
   let nombre = '';
   let metricaDia = null;
+  let catComp = null;
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -547,6 +586,7 @@ async function pintar(root) {
     estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
     historial = historialAhorro({ movimientos, ingresoEmpleo: salario, creditos, hoy, meses: 6 });
+    catComp = gastoCategoriasComparado({ movimientos, hoy, top: 6 });
     recs = recurrentes || [];
     metricaDia = metricaHoy(movimientos, hoy);
   } catch (err) {
@@ -587,7 +627,7 @@ async function pintar(root) {
   const nameEl = root.querySelector('#hoy-name');
   if (nameEl) nameEl.textContent = (nom ? nom + ' ' : '') + saludoInfo().emoji;
 
-  const datos = { estado, negocios, historial, recs };
+  const datos = { estado, negocios, historial, recs, catComp };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
     b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos, true));
   });

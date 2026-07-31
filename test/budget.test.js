@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calcularEstado, diasEnMes, resumenNegocios, historialAhorro } from '../js/budget.js';
+import { calcularEstado, diasEnMes, resumenNegocios, historialAhorro, gastoCategoriasComparado } from '../js/budget.js';
 import { crearMovimiento, crearRecurrente, crearCredito, crearIngreso } from '../js/model.js';
 
 /* ---- factories de apoyo ---- */
@@ -417,6 +417,38 @@ test('historialAhorro: sin creditos, neto == ahorro (retrocompat)', () => {
   const h = historialAhorro({ movimientos: movs, ingresoEmpleo: 3_000_000, hoy: '2026-07-15', meses: 1 });
   assert.equal(h[0].cuotasCredito, 0);
   assert.equal(h[0].neto, h[0].ahorro);
+});
+
+/* ---- gastoCategoriasComparado (en qué se va, mes a mes) ---- */
+
+test('gastoCategoriasComparado: totales del mes, orden desc y delta vs mes pasado', () => {
+  const movs = [
+    // mes pasado (junio)
+    gasto('2026-06-10', 200_000, { categoria: 'mercado' }),
+    gasto('2026-06-12', 100_000, { categoria: 'ocio' }),
+    // este mes (julio)
+    gasto('2026-07-05', 300_000, { categoria: 'mercado' }),   // subió 50% vs junio
+    gasto('2026-07-08', 50_000, { categoria: 'ocio' }),       // bajó 50%
+    gasto('2026-07-09', 80_000, { categoria: 'restaurantes' }), // nuevo
+  ];
+  const r = gastoCategoriasComparado({ movimientos: movs, hoy: '2026-07-15', top: 6 });
+  assert.equal(r.hayPasado, true);
+  assert.equal(r.totalEste, 430_000);
+  assert.equal(r.filas[0].categoriaId, 'mercado');   // el mayor de julio
+  assert.equal(r.filas[0].actual, 300_000);
+  assert.equal(r.filas[0].previo, 200_000);
+  assert.equal(r.filas[0].deltaPct, 0.5);            // +50%
+  const rest = r.filas.find((f) => f.categoriaId === 'restaurantes');
+  assert.equal(rest.deltaPct, null);                 // nuevo (no había en junio)
+  const ocio = r.filas.find((f) => f.categoriaId === 'ocio');
+  assert.equal(ocio.deltaPct, -0.5);                 // −50%
+});
+
+test('gastoCategoriasComparado: sin mes pasado → hayPasado false', () => {
+  const movs = [gasto('2026-07-05', 100_000, { categoria: 'mercado' })];
+  const r = gastoCategoriasComparado({ movimientos: movs, hoy: '2026-07-15' });
+  assert.equal(r.hayPasado, false);
+  assert.equal(r.filas.length, 1);
 });
 
 test('proyección: variableGastado / avance, más los fijos', () => {

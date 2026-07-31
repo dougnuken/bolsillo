@@ -675,3 +675,52 @@ export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, creditos 
   }
   return out;
 }
+
+/**
+ * Gasto por categoría de ESTE mes vs el PASADO (para el barchart "en qué se va,
+ * mes a mes"). Cuenta TODO gasto (fijo + variable), prorrateando cuotas. PURA.
+ * @returns {{filas:Array<{categoriaId,actual,previo,delta,deltaPct:(number|null),pct}>, totalEste:number, hayPasado:boolean}}
+ *   deltaPct null = categoría NUEVA este mes (no había gasto el mes pasado).
+ */
+export function gastoCategoriasComparado({ movimientos = [], hoy, top = 6 } = {}) {
+  const movs = (Array.isArray(movimientos) ? movimientos : []).filter(Boolean);
+  const { anio, mes } = partes(hoy);
+  let ap = anio, mp = mes - 1;
+  if (mp < 1) { mp = 12; ap -= 1; }
+
+  const totalesMes = (a, m) => {
+    const acc = new Map();
+    for (const x of movs) {
+      if (x.tipo !== 'gasto') continue;
+      const p = porcionEnMes(x, a, m);
+      if (!(p > 0)) continue;
+      const id = (typeof x.categoria === 'string' && x.categoria.trim() !== '') ? x.categoria : CATEGORIA_FALLBACK;
+      acc.set(id, (acc.get(id) || 0) + p);
+    }
+    return acc;
+  };
+  const esteMap = totalesMes(anio, mes);
+  const pasMap = totalesMes(ap, mp);
+  const totalEste = redondear([...esteMap.values()].reduce((s, v) => s + v, 0));
+
+  const filas = [];
+  for (const id of new Set([...esteMap.keys(), ...pasMap.keys()])) {
+    const actual = redondear(esteMap.get(id) || 0);
+    const previo = redondear(pasMap.get(id) || 0);
+    filas.push(Object.freeze({
+      categoriaId: id,
+      actual,
+      previo,
+      delta: actual - previo,
+      // null = nueva (no había el mes pasado); si sigue en 0, delta 0.
+      deltaPct: previo > 0 ? (actual - previo) / previo : (actual > 0 ? null : 0),
+      pct: totalEste > 0 ? actual / totalEste : 0,
+    }));
+  }
+  filas.sort((a, b) => b.actual - a.actual);
+  return {
+    filas: filas.filter((f) => f.actual > 0).slice(0, Number.isInteger(top) && top > 0 ? top : 6),
+    totalEste,
+    hayPasado: [...pasMap.values()].some((v) => v > 0),
+  };
+}

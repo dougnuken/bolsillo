@@ -695,6 +695,34 @@ body[data-route="hoy"] .app-header { display: none; }
   margin-top: 2px;
   padding: 0 2.35%;   /* = padX (8) / viewBox (340): alinea con las barras */
 }
+
+/* ---- "En qué se va, mes a mes" (categorías con delta vs mes pasado) ---- */
+.catmes { margin-top: var(--sp-6); }
+.catmes__sub { font-size: var(--fs-sm); color: var(--text-2); margin: var(--sp-1) 0 var(--sp-3); }
+.catmes-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.catmes-row { display: flex; align-items: center; gap: var(--sp-3); }
+.catmes__ic {
+  width: 34px; height: 34px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--tint, var(--text-3)) 18%, transparent);
+  color: color-mix(in srgb, var(--tint, var(--text-1)) 74%, var(--text-1));
+}
+.catmes__ic svg { width: 19px; height: 19px; }
+.catmes__body { flex: 1 1 auto; min-width: 0; }
+.catmes__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); margin-bottom: 5px; }
+.catmes__label { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text-1); }
+.catmes__amt { font-size: var(--fs-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.catmes__track { display: block; height: 6px; border-radius: var(--r-full); background: var(--track); overflow: hidden; }
+.catmes__fill { display: block; width: 0; height: 100%; border-radius: var(--r-full); background: var(--text-3); transition: width var(--dur) var(--ease); }
+.catmes__delta {
+  flex: none; font-size: var(--fs-xs); font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums; min-width: 42px; text-align: right;
+}
+.catmes__delta--up { color: var(--semaforo-rojo); }     /* gastar MÁS = malo */
+.catmes__delta--down { color: var(--semaforo-verde); }  /* gastar MENOS = bueno */
+.catmes__delta--new { color: var(--semaforo-ambar-text); }
+.catmes__delta--flat { color: var(--text-3); }
 .ahorro__lbl {
   flex: 1 1 0;
   text-align: center;
