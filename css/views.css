@@ -836,15 +836,41 @@ body[data-route="asesor"] .nav-blur {
 /* barra de chat: pegada al fondo (no hay navbar), sobre el home indicator */
 .chat-bar {
   flex: none;
-  display: flex; gap: var(--sp-2); align-items: center;
+  display: flex; flex-direction: column; gap: var(--sp-2);
   margin: 0 var(--sp-3) max(var(--sp-2), env(safe-area-inset-bottom));
   padding: var(--sp-2);
-  border-radius: var(--r-full);
+  border-radius: var(--r-xl);
   background: var(--glass-nav);
   border: 1px solid var(--glass-nav-line);
   -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
   backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
 }
+.chat-bar__row { display: flex; gap: var(--sp-1); align-items: center; }
+/* chip del documento adjunto (arriba de la fila de input) */
+.chat-adjunto {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
+}
+.chat-adjunto[hidden] { display: none; }
+.chat-adjunto__ic { flex: none; display: grid; place-items: center; color: var(--accent); }
+.chat-adjunto__ic svg { width: 16px; height: 16px; }
+.chat-adjunto__name { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); color: var(--text-1); font-weight: var(--fw-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-adjunto__x { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: var(--r-full); color: var(--text-3); font-size: 20px; line-height: 1; }
+.chat-adjunto__x:active { color: var(--text-1); }
+/* botón de adjuntar (clip) */
+.chat-attach {
+  flex: none; width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  color: var(--text-2); background: transparent;
+  transition: transform var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.chat-attach svg { width: 21px; height: 21px; }
+.chat-attach:hover { color: var(--text-1); }
+.chat-attach:active { transform: scale(0.9); }
 .chat-input {
   flex: 1 1 auto; min-width: 0; height: 40px;
   padding: 0 var(--sp-3);

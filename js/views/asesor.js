@@ -8,6 +8,9 @@
 
 import { aconsejar } from '../conciencia.js';
 import { armarContexto } from '../agente-datos.js';
+import { elegirArchivoPDF, abrirConClave, CANCELADO } from '../pdf-picker.js';
+import { paginasAImagenes } from '../pdf-render.js';
+import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
 /* Spark de IA (dos destellos: uno grande, uno chico). */
@@ -17,6 +20,8 @@ const ICON_BACK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
 const SEND =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5L4 12Z"/></svg>';
+const CLIP =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L10 16.9a1.6 1.6 0 0 1-2.3-2.3l7.8-7.8"/></svg>';
 
 const SUGERENCIAS = [
   '¿Cuánto puedo gastar hoy sin cagarla?',
@@ -50,8 +55,16 @@ export default {
           <div class="chat-suggest" id="chat-suggest">${chips}</div>
         </div>
         <form class="chat-bar" id="chat-form">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Escríbele a tu conciencia…" autocomplete="off" enterkeyhint="send" aria-label="Escribe tu pregunta" />
-          <button type="submit" class="chat-send" id="chat-send" aria-label="Enviar">${SEND}</button>
+          <div class="chat-adjunto" id="chat-adjunto" hidden>
+            <span class="chat-adjunto__ic">${CLIP}</span>
+            <span class="chat-adjunto__name" id="chat-adjunto-name"></span>
+            <button type="button" class="chat-adjunto__x" id="chat-adjunto-x" aria-label="Quitar adjunto">&times;</button>
+          </div>
+          <div class="chat-bar__row">
+            <button type="button" class="chat-attach" id="chat-attach" aria-label="Adjuntar un PDF (extracto)">${CLIP}</button>
+            <input type="text" class="chat-input" id="chat-input" placeholder="Escríbele a tu conciencia…" autocomplete="off" enterkeyhint="send" aria-label="Escribe tu pregunta" />
+            <button type="submit" class="chat-send" id="chat-send" aria-label="Enviar">${SEND}</button>
+          </div>
         </form>
       </section>`;
   },
@@ -84,12 +97,44 @@ export default {
       irAlFondo();
     }
 
+    // --- adjunto: un PDF (extracto) → imágenes de sus páginas para que el agente lo lea ---
+    const attachBtn = root.querySelector('#chat-attach');
+    const adjEl = root.querySelector('#chat-adjunto');
+    const adjName = root.querySelector('#chat-adjunto-name');
+    const adjX = root.querySelector('#chat-adjunto-x');
+    let adjunto = null; // { imagenes: [{base64, mediaType}] }
+
+    const mostrarAdjunto = (nombre) => { if (adjName) adjName.textContent = nombre; if (adjEl) adjEl.hidden = false; };
+    const limpiarAdjunto = () => { adjunto = null; if (adjEl) adjEl.hidden = true; if (adjName) adjName.textContent = ''; };
+    if (adjX) adjX.addEventListener('click', limpiarAdjunto);
+
+    if (attachBtn) attachBtn.addEventListener('click', async () => {
+      if (ocupado) return;
+      const picked = await elegirArchivoPDF();          // SÍNCRONO hasta el picker (iOS)
+      if (!picked) return;
+      if (picked.error) { toast(picked.error, { icono: false }); return; }
+      mostrarAdjunto('Leyendo PDF…');
+      let pdfDoc;
+      try { pdfDoc = await abrirConClave(picked.bytes); }
+      catch (e) { limpiarAdjunto(); if (e !== CANCELADO) toast('No se pudo abrir el PDF', { icono: false }); return; }
+      let imagenes = [];
+      try { imagenes = await paginasAImagenes(pdfDoc); }
+      catch { limpiarAdjunto(); toast('No se pudo procesar el PDF', { icono: false }); return; }
+      if (!imagenes.length) { limpiarAdjunto(); toast('El PDF no tiene páginas legibles', { icono: false }); return; }
+      adjunto = { imagenes: imagenes.slice(0, 6) };     // tope de páginas (control de tokens)
+      mostrarAdjunto('Documento adjunto');
+      input.focus();
+    });
+
     async function preguntar(texto) {
       const q = String(texto || '').trim();
-      if (!q || ocupado) return;
+      if ((!q && !adjunto) || ocupado) return;
       ocupado = true;
       input.value = '';
-      agregar('user', q);
+      const imgs = adjunto ? adjunto.imagenes : null;
+      const teniaAdjunto = !!adjunto;
+      limpiarAdjunto();
+      agregar('user', (q || 'Te adjunté un documento.') + (teniaAdjunto ? '  📎' : ''));
 
       // burbuja "pensando…"
       const pensando = document.createElement('div');
@@ -107,6 +152,7 @@ export default {
           nombre: ctx ? ctx.nombre : '',
           modo: 'chat',
           pregunta: q,
+          imagenes: imgs,
           historialChat: historial.slice(-8),
           apiKey: ctx ? ctx.apiKey : '',
         });
@@ -116,7 +162,7 @@ export default {
       pensando.remove();
 
       if (r.estado === 'ok') {
-        historial.push({ rol: 'user', texto: q }, { rol: 'assistant', texto: r.texto });
+        historial.push({ rol: 'user', texto: q || '(documento adjunto)' }, { rol: 'assistant', texto: r.texto });
         agregar('assistant', r.texto);
       } else if (r.estado === 'sin-clave') {
         agregar('assistant', 'Necesito tu clave de Anthropic para hablarte con datos. Actívala en Perfil → Conexión con IA.');

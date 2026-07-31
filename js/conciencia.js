@@ -83,10 +83,13 @@ export function construirContexto(f = {}) {
  * @param {object} [p.movimiento]    (modo susurro) el gasto recién registrado
  * @param {string} [p.pregunta]      (modo chat) lo que preguntó el usuario
  * @param {Array<{rol:'user'|'assistant',texto:string}>} [p.historialChat]
+ * @param {Array<{base64:string, mediaType?:string}>} [p.imagenes]  (modo chat)
+ *        páginas de un documento adjunto (ej. extracto en PDF ya rendido a imagen)
  */
-export function construirPeticion({ contexto, nombre, modo = 'chat', movimiento, pregunta, historialChat } = {}) {
+export function construirPeticion({ contexto, nombre, modo = 'chat', movimiento, pregunta, historialChat, imagenes } = {}) {
   const system = SISTEMA.replace('{NOMBRE}', (nombre || '').trim() || 'esta persona') + '\n\n' + (contexto || '');
   const messages = [];
+  const imgs = Array.isArray(imagenes) ? imagenes.filter((im) => im && im.base64) : [];
 
   if (modo === 'susurro') {
     const m = movimiento || {};
@@ -103,12 +106,24 @@ export function construirPeticion({ contexto, nombre, modo = 'chat', movimiento,
       if (!t || !t.texto) continue;
       messages.push({ role: t.rol === 'assistant' ? 'assistant' : 'user', content: String(t.texto) });
     }
-    messages.push({ role: 'user', content: String(pregunta || '').trim() || '¿Cómo voy con mi plata?' });
+    const txt = String(pregunta || '').trim();
+    if (imgs.length) {
+      // Adjunto: las páginas del documento + la pregunta (o una por defecto).
+      messages.push({
+        role: 'user',
+        content: [
+          ...imgs.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.mediaType || 'image/jpeg', data: im.base64 } })),
+          { type: 'text', text: txt || 'Te adjunto un documento (extracto). Léelo y dime cruda mi realidad a la luz de esto y de mis números.' },
+        ],
+      });
+    } else {
+      messages.push({ role: 'user', content: txt || '¿Cómo voy con mi plata?' });
+    }
   }
 
   return {
     model: MODELO_CONCIENCIA_DEFAULT,
-    max_tokens: modo === 'susurro' ? 80 : 500,
+    max_tokens: modo === 'susurro' ? 80 : (imgs.length ? 700 : 500),
     system,
     messages,
   };
@@ -129,7 +144,7 @@ export function extraerTexto(cuerpo) {
  * @returns {Promise<{estado:'ok'|'sin-clave'|'invalida'|'red'|'error', mensaje?:string, texto?:string}>}
  */
 export async function aconsejar(
-  { contexto, nombre, modo, movimiento, pregunta, historialChat, apiKey, modelo },
+  { contexto, nombre, modo, movimiento, pregunta, historialChat, imagenes, apiKey, modelo },
   { fetchImpl } = {},
 ) {
   const key = typeof apiKey === 'string' ? apiKey.trim() : '';
@@ -139,7 +154,7 @@ export async function aconsejar(
   const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
   if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
 
-  const body = construirPeticion({ contexto, nombre, modo, movimiento, pregunta, historialChat });
+  const body = construirPeticion({ contexto, nombre, modo, movimiento, pregunta, historialChat, imagenes });
   if (modelo) body.model = modelo;
 
   let res;

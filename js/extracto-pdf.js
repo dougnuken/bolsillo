@@ -33,7 +33,7 @@ export const MODELO_EXTRACTO_DEFAULT = 'claude-sonnet-5';
 export const TOOL_EXTRACTO = Object.freeze({
   name: 'registrar_extracto',
   description:
-    'Registra los datos del ciclo de una tarjeta de crédito leídos de su extracto/estado de cuenta.',
+    'Registra los datos de un crédito (tarjeta o préstamo) leídos de su extracto/estado de cuenta.',
   input_schema: {
     type: 'object',
     properties: {
@@ -67,7 +67,7 @@ export const TOOL_EXTRACTO = Object.freeze({
       },
       encontrado: {
         type: 'boolean',
-        description: 'true si el documento es de verdad un extracto de tarjeta y pudiste leer al menos el corte o el límite de pago.',
+        description: 'true si el documento es un extracto de crédito (tarjeta o préstamo) y pudiste leer al menos el saldo, la cuota o una fecha.',
       },
     },
     required: ['encontrado'],
@@ -77,15 +77,17 @@ export const TOOL_EXTRACTO = Object.freeze({
 /* Instrucciones del sistema (compartidas por el camino documento y el de
    imágenes: "el documento" cubre ambas entradas). */
 export const SISTEMA_EXTRACTO = [
-  'Eres un lector de extractos (estados de cuenta) de tarjetas de crédito de Colombia.',
+  'Eres un lector de extractos (estados de cuenta) de CRÉDITOS de Colombia: tarjetas de crédito,',
+  'créditos de libre inversión, hipotecarios/de vivienda, de vehículo, libranzas y similares.',
   'Lee el documento y llama SIEMPRE a la herramienta registrar_extracto con lo que encuentres.',
   'FECHA DE CORTE (o "fecha de facturación"): devuelve solo el DÍA del mes (1 a 31) en "corte".',
   'FECHA LÍMITE DE PAGO (o "fecha máxima/límite de pago", "paga hasta"): devuelve solo el DÍA (1 a 31) en "limite".',
   'TASA de interés: devuelve el número en "tasa". Si el extracto la reporta como Efectiva Anual (E.A.) pon esAnual=true; si es mensual (M.V.) pon esAnual=false.',
   'TOTAL: el "pago total" o "total a pagar" del período, entero en pesos COP.',
   'SALDO: la DEUDA TOTAL / saldo actual / capital adeudado / cupo utilizado (lo que se debe en TOTAL, no la cuota del mes), entero en pesos COP.',
+  'FECHA DE PAGO: si es un préstamo (no tarjeta) puede no haber "corte"; usa el DÍA de la cuota/pago en "limite".',
   'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco").',
-  'Si el documento NO es un extracto de tarjeta, pon encontrado=false.',
+  'Pon encontrado=true si es un estado de cuenta de un crédito (tarjeta o préstamo) y pudiste leer al menos el saldo, la cuota, o una fecha. Solo encontrado=false si NO es un extracto de crédito.',
 ].join('\n');
 
 const TEXTO_INSTRUCCION = 'Extrae el ciclo de esta tarjeta con la herramienta.';

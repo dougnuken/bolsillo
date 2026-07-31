@@ -61,6 +61,25 @@ test('construirPeticion (chat): arrastra el historial en orden', () => {
   assert.equal(body.messages[0].content, 'hola');
 });
 
+test('construirPeticion (chat con adjunto): el mensaje lleva imágenes + texto', () => {
+  const body = construirPeticion({
+    contexto: 'CTX', modo: 'chat', pregunta: '¿qué ves acá?',
+    imagenes: [{ base64: 'AAA', mediaType: 'image/jpeg' }, { base64: 'BBB' }],
+  });
+  const ultimo = body.messages.at(-1);
+  assert.equal(Array.isArray(ultimo.content), true);
+  assert.equal(ultimo.content.filter((b) => b.type === 'image').length, 2);
+  assert.equal(ultimo.content.at(-1).type, 'text');
+  assert.equal(ultimo.content.at(-1).text, '¿qué ves acá?');
+  assert.equal(body.max_tokens, 700); // más tokens cuando hay documento
+});
+
+test('construirPeticion (chat con adjunto sin texto): usa una pregunta por defecto', () => {
+  const body = construirPeticion({ contexto: 'CTX', modo: 'chat', imagenes: [{ base64: 'AAA' }] });
+  const t = body.messages.at(-1).content.at(-1).text;
+  assert.match(t, /extracto|documento/i);
+});
+
 test('construirPeticion (susurro): una sola frase pedida, tokens cortos, menciona el gasto', () => {
   const body = construirPeticion({
     contexto: 'CTX', modo: 'susurro',
