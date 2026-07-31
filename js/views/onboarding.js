@@ -54,6 +54,11 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
   }
   if (!forzado && !debeMostrarse(config, ingresos)) return;
 
+  // Precarga la moneda de la pantalla final "¡Listo!": el onboarding tiene
+  // varios pasos antes, así que para cuando se llega ya está en caché y aparece
+  // sin esperar el fetch (era la imagen que cargaba lento en el primer arranque).
+  try { new Image().src = './img/empty-states/coin-check.png'; } catch { /* noop */ }
+
   // Estado local del flujo (se persiste paso a paso, no al final).
   const st = {
     fase: 'intro',   // 'intro' (3 slides split) | 'config' (nombre/sueldo/cuentas/fijos/listo)
@@ -438,7 +443,8 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
         <div class="ob__celebra">
           <span class="ob__confeti" aria-hidden="true">${CONFETI}</span>
           <span class="ob__celebra-ring" aria-hidden="true"></span>
-          <img class="ob__celebra-coin" src="./img/empty-states/coin-check.png" alt="" aria-hidden="true" />
+          <img class="ob__celebra-coin" src="./img/empty-states/coin-check.png" alt="" aria-hidden="true"
+            width="152" height="152" decoding="async" />
         </div>
         <h1 class="ob__title">¡Listo${st.nombre ? ', ' + esc(st.nombre) : ''}! Ya puedes empezar</h1>
         <p class="ob__text">Con esto el semáforo ya sabe calcular tu ritmo del mes.</p>
