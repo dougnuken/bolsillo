@@ -233,6 +233,18 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     .filter((m) => m.montoMes > 0);
   const variableGastado = redondear(variables.reduce((s, m) => s + m.montoMes, 0));
 
+  // Gasto TOTAL del mes (fijo + variable) para la card "Tu dinero": es el
+  // descuento real sobre la plata que entró. A diferencia de fijosDelMes (que
+  // presupuesta TODO el fijo del mes de entrada, pagado o no), aquí solo cuenta
+  // lo efectivamente REGISTRADO, así el saldo arranca en el sueldo completo y
+  // baja a medida que gastas —no arranca ya descontado.
+  const gastadoTotal = redondear(
+    movs
+      .filter((m) => m.tipo === 'gasto')
+      .map((m) => porcionEnMes(m, anio, mesN))
+      .reduce((s, p) => s + (p > 0 ? p : 0), 0),
+  );
+
   // Ingresos RECIBIDOS del mes: solo lo que el usuario registró que entró (los
   // negocios varían; el "esperado" es referencia, no entra al cálculo).
   const ingresosRecibidos = redondear(
@@ -261,6 +273,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     diasRestantes,
     avance,
     variableGastado,
+    gastadoTotal,
     ingresosRecibidos,
     fijosDelMes,
     fijosCreditos,
@@ -290,6 +303,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
       porcentajeIngreso: null,
       disponibleRestante: null,
       disponiblePorDia: null,
+      saldoDisponible: null,
       fijosSuperanIngreso: false,
     });
   }
@@ -316,6 +330,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
       porcentajeIngreso,
       disponibleRestante,
       disponiblePorDia: redondear(disponibleRestante / diasRestantes),
+      saldoDisponible: plataDelMes - gastadoTotal,
       fijosSuperanIngreso: true,
     });
   }
@@ -346,6 +361,7 @@ export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = 
     porcentajeIngreso,
     disponibleRestante,
     disponiblePorDia: redondear(disponibleRestante / diasRestantes),
+    saldoDisponible: plataDelMes - gastadoTotal,
     fijosSuperanIngreso: false,
   });
 }

@@ -550,14 +550,14 @@ async function pintar(root) {
 
   if (!root.isConnected) return; // el usuario ya cambió de vista
 
-  // "Tu dinero" = disponibleRestante: la plata que te queda para gastar este mes
-  // (base variable − gastado). ARRANCA cerca del sueldo y BAJA con cada gasto,
-  // SUBE con cada ingreso — por eso puede rodar. Antes mostraba el sueldo pelado,
-  // que nunca cambiaba (por eso se sentía "mockeado" y no animaba nada).
+  // "Tu dinero" = saldoDisponible: la plata que ENTRÓ este mes (sueldo + ingresos)
+  // menos TODO lo que llevas gastado. Arranca en el total (el sueldo completo) y
+  // baja con cada gasto, sube con cada ingreso — por eso rueda. No pre-descuenta
+  // los fijos presupuestados: el descuento se ve suceder sobre el monto total.
   const balEl = root.querySelector('#hoy-balance');
   if (balEl) {
-    const saldoActual = (estado && estado.configurado && Number.isFinite(estado.disponibleRestante))
-      ? estado.disponibleRestante : null;
+    const saldoActual = (estado && estado.configurado && Number.isFinite(estado.saldoDisponible))
+      ? estado.saldoDisponible : null;
     if (saldoActual == null) {
       balEl.innerHTML = '—';
     } else if (saldoMostrado != null && saldoMostrado !== saldoActual && !prefersReduced) {
