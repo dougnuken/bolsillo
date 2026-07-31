@@ -9,9 +9,9 @@ import personas from './views/personas.js';
 import movimientos from './views/movimientos.js';
 import perfil from './views/perfil.js';
 import registrar from './views/registrar.js';
+import asesor from './views/asesor.js';           // chat "voz de conciencia" (se llega desde el orbe de Hoy)
 // Ocultas en el piloto (se re-agregan a ROUTES + tab bar cuando estén listas):
 // import creditos from './views/creditos.js';  // CRUD real vive en Perfil → Créditos
-// import asesor from './views/asesor.js';       // chat IA, llega en otra tanda
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
 import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
@@ -30,8 +30,8 @@ const ROUTES = {
   personas,
   movimientos,
   perfil,
-  // creditos, asesor: ocultas en el piloto. Sin entrada aquí, sus hashes
-  // (#/creditos, #/asesor) caen a DEFAULT_ROUTE en routeFromHash() → nunca rompen.
+  asesor,   // no es tab: se llega por el orbe del header de Hoy (#/asesor).
+  // creditos: oculta en el piloto. Sin entrada aquí, su hash cae a DEFAULT_ROUTE.
 };
 
 const DEFAULT_ROUTE = 'hoy';

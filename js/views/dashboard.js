@@ -122,6 +122,8 @@ function animarSaldo(el, desde, hasta, dur = 820) {
 
 const ICON_BELL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
+const ICON_ORB =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.3"/><path d="M12 3.5v1.8M12 18.7v1.8M4.6 4.6l1.3 1.3M18.1 18.1l1.3 1.3M3.5 12h1.8M18.7 12h1.8M4.6 19.4l1.3-1.3M18.1 5.9l1.3-1.3"/></svg>';
 
 function saludoInfo() {
   const h = new Date().getHours();
@@ -140,6 +142,9 @@ function greetHTML(nombre) {
         <p class="hoy-greet__name" id="hoy-name">${nom ? esc(nom) + ' ' : ''}${s.emoji}</p>
       </div>
       <div class="hoy-greet__actions">
+        <button type="button" class="icon-btn hoy-greet__orb" id="hoy-asesor" aria-label="Tu conciencia financiera">
+          ${ICON_ORB}
+        </button>
         <button type="button" class="icon-btn icon-btn--notif" id="hoy-search" aria-label="Buscar movimientos">
           ${ICON_SEARCH}
         </button>
@@ -653,6 +658,8 @@ export default {
       try { sessionStorage.setItem('bolsillo:openSearch', '1'); } catch { /* noop */ }
       location.hash = '#/movimientos';
     });
+    const orb = root.querySelector('#hoy-asesor');
+    if (orb) orb.addEventListener('click', () => { location.hash = '#/asesor'; });
     pintar(root); // async, no bloquea el primer render
   },
 };

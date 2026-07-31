@@ -723,6 +723,101 @@ body[data-route="hoy"] .app-header { display: none; }
 .catmes__delta--down { color: var(--semaforo-verde); }  /* gastar MENOS = bueno */
 .catmes__delta--new { color: var(--semaforo-ambar-text); }
 .catmes__delta--flat { color: var(--text-3); }
+
+/* ============================================================
+   Asesor — chat "voz de conciencia" (D)
+   ============================================================ */
+/* Orbe de entrada en el header de Hoy: gradiente firma para que se lea como IA. */
+.hoy-greet__orb {
+  background: var(--grad-cta);
+  color: var(--text-inverse);
+  border: 1px solid var(--glass-gloss);
+  box-shadow: var(--sh-ia);
+}
+.hoy-greet__orb svg { width: 20px; height: 20px; }
+.hoy-greet__orb:active { transform: scale(0.94); }
+
+.asesor-greet { display: flex; align-items: center; gap: var(--sp-3); }
+.asesor-orb-big {
+  width: 46px; height: 46px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-lg);
+  background: var(--grad-cta); color: var(--text-inverse);
+  box-shadow: var(--sh-ia);
+}
+.asesor-orb-big svg { width: 26px; height: 26px; }
+.asesor-intro { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.5; margin-bottom: var(--sp-4); }
+
+.chat-scroll { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 42vh; }
+.chat-suggest { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+.chat-suggest[hidden] { display: none; }  /* la clase display:flex pisaría a [hidden] */
+.chat-chip {
+  text-align: left;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--glass-1);
+  border: 1px solid var(--line-2);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.chat-chip:hover { background: var(--glass-2); }
+.chat-chip:active { transform: scale(0.98); }
+
+.chat-msg {
+  max-width: 85%;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.chat-msg--yo { align-self: flex-end; background: var(--grad-cta); color: var(--text-inverse); border-bottom-right-radius: var(--r-sm); }
+.chat-msg--ia { align-self: flex-start; background: var(--glass-2); color: var(--text-1); border: 1px solid var(--line-2); border-bottom-left-radius: var(--r-sm); }
+.chat-msg--wait { display: inline-flex; gap: 4px; align-items: center; }
+.chat-msg--wait span { width: 6px; height: 6px; border-radius: var(--r-full); background: var(--text-3); animation: chatDot 1s infinite; }
+.chat-msg--wait span:nth-child(2) { animation-delay: 0.15s; }
+.chat-msg--wait span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chatDot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+.chat-bar {
+  position: sticky;
+  bottom: calc(var(--dock-b) + var(--nav-h) + var(--sp-2));
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  margin-top: var(--sp-4);
+  padding: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--glass-nav);
+  border: 1px solid var(--glass-nav-line);
+  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+  backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+}
+.chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 var(--sp-3);
+  background: transparent;
+  border: none;
+  color: var(--text-1);
+  font-size: var(--fs-body);
+}
+.chat-input::placeholder { color: var(--text-3); }
+.chat-send {
+  flex: none;
+  width: 40px; height: 40px;
+  border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--grad-cta);
+  color: var(--text-inverse);
+  transition: transform var(--dur-fast) var(--ease);
+}
+.chat-send:active { transform: scale(0.94); }
+@media (prefers-reduced-motion: reduce) { .chat-msg--wait span { animation: none; } }
 .ahorro__lbl {
   flex: 1 1 0;
   text-align: center;
