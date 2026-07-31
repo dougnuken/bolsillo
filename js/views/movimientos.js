@@ -38,9 +38,19 @@ const hoyISO = () => new Date().toISOString().slice(0, 10);
 function ayerISO() { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); }
 
 const FUENTE_LABEL = { manual: 'Manual', recurrente: 'Fijo', foto: 'Foto', pdf: 'PDF' };
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+/* "2026-07" → "Julio" (o "Julio 2026" si es de otro año que el actual). */
+function etiquetaMes(ym) {
+  const [a, m] = String(ym).split('-');
+  const idx = parseInt(m, 10) - 1;
+  const nombre = MESES[idx] ? MESES[idx][0].toUpperCase() + MESES[idx].slice(1) : ym;
+  const anioActual = new Date().getFullYear();
+  return Number(a) === anioActual ? nombre : `${nombre} ${a}`;
+}
 
 /* estado de filtros a nivel de sesión */
-const filtros = { categoria: '', cuenta: '', fuente: '', soloHormiga: false, q: '' };
+const filtros = { categoria: '', cuenta: '', fuente: '', soloHormiga: false, q: '', mes: '' };
 
 /* Coincidencia de búsqueda libre: concepto, categoría, cuenta, fuente o monto.
    Sin acentos; el monto matchea por dígitos ("15000", "15.000" o "$15.000"). */
@@ -80,6 +90,7 @@ function etiquetaDia(iso) {
 
 function aplicarFiltros(movs) {
   return movs.filter((m) => {
+    if (filtros.mes && (m.fecha || '').slice(0, 7) !== filtros.mes) return false;
     if (filtros.categoria && m.categoria !== filtros.categoria) return false;
     if (filtros.cuenta && m.cuenta !== filtros.cuenta) return false;
     if (filtros.fuente && m.fuente !== filtros.fuente) return false;
@@ -99,6 +110,7 @@ function ordenar(movs) {
 
 /* ---- chips de filtro (solo dimensiones presentes en los datos) ---- */
 function chipsFiltro(movs) {
+  const mesesUsados = [...new Set(movs.map((m) => (m.fecha || '').slice(0, 7)).filter(Boolean))].sort().reverse();
   const catsUsadas = [...new Set(movs.map((m) => m.categoria).filter(Boolean))];
   const cuentasUsadas = [...new Set(movs.map((m) => m.cuenta).filter(Boolean))];
   const fuentesUsadas = [...new Set(movs.map((m) => m.fuente).filter(Boolean))];
@@ -106,6 +118,10 @@ function chipsFiltro(movs) {
   const chip = (dim, val, label, extraCls = '', sel = false) =>
     `<button type="button" class="mfilter${extraCls}${sel ? ' is-sel' : ''}" data-dim="${dim}" data-val="${esc(val)}">${label}</button>`;
 
+  // Salto directo a un mes (Julio, Agosto…). Solo si hay más de un mes con datos.
+  const grupoMes = mesesUsados.length > 1
+    ? mesesUsados.map((ym) => chip('mes', ym, esc(etiquetaMes(ym)), ' mfilter--mes', filtros.mes === ym)).join('')
+    : '';
   const grupoCat = catsUsadas.map((id) => {
     const c = categoriaPorId(id);
     return chip('categoria', id, `<span class="mfilter__dot ${c.cls}"></span>${esc(c.label)}`, '', filtros.categoria === id);
@@ -116,6 +132,7 @@ function chipsFiltro(movs) {
   const sep = '<span class="mfilter-sep" aria-hidden="true"></span>';
   return `
     <div class="mov-filters" role="group" aria-label="Filtros">
+      ${grupoMes ? grupoMes + sep : ''}
       ${chip('hormiga', '1', 'Hormiga', ' mfilter--hormiga', filtros.soloHormiga)}
       ${grupoCat ? sep + grupoCat : ''}
       ${grupoCuenta ? sep + grupoCuenta : ''}
@@ -156,8 +173,25 @@ function listaHTML(movs) {
     if (!grupos.has(dia)) grupos.set(dia, []);
     grupos.get(dia).push(m);
   }
+  // Total de GASTOS por mes (para el encabezado). Los ingresos no restan.
+  const totalMes = {};
+  for (const m of movs) {
+    const ym = (m.fecha || '').slice(0, 7);
+    totalMes[ym] = (totalMes[ym] || 0) + (m.tipo === 'ingreso' ? 0 : m.monto);
+  }
   let out = '';
+  let mesActual = null;
   for (const [dia, items] of grupos) {
+    const ym = dia.slice(0, 7);
+    // Encabezado de mes al cambiar de mes: separa julio de agosto sin filtrar.
+    if (ym !== mesActual) {
+      mesActual = ym;
+      out += `
+        <div class="mov-month">
+          <span class="mov-month__label">${esc(etiquetaMes(ym))}</span>
+          <span class="mov-month__total num">${formatCOP(totalMes[ym] || 0)}</span>
+        </div>`;
+    }
     const total = items.reduce((s, x) => s + (x.tipo === 'ingreso' ? 0 : x.monto), 0);
     out += `
       <div class="mov-day">
@@ -243,7 +277,7 @@ export default {
     }
 
     function resetFiltros() {
-      filtros.categoria = ''; filtros.cuenta = ''; filtros.fuente = ''; filtros.soloHormiga = false; filtros.q = '';
+      filtros.categoria = ''; filtros.cuenta = ''; filtros.fuente = ''; filtros.soloHormiga = false; filtros.q = ''; filtros.mes = '';
       if (input) input.value = '';
       if (clearBtn) clearBtn.hidden = true;
     }

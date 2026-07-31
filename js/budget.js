@@ -629,12 +629,22 @@ const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
  * @param {{movimientos?:object[], ingresoEmpleo?:number, hoy:Date|string, meses?:number}} args
  * @returns {Array<{anio:number, mes:number, label:string, ingresos:number, gastos:number, ahorro:number, tieneDatos:boolean, esActual:boolean}>}
  */
-export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, hoy, meses = 6 } = {}) {
+export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, creditos = [], hoy, meses = 6 } = {}) {
   const movs = Array.isArray(movimientos) ? movimientos.filter(Boolean) : [];
   const { anio, mes } = partes(hoy);
   const salario = esEntero(ingresoEmpleo) && ingresoEmpleo > 0 ? ingresoEmpleo
     : (Number.isFinite(ingresoEmpleo) && ingresoEmpleo > 0 ? Math.round(ingresoEmpleo) : 0);
   const n = Number.isInteger(meses) && meses > 0 ? Math.min(meses, 24) : 6;
+
+  // Cuota mensual comprometida en créditos ACTIVOS. Es la pata que el "ahorro"
+  // simple (ingresos − gastos) escondía: para quien vive apalancado, ignorarla
+  // infla el ahorro. Se aplica constante a cada mes del historial (usamos el
+  // compromiso ACTUAL como referencia; la app no guarda cuotas históricas).
+  const cuotasCredito = redondear(
+    (Array.isArray(creditos) ? creditos : [])
+      .filter((c) => c && c.activo && Number.isFinite(c.cuotaMensual))
+      .reduce((s, c) => s + c.cuotaMensual, 0),
+  );
 
   const out = [];
   for (let i = n - 1; i >= 0; i--) {
@@ -649,13 +659,16 @@ export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, hoy, mese
       movs.filter((x) => x.tipo === 'gasto').reduce((s, x) => s + porcionEnMes(x, a, m), 0),
     );
     const ingresos = redondear(salario + ingMovs);
+    const ahorro = redondear(ingresos - gastos);        // compat: NO incluye cuotas
     out.push({
       anio: a,
       mes: m,
       label: MESES_CORTOS[m - 1],
       ingresos,
       gastos,
-      ahorro: redondear(ingresos - gastos),
+      cuotasCredito,
+      ahorro,
+      neto: redondear(ahorro - cuotasCredito),           // flujo REAL: ya descuenta las cuotas
       tieneDatos: gastos > 0 || ingMovs > 0,
       esActual: a === anio && m === mes,
     });

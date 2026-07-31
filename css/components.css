@@ -1158,8 +1158,26 @@ body.nav-min .fab {
 .mfilter--hormiga.is-sel { background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); color: var(--semaforo-ambar); }
 .mfilter__dot { width: 8px; height: 8px; border-radius: var(--r-full); background: var(--tint); }
 .mfilter-sep { flex: 0 0 auto; width: 1px; height: 20px; background: var(--line-2); margin: 0 2px; }
+.mfilter--mes { font-weight: var(--fw-bold); }
 
 .mov-list { display: flex; flex-direction: column; gap: var(--sp-5); }
+/* Encabezado de mes: separa Julio de Agosto al scrollear el historial. */
+.mov-month {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--sp-3);
+  margin: var(--sp-4) var(--sp-1) 0;
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line-2);
+}
+.mov-list > .mov-month:first-child { margin-top: 0; }
+.mov-month__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.015em;
+  color: var(--text-1);
+}
+.mov-month__total { font-size: var(--fs-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .mov-day__head {
   display: flex; align-items: baseline; justify-content: space-between;
   margin-bottom: var(--sp-2); padding: 0 var(--sp-1);

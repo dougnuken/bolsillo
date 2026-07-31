@@ -403,10 +403,11 @@ function fmtCompacto(n) {
   return `${s}$${a}`;
 }
 
-/* Barchart de AHORRO mes a mes (diverge desde una línea cero: arriba = ahorraste,
-   abajo = gastaste de más). Barras neutras; el mes actual en acento. SVG (los
-   atributos de geometría no son inline-style → OK con el CSP). */
-function ahorroCardHTML(hist) {
+/* Barchart de FLUJO NETO REAL mes a mes (diverge desde cero: arriba = te sobró,
+   abajo = te faltó). Usa `neto` = ingresos − gastos − CUOTAS de crédito, así el
+   número no infla el ahorro escondiendo la deuda. El mes actual en acento. SVG
+   (los atributos de geometría no son inline-style → OK con el CSP). */
+function flujoCardHTML(hist) {
   const datos = (hist || []).filter((d) => d.tieneDatos);
   if (datos.length < 2) return '';
 
@@ -414,8 +415,8 @@ function ahorroCardHTML(hist) {
   // positivas, abajo de negativas) sin que se corten en el viewBox.
   const W = 340, H = 158, padX = 8, padTop = 20, padBot = 20;
   const chartH = H - padTop - padBot;
-  const maxPos = Math.max(0, ...datos.map((d) => d.ahorro));
-  const maxNeg = Math.max(0, ...datos.map((d) => -d.ahorro));
+  const maxPos = Math.max(0, ...datos.map((d) => d.neto));
+  const maxNeg = Math.max(0, ...datos.map((d) => -d.neto));
   const range = (maxPos + maxNeg) || 1;
   const yZero = padTop + (maxPos / range) * chartH;
   const n = datos.length;
@@ -425,27 +426,33 @@ function ahorroCardHTML(hist) {
   const bars = datos.map((d, i) => {
     const cx = padX + slot * i + slot / 2;
     const x = cx - barW / 2;
-    const h = Math.max(2, (Math.abs(d.ahorro) / range) * chartH);
-    const y = d.ahorro >= 0 ? yZero - h : yZero;
-    const barCls = 'ahorro__bar' + (d.esActual ? ' ahorro__bar--now' : '');
+    const h = Math.max(2, (Math.abs(d.neto) / range) * chartH);
+    const y = d.neto >= 0 ? yZero - h : yZero;
+    // rojo cuando el mes cierra en negativo (te faltó); acento si es el mes actual.
+    const neg = d.neto < 0 ? ' ahorro__bar--neg' : '';
+    const barCls = 'ahorro__bar' + neg + (d.esActual ? ' ahorro__bar--now' : '');
     const valCls = 'ahorro__val' + (d.esActual ? ' ahorro__val--now' : '');
-    const vy = d.ahorro >= 0 ? y - 5 : y + h + 12;
+    const vy = d.neto >= 0 ? y - 5 : y + h + 12;
     return `<rect class="${barCls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4"></rect>`
-      + `<text class="${valCls}" x="${cx.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle">${esc(fmtCompacto(d.ahorro))}</text>`;
+      + `<text class="${valCls}" x="${cx.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle">${esc(fmtCompacto(d.neto))}</text>`;
   }).join('');
   const zero = `<line class="ahorro__zeroline" x1="${padX}" y1="${yZero.toFixed(1)}" x2="${W - padX}" y2="${yZero.toFixed(1)}"></line>`;
   const labels = datos.map((d) =>
     `<span class="ahorro__lbl${d.esActual ? ' is-now' : ''}">${esc(d.label)}</span>`).join('');
 
   const actual = datos[datos.length - 1];
-  const prom = Math.round(datos.reduce((s, d) => s + d.ahorro, 0) / datos.length);
-  const insight = `Este mes ${actual.ahorro >= 0 ? 'ahorras' : 'gastas de más'} <strong>${esc(fmtCompacto(actual.ahorro))}</strong> · promedio ${esc(fmtCompacto(prom))}`;
+  const prom = Math.round(datos.reduce((s, d) => s + d.neto, 0) / datos.length);
+  const insight = `Este mes te ${actual.neto >= 0 ? 'sobran' : 'faltan'} <strong>${esc(fmtCompacto(actual.neto))}</strong> · promedio ${esc(fmtCompacto(prom))}`;
+  const nota = actual.cuotasCredito > 0
+    ? `<p class="ahorro__sub">Ya descuenta <span class="num">${esc(fmtCompacto(actual.cuotasCredito))}</span> de cuotas de crédito al mes.</p>`
+    : '';
 
   return `
     <div class="ahorro">
-      <div class="section-head"><span class="section-head__title">Tu ahorro mes a mes</span></div>
+      <div class="section-head"><span class="section-head__title">Tu flujo real mes a mes</span></div>
       <p class="ahorro__insight">${insight}</p>
-      <svg class="ahorro__svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ahorro por mes">
+      ${nota}
+      <svg class="ahorro__svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Flujo neto real por mes">
         ${zero}${bars}
       </svg>
       <div class="ahorro__labels">${labels}</div>
@@ -454,7 +461,7 @@ function ahorroCardHTML(hist) {
 
 /* Contenido de cada pestaña del Hoy. */
 function panelHTML(tab, e, negocios, historial, recs) {
-  if (tab === 'analytics') return gaugeCardHTML(e) + ahorroCardHTML(historial);
+  if (tab === 'analytics') return gaugeCardHTML(e) + flujoCardHTML(historial);
   // dashboard: disponible/gastado + fijos + negocios + en qué se va (+ hormiga)
   return statRowHTML(e) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
@@ -539,7 +546,7 @@ async function pintar(root) {
     nombre = (config && config.nombre) ? config.nombre : '';
     estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
-    historial = historialAhorro({ movimientos, ingresoEmpleo: salario, hoy, meses: 6 });
+    historial = historialAhorro({ movimientos, ingresoEmpleo: salario, creditos, hoy, meses: 6 });
     recs = recurrentes || [];
     metricaDia = metricaHoy(movimientos, hoy);
   } catch (err) {

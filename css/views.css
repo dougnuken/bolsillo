@@ -674,9 +674,13 @@ body[data-route="hoy"] .app-header { display: none; }
   line-height: 1.45;
 }
 .ahorro__insight strong { color: var(--text-1); font-weight: var(--fw-bold); }
+.ahorro__sub { font-size: var(--fs-xs); color: var(--text-3); margin: calc(-1 * var(--sp-2)) 0 var(--sp-3); }
+.ahorro__sub .num { font-variant-numeric: tabular-nums; }
 .ahorro__svg { display: block; width: 100%; height: auto; }
 .ahorro__bar { fill: var(--text-3); }          /* barras neutras */
+.ahorro__bar--neg { fill: var(--semaforo-rojo); }  /* mes en negativo (te faltó) */
 .ahorro__bar--now { fill: var(--text-1); }      /* mes actual = barra blanca (referencia) */
+.ahorro__bar--neg.ahorro__bar--now { fill: var(--semaforo-rojo); }  /* negativo manda sobre "actual" */
 .ahorro__zeroline { stroke: var(--line-3); stroke-width: 1; }
 .ahorro__val {
   fill: var(--text-3);

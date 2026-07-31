@@ -397,6 +397,28 @@ test('historialAhorro: cuotas pesan monto/N; ahorro puede ser negativo', () => {
   assert.equal(h[0].ahorro, -100_000);  // 0 ingreso − 100k
 });
 
+test('historialAhorro: neto descuenta cuotas de crédito activas; ahorro no', () => {
+  const movs = [gasto('2026-07-05', 500_000, { categoria: 'ocio' })];
+  const creditos = [
+    { activo: true, cuotaMensual: 1_000_000 },
+    { activo: true, cuotaMensual: 500_000 },
+    { activo: false, cuotaMensual: 9_000_000 }, // inactivo: NO cuenta
+    { activo: true, cuotaMensual: null },        // sin cuota: NO cuenta
+  ];
+  const h = historialAhorro({ movimientos: movs, ingresoEmpleo: 3_000_000, creditos, hoy: '2026-07-15', meses: 1 });
+  const jul = h[0];
+  assert.equal(jul.cuotasCredito, 1_500_000);      // 1M + 500k
+  assert.equal(jul.ahorro, 2_500_000);             // 3M − 500k (sin cuotas)
+  assert.equal(jul.neto, 1_000_000);               // 2.5M − 1.5M de cuotas
+});
+
+test('historialAhorro: sin creditos, neto == ahorro (retrocompat)', () => {
+  const movs = [gasto('2026-07-05', 500_000, { categoria: 'ocio' })];
+  const h = historialAhorro({ movimientos: movs, ingresoEmpleo: 3_000_000, hoy: '2026-07-15', meses: 1 });
+  assert.equal(h[0].cuotasCredito, 0);
+  assert.equal(h[0].neto, h[0].ahorro);
+});
+
 test('proyección: variableGastado / avance, más los fijos', () => {
   // Arrange: 500.000 el día 10 de 30 → proyección variable 1.500.000
   const movs = [gasto('2026-04-05', 500_000, { categoria: 'ocio' }), fijo('2026-04-01', 1_000_000)];
