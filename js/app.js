@@ -218,11 +218,18 @@ async function initData() {
   // con nombre legible). Idempotente: solo escribe si hay slots viejos.
   await migrarIngresosSiHace();
 
+  // Limpieza one-shot de la siembra vieja de nombres de personas. Builds previos
+  // ESCRIBÍAN Antonella/Marley/Madre en categoriasRenombradas; ya no se siembran,
+  // pero quedaron guardados en los dispositivos que abrieron esas versiones.
+  const renAntes = JSON.stringify(cfg.categoriasRenombradas || {});
+  cfg = await limpiarSiembraPersonal(cfg);
+  const limpiezaCambio = JSON.stringify(cfg.categoriasRenombradas || {}) !== renAntes;
+
   // El catálogo de categorías refleja los renombres y las categorías propias.
   const personalizado = (cfg.categoriasPersonalizadas || []).length > 0
     || Object.keys(cfg.categoriasRenombradas || {}).length > 0;
   aplicarPersonalizacion(cfg);
-  if (personalizado) refreshActive(currentRoute); // repinta con las etiquetas del usuario
+  if (personalizado || limpiezaCambio) refreshActive(currentRoute); // repinta con las etiquetas ya limpias
 
   // (Sin siembra de datos personales. Las personas quedan como "Persona 1/2/3"
   // hasta que el usuario las renombre, y no se precarga ninguna cuenta/tarjeta:
@@ -285,6 +292,22 @@ const CANCELAR = Symbol('cancelar');
 
 const ICON_X =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+
+/** Limpia UNA sola vez los nombres de persona que sembraban los builds viejos
+ *  (Antonella/Marley/Madre), para que vuelvan a "Persona 1/2/3" sin borrar los
+ *  renombres propios del usuario. Solo elimina la entrada si su valor ACTUAL
+ *  sigue siendo EXACTO el sembrado (un renombre a otra cosa no se toca), y se
+ *  marca hecha con un flag para no re-correr: si luego el usuario nombra a
+ *  alguien "Madre" a propósito, ya no se borra. */
+async function limpiarSiembraPersonal(cfg) {
+  if (cfg && cfg.siembraPersonalLimpiada === true) return cfg;
+  const SEMBRADOS = { persona1: 'Antonella', persona2: 'Marley', persona3: 'Madre' };
+  const ren = { ...((cfg && cfg.categoriasRenombradas) || {}) };
+  for (const [id, val] of Object.entries(SEMBRADOS)) {
+    if (ren[id] === val) delete ren[id];
+  }
+  return saveConfig({ categoriasRenombradas: ren, siembraPersonalLimpiada: true });
+}
 
 /** Alertas de gasto por persona/categoría (ámbar o rojo) del mes actual. */
 async function recolectarAlertas() {

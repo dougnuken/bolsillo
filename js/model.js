@@ -413,6 +413,10 @@ export function configDefault() {
     tema: 'dark',
     fechaUltimoBackup: null,
     onboardingCompletado: false,
+    // Migración one-shot: builds viejos SEMBRABAN nombres de personas (Antonella/
+    // Marley/Madre) en categoriasRenombradas y ahí quedaron. Al arrancar se
+    // limpian una sola vez; este flag marca que ya se hizo. Ver app.js.
+    siembraPersonalLimpiada: false,
   });
 }
 
