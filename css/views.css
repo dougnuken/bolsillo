@@ -1767,6 +1767,121 @@ body[data-route="hoy"] .app-header { display: none; }
 .persona-card--ambar .persona-card__foot { color: var(--semaforo-ambar-text); }
 .persona-card--rojo .persona-card__foot { color: var(--semaforo-rojo-text); }
 
+/* ---- Préstamos: "Te deben" (cuentas por cobrar) ---- */
+.prestamos { margin-bottom: var(--sp-5); }
+.prestamos__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.prestamos__kicker {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
+}
+.prestamos__total {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.015em;
+  color: var(--text-1);
+  margin-top: 1px;
+}
+.prestamos__total--cero {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text-2);
+}
+.prestamos__add {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 36px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-full);
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.prestamos__add svg { width: 16px; height: 16px; }
+.prestamos__add:hover { background: var(--glass-3); }
+.prestamos__add:active { transform: scale(0.96); }
+
+.prestamos__list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.prestamo-card {
+  background: var(--glass-1);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+}
+.prestamo-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.prestamo-card__id { flex: 1 1 auto; min-width: 0; }
+.prestamo-card__name { font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--text-1); letter-spacing: -0.01em; }
+.prestamo-card__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prestamo-card__saldo { flex: none; text-align: right; }
+.prestamo-card__pend {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.prestamo-card__lbl { font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px; }
+.prestamo-card__track {
+  height: 6px;
+  border-radius: var(--r-full);
+  background: var(--track);
+  margin: var(--sp-3) 0;
+  overflow: hidden;
+}
+.prestamo-card__fill {
+  display: block;
+  width: 0;                 /* ancho real por JS (CSP: nada de style= inline) */
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--semaforo-verde);
+  transition: width var(--dur) var(--ease);
+}
+.prestamo-card__abonar {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--glass-2);
+  border: 1px solid var(--line-2);
+  color: var(--text-1);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.prestamo-card__abonar:hover { background: var(--glass-3); }
+.prestamo-card__abonar:active { transform: scale(0.98); }
+
+/* botón rápido "pagó todo" dentro del sheet de abono */
+.abo-quick { display: flex; margin: calc(-1 * var(--sp-2)) 0 var(--sp-1); }
+.abo-quick__btn {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--accent);
+  padding: var(--sp-1) 0;
+}
+.abo-quick__btn:active { opacity: 0.7; }
+
 /* Bonus — el gasto NO fijo #1 del mes */
 .bonus-card {
   margin-top: var(--sp-6);

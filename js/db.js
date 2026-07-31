@@ -8,10 +8,13 @@
 import { configDefault, crearConfig, CONFIG_ID } from './model.js';
 
 const DB_NAME = 'bolsillo';
-const DB_VERSION = 1;
+// v2: agrega el store 'prestamos' (cuentas por cobrar). onupgradeneeded crea los
+// stores que falten, así que subir la versión basta para sembrarlo en las DB ya
+// existentes sin tocar los datos que ya hay.
+const DB_VERSION = 2;
 
 // Stores con keyPath "id". El de movimientos lleva índices de consulta.
-const STORES_SIMPLES = ['recurrentes', 'creditos', 'ingresos', 'config', 'adjuntos'];
+const STORES_SIMPLES = ['recurrentes', 'creditos', 'ingresos', 'config', 'adjuntos', 'prestamos'];
 const INDICES_MOVIMIENTOS = ['fecha', 'categoria', 'cuenta', 'fuente', 'dedupKey'];
 
 let dbPromise = null;

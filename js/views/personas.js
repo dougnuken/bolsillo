@@ -12,6 +12,8 @@ import {
   TOPES_PERSONA_DEFAULT,
   VIGILADOS_DEFAULT,
 } from '../budget.js';
+import { resumenPrestamos, saldoPendiente, totalAbonado, fraccionAbonada } from '../prestamos.js';
+import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { categoriaPorId } from '../categories.js';
 import { formatCOP } from '../money.js';
 import { esc } from '../html.js';
@@ -80,6 +82,55 @@ function bonusHTML(estado) {
     </section>`;
 }
 
+/* ---- Préstamos: "Te deben" (cuentas por cobrar) ---- */
+function prestamoCardHTML(p) {
+  const saldo = saldoPendiente(p);
+  const abonado = totalAbonado(p);
+  const relleno = Math.round(fraccionAbonada(p) * 100);
+  const sub = abonado > 0
+    ? `Abonado ${esc(formatCOP(abonado))} de ${esc(formatCOP(p.monto))}`
+    : (p.concepto ? esc(p.concepto) : `Prestado ${esc(formatCOP(p.monto))}`);
+  return `
+    <article class="prestamo-card">
+      <div class="prestamo-card__top">
+        <div class="prestamo-card__id">
+          <p class="prestamo-card__name">${esc(p.persona)}</p>
+          <p class="prestamo-card__sub">${sub}</p>
+        </div>
+        <div class="prestamo-card__saldo">
+          <p class="prestamo-card__pend num">${esc(formatCOP(saldo))}</p>
+          <p class="prestamo-card__lbl">te debe</p>
+        </div>
+      </div>
+      <div class="prestamo-card__track"><span class="prestamo-card__fill" data-fill="${relleno}"></span></div>
+      <button type="button" class="prestamo-card__abonar" data-pre-abonar="${esc(p.id)}">Registrar abono</button>
+    </article>`;
+}
+
+function seccionPrestamosHTML(prestamos) {
+  const { activos, totalPorCobrar } = resumenPrestamos(prestamos);
+  const total = activos.length
+    ? `<p class="prestamos__total num">${esc(formatCOP(totalPorCobrar))}</p>`
+    : `<p class="prestamos__total prestamos__total--cero">Nadie te debe nada 🎉</p>`;
+  const lista = activos.length
+    ? `<div class="prestamos__list">${activos.map(prestamoCardHTML).join('')}</div>`
+    : '';
+  return `
+    <section class="prestamos">
+      <div class="prestamos__head">
+        <div>
+          <p class="prestamos__kicker">Te deben</p>
+          ${total}
+        </div>
+        <button type="button" class="prestamos__add" data-pre-nuevo>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Prestar
+        </button>
+      </div>
+      ${lista}
+    </section>`;
+}
+
 function sinSueldoHTML() {
   return `
     <section class="empty">
@@ -108,11 +159,30 @@ export default {
     const body = root.querySelector('#personas-body');
     if (!body) return;
 
+    /* Cablea los botones de préstamos (alta + abono). Idempotente por render. */
+    function wirePrestamos(prestamos) {
+      const nuevo = body.querySelector('[data-pre-nuevo]');
+      if (nuevo) nuevo.addEventListener('click', () => abrirNuevoPrestamo({ onSaved: pintar }));
+      body.querySelectorAll('[data-pre-abonar]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const p = (prestamos || []).find((x) => x && x.id === btn.dataset.preAbonar);
+          if (p) abrirAbono(p, { onSaved: pintar });
+        });
+      });
+      // Barras de progreso de abono (ancho por JS: CSP bloquea style= inline).
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      body.querySelectorAll('.prestamo-card__fill').forEach((f) => {
+        const w = Math.max(0, Math.min(100, Number(f.dataset.fill) || 0));
+        if (reduce) f.style.width = w + '%';
+        else requestAnimationFrame(() => { f.style.width = w + '%'; });
+      });
+    }
+
     async function pintar() {
-      let movs = [], ingresos = [], recs = [], creds = [], config = null;
+      let movs = [], ingresos = [], recs = [], creds = [], prestamos = [], config = null;
       try {
-        [movs, ingresos, recs, creds, config] = await Promise.all([
-          getAll('movimientos'), getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
+        [movs, ingresos, recs, creds, prestamos, config] = await Promise.all([
+          getAll('movimientos'), getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getAll('prestamos'), getConfig(),
         ]);
       } catch (err) {
         console.warn('[Bolsillo] no se pudo cargar Personas:', err);
@@ -128,8 +198,12 @@ export default {
         movimientos: movs, recurrentes: recs, creditos: creds, hoy, config,
       });
 
+      // "Te deben" no depende del sueldo: se muestra siempre, arriba de todo.
+      const prestamosHTML = seccionPrestamosHTML(prestamos);
+
       if (!estado.configurado) {
-        body.innerHTML = sinSueldoHTML();
+        body.innerHTML = prestamosHTML + sinSueldoHTML();
+        wirePrestamos(prestamos);
         const ir = body.querySelector('[data-act="ir-sueldo"]');
         if (ir) ir.addEventListener('click', () => { location.hash = '#/perfil'; });
         return;
@@ -145,6 +219,7 @@ export default {
       const categorias = filas.filter((f) => !IDS_PERSONA.has(f.id));
 
       body.innerHTML = `
+        ${prestamosHTML}
         <p class="personas-intro">Cuánto llevas en cada quien este mes, medido contra un tope sano de tu ingreso neto (${esc(formatCOP(estado.plataDelMes))}).</p>
         <section class="personas-grid">
           ${personas.map(tarjeta).join('')}
@@ -153,6 +228,8 @@ export default {
           <p class="settings-group__label personas-sub">Categorías vigiladas</p>
           <section class="personas-grid">${categorias.map(tarjeta).join('')}</section>` : ''}
         ${bonusHTML(estado)}`;
+
+      wirePrestamos(prestamos);
 
       // Ancho de las barras por JS (CSP style-src 'self' bloquea style= inline).
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
