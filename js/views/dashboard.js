@@ -83,7 +83,7 @@ function deltaInnerHoy(m) {
   return `${up ? ICON_TREND_UP : ICON_TREND_DOWN}<span class="num">${signo}${esc(formatCOP(Math.abs(m.neto)))}</span><span class="bcard__delta-lbl">hoy</span>`;
 }
 
-/** Iniciales para el avatar: "Doug Vargas" → "DV". Vacío → ''. */
+/** Iniciales para el avatar: "Ana Pérez" → "AP". Vacío → ''. */
 function iniciales(nombre) {
   const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
   if (!partes.length) return '';
@@ -92,6 +92,33 @@ function iniciales(nombre) {
   return (a + b).toUpperCase();
 }
 let tabActivo = 'dashboard';
+
+/* Último saldo pintado en "Tu dinero". Vive a nivel de módulo (no en el DOM)
+   para sobrevivir al re-render de la vista al guardar un movimiento: así podemos
+   animar el rodillo DESDE el valor anterior HASTA el nuevo (tipo cuentakilómetros
+   de casino) en vez de saltar seco. null = aún no hay saldo (sin sueldo). */
+let saldoMostrado = null;
+
+/* Rueda el número de "Tu dinero" de `desde` a `hasta` (~0.8s, ease-out), pintando
+   cada frame formateado. Anima SOLO texto + un transform/tint sutil vía clase (se
+   honra prefers-reduced-motion en el llamador). El tinte marca la dirección
+   (rojo baja / verde sube) y se desvanece al soltar la clase. */
+function animarSaldo(el, desde, hasta, dur = 820) {
+  const baja = hasta < desde;
+  el.classList.add('is-rolling', baja ? 'is-rolling--down' : 'is-rolling--up');
+  let t0 = null;
+  const paso = (now) => {
+    if (t0 == null) t0 = now;
+    const t = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - t, 3);           // ease-out cúbico
+    const val = Math.round(desde + (hasta - desde) * e);
+    el.innerHTML = conDivisa(formatCOP(val));
+    if (t < 1) { requestAnimationFrame(paso); return; }
+    el.innerHTML = conDivisa(formatCOP(hasta));  // asegura el valor exacto final
+    el.classList.remove('is-rolling', 'is-rolling--down', 'is-rolling--up');
+  };
+  requestAnimationFrame(paso);
+}
 
 const ICON_BELL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
@@ -123,8 +150,12 @@ function greetHTML(nombre) {
     </header>`;
 }
 
-function balanceCardHTML(salario) {
-  const bal = salario != null && salario > 0 ? conDivisa(formatCOP(salario)) : '—';
+function balanceCardHTML(saldo) {
+  // Semilla del render: si ya conocemos el saldo (re-render tras un movimiento),
+  // lo pintamos de una para que NO haya parpadeo a "—" y el rodillo arranque
+  // desde el número visible. Se muestra cualquier valor finito (incluido 0 o
+  // negativo: "sin dinero disponible" / "te pasaste" son estados reales).
+  const bal = (saldo != null && Number.isFinite(saldo)) ? conDivisa(formatCOP(saldo)) : '—';
   return `
     <section class="bcard">
       <div class="bcard__top">
@@ -519,8 +550,23 @@ async function pintar(root) {
 
   if (!root.isConnected) return; // el usuario ya cambió de vista
 
+  // "Tu dinero" = disponibleRestante: la plata que te queda para gastar este mes
+  // (base variable − gastado). ARRANCA cerca del sueldo y BAJA con cada gasto,
+  // SUBE con cada ingreso — por eso puede rodar. Antes mostraba el sueldo pelado,
+  // que nunca cambiaba (por eso se sentía "mockeado" y no animaba nada).
   const balEl = root.querySelector('#hoy-balance');
-  if (balEl) balEl.innerHTML = salario > 0 ? conDivisa(formatCOP(salario)) : '—';
+  if (balEl) {
+    const saldoActual = (estado && estado.configurado && Number.isFinite(estado.disponibleRestante))
+      ? estado.disponibleRestante : null;
+    if (saldoActual == null) {
+      balEl.innerHTML = '—';
+    } else if (saldoMostrado != null && saldoMostrado !== saldoActual && !prefersReduced) {
+      animarSaldo(balEl, saldoMostrado, saldoActual); // rueda desde el valor previo
+    } else {
+      balEl.innerHTML = conDivisa(formatCOP(saldoActual)); // primer pintado o sin motion
+    }
+    saldoMostrado = saldoActual;
+  }
 
   // Métrica del día bajo el balance (neto de hoy: verde entra / rojo se gasta).
   const deltaEl = root.querySelector('#hoy-daydelta');
@@ -547,7 +593,7 @@ export default {
   render() {
     return `
       ${greetHTML('')}
-      ${balanceCardHTML(null)}
+      ${balanceCardHTML(saldoMostrado)}
       ${tabsHTML()}
       <div class="hoy-body" id="hoy-body"><div class="hoy-skeleton" aria-hidden="true"></div></div>`;
   },

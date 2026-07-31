@@ -213,7 +213,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
         <label class="field">
           <span class="field__label">Tu nombre</span>
           <input class="field__input" id="ob-nombre" type="text" autocomplete="given-name"
-            autocapitalize="words" spellcheck="false" maxlength="40" placeholder="Doug" value="${esc(st.nombre || '')}" />
+            autocapitalize="words" spellcheck="false" maxlength="40" placeholder="Escribe tu nombre" value="${esc(st.nombre || '')}" />
         </label>`,
       foot: `
         <div class="ob__actions">

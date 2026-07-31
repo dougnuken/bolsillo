@@ -419,15 +419,15 @@ export function resumenNegocios({ fuentes = [], movimientos = [], creditos = [],
  * Topes por defecto como FRACCIÓN del ingreso neto del mes.
  * Guardarraíl estilo 50/30/20 (proteger ahorro; "gustos" acotados).
  * El id es la categoría; el tope es el punto ROJO (mala práctica).
- * Doug: persona1=Antonella(hija) · persona2=Marley(novia) · persona3=Madre.
- * Editable por el usuario en config.topesPersona (merge por id).
+ * Valores genéricos de arranque (no identifican a nadie); el usuario los ajusta
+ * en config.topesPersona (merge por id).
  */
 export const TOPES_PERSONA_DEFAULT = Object.freeze({
-  persona1: 0.15, // Antonella (hija)
-  persona2: 0.10, // Marley (novia)
-  persona3: 0.10, // Madre
-  yo: 0.15,       // Yo (personal)
-  ocio: 0.10,     // Ocio (categoría vigilada)
+  persona1: 0.15,
+  persona2: 0.10,
+  persona3: 0.10,
+  yo: 0.15,
+  ocio: 0.10, // ocio algo más bajo: gasto discrecional
 });
 
 /** Banda ámbar: cuántos PUNTOS de fracción antes del tope avisa (2 pts). */

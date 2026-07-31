@@ -29,6 +29,20 @@ const APP_VERSION = '0.6.0';
 const CHEVRON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 
+/* Avatar neutro cuando aún no hay nombre (onboarding saltado): silueta genérica,
+   no una inicial inventada. */
+const ICON_USER =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
+
+/** Iniciales para el avatar: "Ana Pérez" → "AP". Vacío → ''. */
+function iniciales(nombre) {
+  const partes = String(nombre || '').trim().split(/\s+/).filter(Boolean);
+  if (!partes.length) return '';
+  const a = partes[0][0] || '';
+  const b = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (a + b).toUpperCase();
+}
+
 const ICONS = {
   contrasena: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.2" r="1.1"/></svg>',
   faceid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 9.5v3l-1 1"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>',
@@ -126,10 +140,10 @@ export default {
 
   render() {
     return `
-      <header class="perfil-head">
-        <span class="perfil-head__avatar" aria-hidden="true">D</span>
+      <header class="perfil-head" id="perfil-head">
+        <span class="perfil-head__avatar" id="perfil-avatar" aria-hidden="true">${ICON_USER}</span>
         <div class="perfil-head__id">
-          <p class="perfil-head__name">Doug</p>
+          <p class="perfil-head__name perfil-head__name--empty" id="perfil-name">Tu nombre</p>
           <p class="perfil-head__sub">Tu perfil y ajustes</p>
         </div>
       </header>
@@ -152,6 +166,42 @@ export default {
         return;
       }
       if (!root.isConnected) return; // el usuario ya cambió de vista
+
+      // Encabezado con el nombre REAL del onboarding (antes venía un nombre fijo). Si
+      // se saltó el onboarding no hay nombre: mostramos "Tu nombre" atenuado +
+      // avatar neutro, y el encabezado invita a ponerlo (reusa el onboarding
+      // forzado, mismo patrón que la fila de configuración inicial).
+      const nom = (config && typeof config.nombre === 'string') ? config.nombre.trim() : '';
+      const nameEl = root.querySelector('#perfil-name');
+      if (nameEl) {
+        nameEl.textContent = nom || 'Tu nombre';
+        nameEl.classList.toggle('perfil-head__name--empty', !nom);
+      }
+      const avEl = root.querySelector('#perfil-avatar');
+      if (avEl) {
+        const ini = iniciales(nom);
+        if (ini) avEl.textContent = ini;
+        else avEl.innerHTML = ICON_USER;
+      }
+      const headEl = root.querySelector('#perfil-head');
+      if (headEl) {
+        headEl.classList.toggle('perfil-head--cta', !nom);
+        if (!nom) {
+          headEl.setAttribute('role', 'button');
+          headEl.setAttribute('tabindex', '0');
+          headEl.setAttribute('aria-label', 'Poner tu nombre');
+        } else {
+          headEl.removeAttribute('role');
+          headEl.removeAttribute('tabindex');
+          headEl.removeAttribute('aria-label');
+        }
+        if (!headEl.dataset.bound) {
+          headEl.dataset.bound = '1';
+          const ir = () => { if (headEl.classList.contains('perfil-head--cta')) abrirOnboarding({ forzado: true, onDone: pintar }); };
+          headEl.addEventListener('click', ir);
+          headEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ir(); } });
+        }
+      }
 
       const empleo = ingresos.find((i) => i && i.fuente === 'empleo') || null;
       const negocios = ingresos.filter((i) => i && i.fuente !== 'empleo');

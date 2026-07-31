@@ -26,8 +26,8 @@ const DRAFT_KEY = 'bolsillo:draft:registrar';
 const MAX_DIGITOS = 12;
 
 /* ---- dictado por voz (SpeechRecognition) ----
-   En el iPhone de Doug este motor fue INESTABLE: por eso timeout + fallback
-   son obligatorios. Donde funciona = dictado de un toque; donde no, cae al
+   En iPhone este motor resultó INESTABLE: por eso timeout + fallback son
+   obligatorios. Donde funciona = dictado de un toque; donde no, cae al
    teclado sin trabarse jamás. */
 const VOZ_TIMEOUT_MS = 8000;   // sin cierre en 8s → forzamos el fin
 const VOZ_RED_MS = 1200;       // red de seguridad si stop() no dispara onend
@@ -80,7 +80,11 @@ const cuentas = () => (cfg && Array.isArray(cfg.cuentas) ? cfg.cuentas : []);
 /** Cuenta por defecto al registrar (config.cuentaDefault, o la primera). */
 const cuentaDefault = () => {
   const d = cfg && cfg.cuentaDefault;
-  return (d && cuentas().includes(d)) ? d : (cuentaDefault());
+  // Fallback = primera cuenta. Antes decía `cuentaDefault()` (recursión a sí
+  // misma): stack overflow si no había default. Nunca se disparaba porque una
+  // semilla de cuenta siempre fijaba uno; al quitar esa semilla (para no dejar
+  // datos personales) este camino sí se ejerce.
+  return (d && cuentas().includes(d)) ? d : (cuentas()[0] || '');
 };
 /** ¿La cuenta es tarjeta de crédito? (cfg.cuentasMeta[nombre].tipo === 'credito') */
 const esCredito = (nombre) => {

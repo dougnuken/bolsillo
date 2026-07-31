@@ -86,6 +86,24 @@ body[data-route="hoy"] .app-header { display: none; }
   font-family: var(--font-num); font-variant-numeric: tabular-nums;
   font-size: 40px; font-weight: var(--fw-bold); letter-spacing: -0.02em;
   color: var(--text-1); line-height: 1.04; margin-top: var(--sp-2);
+  /* al soltar el tinte del rodillo, el color vuelve a blanco suavemente */
+  transition: color var(--dur) var(--ease);
+  will-change: transform;
+}
+/* Rodillo de "Tu dinero" (cuentakilómetros de casino): las cifras las cambia el
+   JS (animarSaldo); aquí va SOLO el gesto — un empuje vertical sutil + el tinte
+   de dirección que refuerza el semáforo (rojo baja / verde sube). */
+.bcard__amt.is-rolling { animation: bcardRoll 0.82s var(--ease); }
+.bcard__amt.is-rolling--down { color: var(--semaforo-rojo); }
+.bcard__amt.is-rolling--up { color: var(--semaforo-verde); }
+@keyframes bcardRoll {
+  0%   { transform: translateY(-0.14em); }
+  70%  { transform: translateY(0.02em); }
+  100% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bcard__amt { transition: none; }
+  .bcard__amt.is-rolling { animation: none; }
 }
 /* métrica del día: neto de hoy — verde si entró plata, rojo si se gastó */
 .bcard__delta {
@@ -1669,8 +1687,14 @@ body[data-route="hoy"] .app-header { display: none; }
   user-select: none;
 }
 .perfil-head__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.perfil-head__avatar svg { width: 30px; height: 30px; color: var(--text-2); }
 .perfil-head__name { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; color: var(--text-1); }
+/* Sin nombre (onboarding saltado): placeholder atenuado, no un nombre inventado. */
+.perfil-head__name--empty { color: var(--text-3); }
 .perfil-head__sub { font-size: var(--fs-sm); color: var(--text-2); margin-top: 2px; }
+/* Encabezado como CTA cuando falta el nombre: invita a ponerlo. */
+.perfil-head--cta { cursor: pointer; border-radius: var(--r-lg); transition: opacity var(--dur-fast) var(--ease); }
+.perfil-head--cta:active { opacity: 0.7; }
 
 /* Fila deshabilitada con pill "Pronto" */
 .settings-row--soon { cursor: default; }

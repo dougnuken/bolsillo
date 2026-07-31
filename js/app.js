@@ -207,8 +207,6 @@ function initSheet() {
 }
 
 /* ---- datos: siembra de cuentas + materialización de recurrentes ---- */
-const esTextoNoVacio = (v) => typeof v === 'string' && v.trim() !== '';
-
 async function initData() {
   await openDB();
   let cfg = await getConfig();
@@ -226,10 +224,10 @@ async function initData() {
   aplicarPersonalizacion(cfg);
   if (personalizado) refreshActive(currentRoute); // repinta con las etiquetas del usuario
 
-  // Nombres iniciales de las personas de Doug (idempotente: no pisa renombres tuyos).
-  cfg = await sembrarNombresPersona(cfg);
-  // Platino BDO como tarjeta de crédito + cuenta por defecto (idempotente).
-  cfg = await sembrarPlatinoBDO(cfg);
+  // (Sin siembra de datos personales. Las personas quedan como "Persona 1/2/3"
+  // hasta que el usuario las renombre, y no se precarga ninguna cuenta/tarjeta:
+  // cada quien arma su Bolsillo desde cero. Las únicas cuentas por defecto son
+  // las genéricas de CUENTAS_SEMILLA arriba, editables en el onboarding.)
 
   // Primer arranque: guía de inicio antes que nada.
   const ingresos = await getAll('ingresos');
@@ -287,34 +285,6 @@ const CANCELAR = Symbol('cancelar');
 
 const ICON_X =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-
-/** Siembra los nombres iniciales de las personas SIN pisar tus renombres. */
-async function sembrarNombresPersona(cfg) {
-  const ren = (cfg && cfg.categoriasRenombradas) || {};
-  const faltan = {};
-  if (!esTextoNoVacio(ren.persona1)) faltan.persona1 = 'Antonella';
-  if (!esTextoNoVacio(ren.persona2)) faltan.persona2 = 'Marley';
-  if (!esTextoNoVacio(ren.persona3)) faltan.persona3 = 'Madre';
-  if (Object.keys(faltan).length === 0) return cfg;
-  const nueva = await saveConfig({ categoriasRenombradas: faltan });
-  aplicarPersonalizacion(nueva);
-  refreshActive(currentRoute);
-  return nueva;
-}
-
-/** Siembra "Platino BDO" como tarjeta de crédito y cuenta por defecto.
-    Idempotente: solo agrega/setea lo que falte (no pisa tus cambios). */
-async function sembrarPlatinoBDO(cfg) {
-  const NOMBRE = 'Platino BDO';
-  const cuentas = Array.isArray(cfg.cuentas) ? cfg.cuentas : [];
-  const meta = cfg.cuentasMeta || {};
-  const cambios = {};
-  if (!cuentas.includes(NOMBRE)) cambios.cuentas = [...cuentas, NOMBRE];
-  if (!meta[NOMBRE]) cambios.cuentasMeta = { [NOMBRE]: { tipo: 'credito' } };
-  if (!esTextoNoVacio(cfg.cuentaDefault)) cambios.cuentaDefault = NOMBRE;
-  if (Object.keys(cambios).length === 0) return cfg;
-  return saveConfig(cambios);
-}
 
 /** Alertas de gasto por persona/categoría (ámbar o rojo) del mes actual. */
 async function recolectarAlertas() {
