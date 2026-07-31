@@ -57,6 +57,10 @@ export const TOOL_EXTRACTO = Object.freeze({
         type: ['integer', 'null'],
         description: 'Pago total / total a pagar del extracto, en pesos COP enteros (sin puntos ni símbolos). null si no aparece.',
       },
+      saldo: {
+        type: ['integer', 'null'],
+        description: 'Deuda TOTAL / saldo actual / capital adeudado / cupo utilizado (lo que se DEBE en total, no solo la cuota del mes), en pesos COP enteros. null si no aparece.',
+      },
       banco: {
         type: 'string',
         description: 'Nombre del banco o emisor de la tarjeta si aparece, o cadena vacía.',
@@ -79,6 +83,7 @@ export const SISTEMA_EXTRACTO = [
   'FECHA LÍMITE DE PAGO (o "fecha máxima/límite de pago", "paga hasta"): devuelve solo el DÍA (1 a 31) en "limite".',
   'TASA de interés: devuelve el número en "tasa". Si el extracto la reporta como Efectiva Anual (E.A.) pon esAnual=true; si es mensual (M.V.) pon esAnual=false.',
   'TOTAL: el "pago total" o "total a pagar" del período, entero en pesos COP.',
+  'SALDO: la DEUDA TOTAL / saldo actual / capital adeudado / cupo utilizado (lo que se debe en TOTAL, no la cuota del mes), entero en pesos COP.',
   'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco").',
   'Si el documento NO es un extracto de tarjeta, pon encontrado=false.',
 ].join('\n');
@@ -152,10 +157,21 @@ export function normalizarExtracto(input) {
   else if (typeof obj.total === 'string') { const p = parseCOP(obj.total); if (Number.isInteger(p)) total = p; }
   if (total != null && total <= 0) total = null;
 
+  // Saldo = deuda total. Mismo parseo que total; nunca negativo.
+  let saldo = null;
+  if (typeof obj.saldo === 'number' && Number.isFinite(obj.saldo)) saldo = Math.round(obj.saldo);
+  else if (typeof obj.saldo === 'string') { const p = parseCOP(obj.saldo); if (Number.isInteger(p)) saldo = p; }
+  if (saldo != null && saldo <= 0) saldo = null;
+
+  // Tasa ANUAL cruda: solo cuando el extracto la reporta E.A. (para créditos, que
+  // guardan tasaEA). Si viene mensual, no adivinamos la anual: null.
+  const tasaAnual = (Number.isFinite(tRaw) && tRaw > 0 && tRaw < 100 && obj.esAnual === true)
+    ? Math.round(tRaw * 100) / 100 : null;
+
   const banco = typeof obj.banco === 'string' ? obj.banco.trim().slice(0, 40) : '';
   const encontrado = obj.encontrado === true;
 
-  return { corte, limite, tasa, total, banco, encontrado };
+  return { corte, limite, tasa, tasaAnual, total, saldo, banco, encontrado };
 }
 
 /**

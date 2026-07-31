@@ -15,12 +15,15 @@
    La vista de estrategias de pago (avalancha / bola de nieve) es T8.
    ============================================================ */
 
-import { getAll, put, del } from '../db.js';
+import { getAll, put, del, getConfig } from '../db.js';
 import { crearCredito, actualizar, validarCredito, tasaEAaMV } from '../model.js';
 import { parseCOP, formatCOP } from '../money.js';
 import { confirmar } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
+import { elegirArchivoPDF, abrirConClave, CANCELADO } from '../pdf-picker.js';
+import { paginasAImagenes } from '../pdf-render.js';
+import { analizarExtractoImagenes } from '../extracto-pdf.js';
 import {
   hojaNav, cabecera, bindCabecera, filaCfg, vacioCfg, notaCfg,
   botonAgregar, huecoError, limpiarErrores, pintarErrores, autoLimpiarErrores,
@@ -36,6 +39,8 @@ const CAMPOS_OPCIONALES = ['cre-saldo', 'cre-tasa', 'cre-dia'];
 
 const IC_CHEV_ABAJO =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+const IC_PDF =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>';
 
 const PENDIENTE = '—';
 
@@ -80,6 +85,10 @@ function tienePendientes(c) {
  */
 export async function abrirCreditos({ onSaved } = {}) {
   let creditos = [];
+  // Clave + modelo en memoria: el picker de PDF debe abrir SÍNCRONO en el tap
+  // (iOS Safari), sin await previo.
+  let apiKey = '';
+  let modeloExtractos = null;
 
   async function recargar() {
     creditos = await getAll('creditos');
@@ -87,6 +96,9 @@ export async function abrirCreditos({ onSaved } = {}) {
 
   try {
     await recargar();
+    const cfg = await getConfig();
+    apiKey = (cfg && cfg.apiKey) || '';
+    modeloExtractos = cfg && cfg.modelos && cfg.modelos.extractos;
   } catch (err) {
     console.warn('[Bolsillo] no se pudieron leer los créditos:', err);
     toast('No se pudieron cargar tus créditos');
@@ -191,6 +203,8 @@ export async function abrirCreditos({ onSaved } = {}) {
 
           <div class="sueldo-adv" id="cre-adv"${abreOpcionales ? '' : ' hidden'}>
             ${notaCfg('Déjalos vacíos si no los tienes a la mano: quedan como <strong>dato pendiente</strong> y la AI los completa cuando le subas el extracto de este crédito.')}
+            <button type="button" class="btn btn--block cfg-extracto" data-act="subir-extracto">${IC_PDF}<span>Leer del extracto (PDF)</span></button>
+            <p class="cfg-hint" id="cre-extracto-nota"></p>
             <label class="field">
               <span class="field__label">Saldo actual</span>
               <input class="field__input" id="cre-saldo" type="text" data-monto inputmode="numeric" autocomplete="off"
@@ -250,6 +264,53 @@ export async function abrirCreditos({ onSaved } = {}) {
         inputTasa.addEventListener('input', () => {
           const ea = parseFloat(inputTasa.value);
           salidaMV.textContent = Number.isFinite(ea) ? fmtTasa(tasaEAaMV(ea)) + '%' : PENDIENTE;
+        });
+
+        // Leer extracto (PDF) con IA → prellena saldo / día de pago / tasa (si el
+        // extracto la reporta E.A.). Descifra PDFs protegidos localmente (pdf.js).
+        panel.querySelector('[data-act="subir-extracto"]')?.addEventListener('click', async () => {
+          // iOS Safari: el picker solo abre si input.click() corre SÍNCRONO en el
+          // tap → nada de await antes (apiKey/modelo ya están en memoria).
+          if (!apiKey || !apiKey.trim()) { toast('Configura tu clave de Anthropic en Perfil → Conexión con IA'); return; }
+          const picked = await elegirArchivoPDF();
+          if (!picked) return;
+          if (picked.error) { toast(picked.error, { icono: false }); return; }
+
+          const btn = panel.querySelector('[data-act="subir-extracto"]');
+          const nota = panel.querySelector('#cre-extracto-nota');
+          const setBusy = (t) => { if (btn) { btn.disabled = true; btn.innerHTML = `<span>${esc(t)}</span>`; } };
+          const setIdle = () => { if (btn) { btn.disabled = false; btn.innerHTML = `${IC_PDF}<span>Leer del extracto (PDF)</span>`; } };
+          const setNota = (t, err) => { if (nota) { nota.textContent = t; nota.classList.toggle('cfg-hint--err', !!err); } };
+          setNota(''); setBusy('Abriendo PDF…');
+
+          let pdfDoc;
+          try { pdfDoc = await abrirConClave(picked.bytes); }
+          catch (e) { setIdle(); if (e === CANCELADO) return; setNota('No se pudo abrir el PDF. ¿El archivo es correcto?', true); return; }
+
+          setBusy('Leyendo extracto…');
+          let imagenes = [];
+          try { imagenes = await paginasAImagenes(pdfDoc); }
+          catch { setIdle(); setNota('No se pudo procesar el PDF.', true); return; }
+          if (!imagenes.length) { setIdle(); setNota('El PDF no tiene páginas legibles.', true); return; }
+
+          const r = await analizarExtractoImagenes({ imagenes, apiKey, modelo: modeloExtractos });
+          setIdle();
+          if (r.estado !== 'ok') { setNota(r.mensaje || 'No pude leer el extracto. Ingrésalo a mano.', true); return; }
+          if (!r.encontrado) { setNota('No parece un extracto de crédito. Revísalo o ingrésalo a mano.', true); return; }
+
+          abrirAvanzados(true);
+          const setV = (sel, v) => {
+            const el = panel.querySelector(sel);
+            if (el && v != null && v !== '') { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }
+          };
+          if (r.saldo != null) setV('#cre-saldo', formatCOP(r.saldo).replace('$', ''));
+          if (r.limite != null) setV('#cre-dia', r.limite);
+          if (r.tasaAnual != null) setV('#cre-tasa', r.tasaAnual);
+          const partes = [];
+          if (r.banco) partes.push(r.banco);
+          if (r.saldo != null) partes.push(`saldo ${formatCOP(r.saldo)}`);
+          setNota(`Leído del extracto${partes.length ? ' · ' + partes.join(' · ') : ''}. Revisa y guarda.`, false);
+          toast('Extracto leído — revisa los datos');
         });
 
         panel.querySelector('#cre-form').addEventListener('submit', async (e) => {

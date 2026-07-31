@@ -53,7 +53,7 @@ test('arma el body con IMÁGENES + tool_use forzado', () => {
 test('acepta corte/límite válidos (1..31) y descarta inválidos', () => {
   assert.deepEqual(
     normalizarExtracto({ corte: 5, limite: 25, encontrado: true }),
-    { corte: 5, limite: 25, tasa: null, total: null, banco: '', encontrado: true },
+    { corte: 5, limite: 25, tasa: null, tasaAnual: null, total: null, saldo: null, banco: '', encontrado: true },
   );
   const r = normalizarExtracto({ corte: 0, limite: 40, encontrado: true });
   assert.equal(r.corte, null);
@@ -72,9 +72,21 @@ test('total: acepta número o texto COP; descarta <= 0', () => {
   assert.equal(normalizarExtracto({ total: 0, encontrado: true }).total, null);
 });
 
+test('saldo: deuda total (número o COP), descarta <= 0', () => {
+  assert.equal(normalizarExtracto({ saldo: 1794096, encontrado: true }).saldo, 1794096);
+  assert.equal(normalizarExtracto({ saldo: '$1.794.096', encontrado: true }).saldo, 1794096);
+  assert.equal(normalizarExtracto({ saldo: 0, encontrado: true }).saldo, null);
+  assert.equal(normalizarExtracto({ encontrado: true }).saldo, null);
+});
+
+test('tasaAnual: solo cuando el extracto la reporta E.A.', () => {
+  assert.equal(normalizarExtracto({ tasa: 26.5, esAnual: true, encontrado: true }).tasaAnual, 26.5);
+  assert.equal(normalizarExtracto({ tasa: 2.1, esAnual: false, encontrado: true }).tasaAnual, null); // mensual → no adivina la anual
+});
+
 test('tolerante: input basura no lanza y devuelve vacíos', () => {
   const r = normalizarExtracto(null);
-  assert.deepEqual(r, { corte: null, limite: null, tasa: null, total: null, banco: '', encontrado: false });
+  assert.deepEqual(r, { corte: null, limite: null, tasa: null, tasaAnual: null, total: null, saldo: null, banco: '', encontrado: false });
 });
 
 /* ---- analizarExtracto (fetch inyectado) ---- */
