@@ -1085,6 +1085,7 @@ async function guardar() {
   // cuotas: solo para gasto en tarjeta de crédito; en cualquier otro caso = 1.
   const cuotas = (!ingreso && esCredito(cuenta) && Number.isInteger(STATE.cuotas) && STATE.cuotas > 1) ? STATE.cuotas : 1;
 
+  let guardado = null; // el movimiento nuevo (para el susurro); null en edición
   try {
     if (STATE.editId) {
       const orig = await get('movimientos', STATE.editId);
@@ -1124,12 +1125,13 @@ async function guardar() {
         cuotas,
       }, { config: cfg || undefined });
       await put('movimientos', mov);
+      guardado = mov;
       toast('Guardado');
     }
     clearDraft();
     STATE = fresh();
     if (closeRef) closeRef();
-    if (typeof onSavedRef === 'function') onSavedRef();
+    if (typeof onSavedRef === 'function') onSavedRef(guardado);
   } catch (err) {
     toast('No se pudo guardar: ' + err.message, { icono: false, ms: 3200 });
   }

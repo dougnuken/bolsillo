@@ -6,10 +6,8 @@
    (contexto + persona + llamada) vive en conciencia.js.
    ============================================================ */
 
-import { getAll, getConfig } from '../db.js';
-import { calcularEstado, historialAhorro, gastoCategoriasComparado } from '../budget.js';
-import { categoriaPorId } from '../categories.js';
-import { construirContexto, aconsejar } from '../conciencia.js';
+import { aconsejar } from '../conciencia.js';
+import { armarContexto } from '../agente-datos.js';
 import { esc } from '../html.js';
 
 /* Spark de IA (dos destellos: uno grande, uno chico). */
@@ -25,40 +23,6 @@ const SUGERENCIAS = [
   '¿Me alcanza para pagar los créditos este mes?',
   'Dime la verdad de mi mes',
 ];
-
-/* Reúne la realidad económica actual → texto de contexto para el agente. */
-async function armarContexto() {
-  const [movimientos, ingresos, recurrentes, creditos, config] = await Promise.all([
-    getAll('movimientos'), getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
-  ]);
-  const empleo = ingresos.find((i) => i && i.fuente === 'empleo') || null;
-  const salario = empleo ? empleo.monto : 0;
-  const hoy = new Date();
-  const estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
-  const hist = historialAhorro({ movimientos, ingresoEmpleo: salario, creditos, hoy, meses: 1 });
-  const mesAct = hist[hist.length - 1] || {};
-  const catComp = gastoCategoriasComparado({ movimientos, hoy, top: 5 });
-
-  const facts = {
-    salario,
-    plataDelMes: estado.plataDelMes,
-    saldoDisponible: estado.saldoDisponible,
-    gastadoTotal: estado.gastadoTotal,
-    fijosDelMes: estado.fijosDelMes,
-    cuotasCredito: mesAct.cuotasCredito,
-    netoMes: mesAct.neto,
-    etiquetaSemaforo: estado.etiqueta,
-    topCategorias: (catComp.filas || []).map((f) => ({ label: categoriaPorId(f.categoriaId).label, total: f.actual })),
-    creditos: (creditos || []).filter((c) => c && c.activo).map((c) => ({
-      entidad: c.entidad, producto: c.producto, cuotaMensual: c.cuotaMensual, saldo: c.saldo, tasaEA: c.tasaEA,
-    })),
-  };
-  return {
-    contexto: construirContexto(facts),
-    nombre: (config && config.nombre) || '',
-    apiKey: (config && config.apiKey) || '',
-  };
-}
 
 function burbujaHTML(rol, texto) {
   return `<div class="chat-msg chat-msg--${rol === 'assistant' ? 'ia' : 'yo'}">${esc(texto)}</div>`;

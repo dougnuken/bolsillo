@@ -10,6 +10,7 @@ import movimientos from './views/movimientos.js';
 import perfil from './views/perfil.js';
 import registrar from './views/registrar.js';
 import asesor from './views/asesor.js';           // chat "voz de conciencia" (se llega desde el orbe de Hoy)
+import { susurrar } from './susurro.js';           // susurro cruado tras registrar un gasto
 // Ocultas en el piloto (se re-agregan a ROUTES + tab bar cuando estén listas):
 // import creditos from './views/creditos.js';  // CRUD real vive en Perfil → Créditos
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
@@ -197,7 +198,7 @@ function initSheet() {
     delete document.body.dataset.sheet;
   };
 
-  registrar.mount(sheet, { open, close, onSaved: () => { refreshActive(currentRoute); refrescarBadge(); } });
+  registrar.mount(sheet, { open, close, onSaved: (mov) => { refreshActive(currentRoute); refrescarBadge(); susurrar(mov); } });
 
   fab.addEventListener('click', () => registrar.abrir());
   scrim.addEventListener('click', () => registrar.cerrar());

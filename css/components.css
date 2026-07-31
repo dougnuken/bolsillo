@@ -982,6 +982,46 @@ body.nav-min .fab {
 .toast__ic { color: color-mix(in srgb, var(--semaforo-verde) 42%, var(--text-inverse)); display: grid; place-items: center; }
 .toast__ic svg { width: 18px; height: 18px; }
 
+/* Susurro: baja desde arriba tras guardar un gasto. Vidrio + spark de IA;
+   tocarlo abre el chat, la × lo descarta, y se va solo a los ~7s. */
+.susurro {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + var(--sp-3));
+  left: max(var(--sp-4), env(safe-area-inset-left));
+  right: max(var(--sp-4), env(safe-area-inset-right));
+  z-index: var(--z-toast);
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: var(--glass-nav);
+  border: 1px solid var(--glass-nav-line);
+  box-shadow: var(--sh-md);
+  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+  backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.susurro.is-open { opacity: 1; transform: none; }
+.susurro__spark {
+  flex: none; width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: var(--r-md);
+  background: var(--grad-cta); color: var(--text-inverse);
+  box-shadow: var(--sh-ia);
+}
+.susurro__spark svg { width: 18px; height: 18px; }
+.susurro__txt { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); line-height: 1.4; color: var(--text-1); font-weight: var(--fw-medium); }
+.susurro__x {
+  flex: none; width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  color: var(--text-3); font-size: 22px; line-height: 1;
+}
+.susurro__x:active { color: var(--text-1); }
+@media (prefers-reduced-motion: reduce) { .susurro { transition: opacity var(--dur-fast) linear; } }
+
 /* ============================================================
    Overlay ligero (confirmar / menú de acciones)
    ============================================================ */
