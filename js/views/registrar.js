@@ -704,7 +704,11 @@ function ensureFileInput() {
   fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'image/*';
-  fileInput.setAttribute('capture', 'environment'); // sugiere la cámara trasera
+  /* SIN capture. En iOS el atributo capture NO "sugiere" la cámara: la FUERZA, y
+     elimina del picker la opción de Fototeca — el usuario no podía subir una foto
+     ya tomada. Con solo accept='image/*', iOS muestra la hoja nativa completa
+     (Fototeca · Tomar foto · Elegir archivo), que es justo lo que promete la
+     opción "Tómalo o súbelo". */
   fileInput.hidden = true;
   fileInput.addEventListener('change', onFotoElegida);
   document.body.appendChild(fileInput);
