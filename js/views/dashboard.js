@@ -123,7 +123,7 @@ function animarSaldo(el, desde, hasta, dur = 820) {
 const ICON_BELL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
 const ICON_ORB =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.3"/><path d="M12 3.5v1.8M12 18.7v1.8M4.6 4.6l1.3 1.3M18.1 18.1l1.3 1.3M3.5 12h1.8M18.7 12h1.8M4.6 19.4l1.3-1.3M18.1 5.9l1.3-1.3"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>';
 
 function saludoInfo() {
   const h = new Date().getHours();

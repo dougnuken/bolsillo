@@ -1,8 +1,9 @@
 /* ============================================================
    Bolsillo · views/asesor.js
-   Chat "voz de conciencia" (superficie a demanda de D). Arma el
-   contexto financiero real y le pregunta a Claude con voz cruda.
-   El cerebro (contexto + persona + llamada) vive en conciencia.js.
+   "Cuarto de conciencia": chat a pantalla completa con la voz cruda.
+   Al entrar, la app oculta navbar + header (body[data-route=asesor]),
+   así que esto es un espacio íntimo solo con el agente. El cerebro
+   (contexto + persona + llamada) vive en conciencia.js.
    ============================================================ */
 
 import { getAll, getConfig } from '../db.js';
@@ -11,10 +12,13 @@ import { categoriaPorId } from '../categories.js';
 import { construirContexto, aconsejar } from '../conciencia.js';
 import { esc } from '../html.js';
 
-const ORB =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>';
+/* Spark de IA (dos destellos: uno grande, uno chico). */
+const SPARK =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>';
+const ICON_BACK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
 const SEND =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-2.5-6.5L4 12Z"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5L4 12Z"/></svg>';
 
 const SUGERENCIAS = [
   '¿Cuánto puedo gastar hoy sin cagarla?',
@@ -68,21 +72,24 @@ export default {
       (q) => `<button class="chat-chip" type="button" data-q="${esc(q)}">${esc(q)}</button>`,
     ).join('');
     return `
-      <header class="view-greet asesor-greet">
-        <div class="asesor-orb-big">${ORB}</div>
-        <div>
-          <p class="view-greet__eyebrow">Tu conciencia financiera</p>
-          <h1 class="view-greet__title">Asesor</h1>
+      <section class="asesor-room">
+        <header class="asesor-top">
+          <button type="button" class="asesor-back" id="asesor-back" aria-label="Volver">${ICON_BACK}</button>
+          <span class="asesor-top__title"><span class="asesor-top__spark">${SPARK}</span>Tu conciencia</span>
+          <span class="asesor-top__pad" aria-hidden="true"></span>
+        </header>
+        <div class="chat-scroll" id="chat-scroll">
+          <div class="asesor-hello">
+            <div class="asesor-orb-big">${SPARK}</div>
+            <p class="asesor-intro">Sin filtro. Te digo la verdad cruda de tus números — para que reacciones, no para que te sientas bien.</p>
+          </div>
+          <div class="chat-suggest" id="chat-suggest">${chips}</div>
         </div>
-      </header>
-      <p class="asesor-intro">Sin filtro. Te digo la verdad cruda de tus números — para que reacciones, no para que te sientas bien.</p>
-      <div class="chat-scroll" id="chat-scroll">
-        <div class="chat-suggest" id="chat-suggest">${chips}</div>
-      </div>
-      <form class="chat-bar" id="chat-form">
-        <input type="text" class="chat-input" id="chat-input" placeholder="Pregúntale a tu conciencia…" autocomplete="off" enterkeyhint="send" aria-label="Escribe tu pregunta" />
-        <button type="submit" class="chat-send" id="chat-send" aria-label="Enviar">${SEND}</button>
-      </form>`;
+        <form class="chat-bar" id="chat-form">
+          <input type="text" class="chat-input" id="chat-input" placeholder="Escríbele a tu conciencia…" autocomplete="off" enterkeyhint="send" aria-label="Escribe tu pregunta" />
+          <button type="submit" class="chat-send" id="chat-send" aria-label="Enviar">${SEND}</button>
+        </form>
+      </section>`;
   },
 
   mount(root) {
@@ -90,13 +97,22 @@ export default {
     const suggest = root.querySelector('#chat-suggest');
     const form = root.querySelector('#chat-form');
     const input = root.querySelector('#chat-input');
+    const back = root.querySelector('#asesor-back');
     const historial = [];   // {rol, texto}
     let ctx = null;         // {contexto, nombre, apiKey}
     let ocupado = false;
 
+    if (back) back.addEventListener('click', () => { location.hash = '#/hoy'; });
+
     armarContexto().then((c) => { ctx = c; }).catch(() => { ctx = null; });
 
-    const irAlFondo = () => { scroll.scrollTop = scroll.scrollHeight; };
+    // Baja al fondo. Síncrono (leer scrollHeight fuerza el layout) para que
+    // funcione aunque rAF esté throttled; + un rAF de respaldo por si el layout
+    // asienta después (fuentes, wrap). El scroller es .chat-scroll, no la vista.
+    const irAlFondo = () => {
+      scroll.scrollTop = scroll.scrollHeight;
+      requestAnimationFrame(() => { scroll.scrollTop = scroll.scrollHeight; });
+    };
 
     function agregar(rol, texto) {
       if (suggest && !suggest.hidden) suggest.hidden = true;

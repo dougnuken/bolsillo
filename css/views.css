@@ -725,31 +725,85 @@ body[data-route="hoy"] .app-header { display: none; }
 .catmes__delta--flat { color: var(--text-3); }
 
 /* ============================================================
-   Asesor — chat "voz de conciencia" (D)
+   Asesor — cuarto de conciencia (D): chat a pantalla completa
    ============================================================ */
-/* Orbe de entrada en el header de Hoy: gradiente firma para que se lea como IA. */
+/* Spark de entrada en el header de Hoy: gradiente firma = "esto es IA". */
 .hoy-greet__orb {
   background: var(--grad-cta);
   color: var(--text-inverse);
   border: 1px solid var(--glass-gloss);
   box-shadow: var(--sh-ia);
 }
-.hoy-greet__orb svg { width: 20px; height: 20px; }
-.hoy-greet__orb:active { transform: scale(0.94); }
+.hoy-greet__orb svg { width: 19px; height: 19px; }
+.hoy-greet__orb:active { transform: scale(0.9); }
 
-.asesor-greet { display: flex; align-items: center; gap: var(--sp-3); }
-.asesor-orb-big {
-  width: 46px; height: 46px; flex: none;
+/* La vista de asesor se come el padding y NO scrollea (el scroller es
+   .chat-scroll). El chrome —header, navbar, FAB, velo— se esconde animado:
+   entrar es como pasar a un cuarto aparte solo con el agente. */
+.view[data-route="asesor"] { padding: 0; overflow: hidden; }
+.view[data-route="asesor"] > .view-inner { max-width: none; height: 100%; margin: 0; }
+body[data-route="asesor"] .app-header,
+body[data-route="asesor"] .tabbar,
+body[data-route="asesor"] .fab,
+body[data-route="asesor"] .nav-blur {
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.asesor-room { display: flex; flex-direction: column; height: 100%; }
+
+/* barra superior: back + título, respeta el notch */
+.asesor-top {
+  flex: none;
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-4) var(--sp-2);
+}
+.asesor-back {
+  width: 40px; height: 40px; flex: none;
   display: grid; place-items: center;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-full);
+  color: var(--text-1); background: var(--glass-2);
+  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.asesor-back:hover { background: var(--glass-3); }
+.asesor-back:active { transform: scale(0.92); }
+.asesor-top__title {
+  flex: 1 1 auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3); font-weight: var(--fw-bold);
+  letter-spacing: -0.01em; color: var(--text-1);
+}
+.asesor-top__spark { display: inline-grid; place-items: center; color: var(--accent); }
+.asesor-top__spark svg { width: 18px; height: 18px; }
+.asesor-top__pad { width: 40px; flex: none; }  /* equilibra el back → título centrado */
+
+/* zona de mensajes: ÚNICO scroller del cuarto (arregla el auto-scroll) */
+.chat-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+/* saludo inicial (orbe grande + intro); los chips quedan pegados al fondo */
+.asesor-hello { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-3); margin: var(--sp-6) 0 var(--sp-2); }
+.asesor-orb-big {
+  width: 64px; height: 64px; flex: none;
+  display: grid; place-items: center;
+  border-radius: var(--r-xl);
   background: var(--grad-cta); color: var(--text-inverse);
   box-shadow: var(--sh-ia);
 }
-.asesor-orb-big svg { width: 26px; height: 26px; }
-.asesor-intro { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.5; margin-bottom: var(--sp-4); }
+.asesor-orb-big svg { width: 34px; height: 34px; }
+.asesor-intro { font-size: var(--fs-sm); color: var(--text-2); line-height: 1.5; max-width: 34ch; }
 
-.chat-scroll { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 42vh; }
-.chat-suggest { display: flex; flex-direction: column; gap: var(--sp-2); align-items: flex-start; }
+.chat-suggest { display: flex; flex-direction: column; gap: var(--sp-2); align-items: stretch; margin-top: auto; }
 .chat-suggest[hidden] { display: none; }  /* la clase display:flex pisaría a [hidden] */
 .chat-chip {
   text-align: left;
@@ -758,8 +812,7 @@ body[data-route="hoy"] .app-header { display: none; }
   background: var(--glass-1);
   border: 1px solid var(--line-2);
   color: var(--text-1);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
+  font-size: var(--fs-sm); font-weight: var(--fw-medium);
   transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 .chat-chip:hover { background: var(--glass-2); }
@@ -769,10 +822,8 @@ body[data-route="hoy"] .app-header { display: none; }
   max-width: 85%;
   padding: var(--sp-3) var(--sp-4);
   border-radius: var(--r-lg);
-  font-size: var(--fs-body);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-size: var(--fs-body); line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word;
 }
 .chat-msg--yo { align-self: flex-end; background: var(--grad-cta); color: var(--text-inverse); border-bottom-right-radius: var(--r-sm); }
 .chat-msg--ia { align-self: flex-start; background: var(--glass-2); color: var(--text-1); border: 1px solid var(--line-2); border-bottom-left-radius: var(--r-sm); }
@@ -782,13 +833,11 @@ body[data-route="hoy"] .app-header { display: none; }
 .chat-msg--wait span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes chatDot { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
 
+/* barra de chat: pegada al fondo (no hay navbar), sobre el home indicator */
 .chat-bar {
-  position: sticky;
-  bottom: calc(var(--dock-b) + var(--nav-h) + var(--sp-2));
-  display: flex;
-  gap: var(--sp-2);
-  align-items: center;
-  margin-top: var(--sp-4);
+  flex: none;
+  display: flex; gap: var(--sp-2); align-items: center;
+  margin: 0 var(--sp-3) max(var(--sp-2), env(safe-area-inset-bottom));
   padding: var(--sp-2);
   border-radius: var(--r-full);
   background: var(--glass-nav);
@@ -797,27 +846,38 @@ body[data-route="hoy"] .app-header { display: none; }
   backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
 }
 .chat-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 40px;
+  flex: 1 1 auto; min-width: 0; height: 40px;
   padding: 0 var(--sp-3);
-  background: transparent;
-  border: none;
-  color: var(--text-1);
-  font-size: var(--fs-body);
+  background: transparent; border: none;
+  color: var(--text-1); font-size: var(--fs-body);
 }
 .chat-input::placeholder { color: var(--text-3); }
 .chat-send {
-  flex: none;
-  width: 40px; height: 40px;
+  flex: none; width: 40px; height: 40px;
   border-radius: var(--r-full);
   display: grid; place-items: center;
-  background: var(--grad-cta);
-  color: var(--text-inverse);
+  background: var(--grad-cta); color: var(--text-inverse);
   transition: transform var(--dur-fast) var(--ease);
 }
 .chat-send:active { transform: scale(0.94); }
-@media (prefers-reduced-motion: reduce) { .chat-msg--wait span { animation: none; } }
+
+/* --- entrada "pro": el cuarto aparece escalonado --- */
+.view[data-route="asesor"].is-active .asesor-top { animation: asIn 0.4s var(--ease) both; }
+.view[data-route="asesor"].is-active .asesor-orb-big { animation: asPop 0.55s var(--ease) both 0.05s; }
+.view[data-route="asesor"].is-active .asesor-intro { animation: asIn 0.45s var(--ease) both 0.14s; }
+.view[data-route="asesor"].is-active .chat-suggest { animation: asIn 0.45s var(--ease) both 0.2s; }
+.view[data-route="asesor"].is-active .chat-bar { animation: asIn 0.45s var(--ease) both 0.1s; }
+@keyframes asIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes asPop { 0% { opacity: 0; transform: scale(0.6); } 60% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-msg--wait span,
+  .view[data-route="asesor"].is-active .asesor-top,
+  .view[data-route="asesor"].is-active .asesor-orb-big,
+  .view[data-route="asesor"].is-active .asesor-intro,
+  .view[data-route="asesor"].is-active .chat-suggest,
+  .view[data-route="asesor"].is-active .chat-bar { animation: none; }
+}
 .ahorro__lbl {
   flex: 1 1 0;
   text-align: center;
