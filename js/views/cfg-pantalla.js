@@ -103,7 +103,7 @@ export function abrirPantalla({ onSaved } = {}) {
             app: no se puede recuperar desde la web. Se intentó dos veces —bajando la barra con un
             margen negativo (v58) y estirando la app al viewport grande (v59)— y las dos veces el
             resultado fue el dock y el + cortados, porque mover algo a una zona que no se compone es
-            lo mismo que esconderlo. Desde la v67 la barra se ancla al viewport de verdad y queda
+            lo mismo que esconderlo. Desde la v68 la barra se ancla al viewport de verdad y queda
             siempre en cuadro; la franja sigue ahí, en negro, y así se queda.</p>` : ''}
 
         ${hayDeficit ? `

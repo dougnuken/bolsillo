@@ -67,10 +67,16 @@ export function calcularGananciaLvh({ alturaPagina, lvh } = {}) {
  * @param {{alturaPagina:number, alturaPantalla:number, standalone:boolean}} m
  * @returns {number} pt de banda muerta (0 = el viewport sí llega al borde)
  */
-export function calcularDeficit({ alturaPagina, alturaPantalla, standalone } = {}) {
+export function calcularDeficit({ alturaPagina, alturaPantalla, standalone, ios = true } = {}) {
   // En navegador la diferencia es la barra de herramientas, no una banda
   // muerta: moverse por ella metería el dock DEBAJO del chrome de Safari.
   if (!standalone) return 0;
+  // Y SOLO en iOS. En Android instalada la diferencia con screen.height es la
+  // barra de navegación del sistema (Atrás / Inicio / Recientes), que es zona
+  // REAL y hay que respetarla: tratarla como banda muerta pone --dock-gap en 0
+  // y mete el dock debajo de esos controles. Verificado por Doug en un Android:
+  // ahí el viewport SÍ llega al borde, o sea no hay nada que recuperar.
+  if (!ios) return 0;
   const pagina = Number(alturaPagina);
   const pantalla = Number(alturaPantalla);
   if (!Number.isFinite(pagina) || !Number.isFinite(pantalla)) return 0;
@@ -78,6 +84,13 @@ export function calcularDeficit({ alturaPagina, alturaPantalla, standalone } = {
   const d = Math.round(pantalla - pagina);
   if (d < DEFICIT_MIN || d > DEFICIT_MAX) return 0;
   return d;
+}
+
+/** ¿Es iOS/iPadOS? El déficit de viewport que compensamos es exclusivo de ahí. */
+export function esIOS() {
+  const ua = navigator.userAgent || '';
+  // iPadOS 13+ se anuncia como Mac: se distingue por ser táctil.
+  return /iPad|iPhone|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1);
 }
 
 /** ¿La app corre instalada (no en una pestaña)? */
@@ -105,6 +118,7 @@ export function leerEntorno() {
   const vv = window.visualViewport;
   return {
     standalone: esInstalada(),
+    ios: esIOS(),
     alturaPagina: window.innerHeight,
     lvh: medirLvh(),
     anchoPagina: window.innerWidth,

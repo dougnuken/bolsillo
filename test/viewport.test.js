@@ -100,3 +100,15 @@ test('veredicto: con déficit dice cuántos pt se pierden y que no son recuperab
   assert.doesNotMatch(v.texto, /interruptor/i);
   assert.match(v.texto, /no hay forma/i);
 });
+
+// v68 — Android: la diferencia con screen.height es la barra de navegación del
+// sistema, no una banda muerta. Tratarla como déficit ponía --dock-gap en 0 y
+// metía el dock DEBAJO de los controles Atrás/Inicio/Recientes. Verificado en
+// dispositivo: en Android el viewport sí llega al borde, no hay nada que ganar.
+test('calcularDeficit: en Android instalada NO hay déficit que compensar', () => {
+  assert.equal(calcularDeficit({ alturaPagina: 894, alturaPantalla: 956, standalone: true, ios: false }), 0);
+});
+
+test('calcularDeficit: en iOS instalada sí lo mide', () => {
+  assert.equal(calcularDeficit({ alturaPagina: 894, alturaPantalla: 956, standalone: true, ios: true }), 62);
+});
