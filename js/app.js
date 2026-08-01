@@ -11,12 +11,15 @@ import perfil from './views/perfil.js';
 import registrar from './views/registrar.js';
 import asesor from './views/asesor.js';           // chat "voz de conciencia" (se llega desde el orbe de Hoy)
 import { susurrar } from './susurro.js';           // susurro cruado tras registrar un gasto
+import { sugerirFijo } from './reconciliacion.js'; // ¿el gasto manual es el pago de un fijo pendiente?
+import { mostrarVinculo } from './vincular-chip.js';
+import { toast } from './toast.js';
 // Ocultas en el piloto (se re-agregan a ROUTES + tab bar cuando estén listas):
 // import creditos from './views/creditos.js';  // CRUD real vive en Perfil → Créditos
 import { abrirOnboarding, debeMostrarse } from './views/onboarding.js';
-import { openDB, getConfig, saveConfig, getAll, bulkPut } from './db.js';
+import { openDB, getConfig, saveConfig, getAll, get, put, bulkPut } from './db.js';
 import { materializarMes } from './recurring.js';
-import { migrarIngresos, ingresoNecesitaMigracion, crearMovimiento } from './model.js';
+import { migrarIngresos, ingresoNecesitaMigracion, crearMovimiento, actualizar } from './model.js';
 import { aplicarPersonalizacion, categoriaPorId } from './categories.js';
 import { calcularEstado, resumenPersonas, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAULT } from './budget.js';
 import { parseCOP, formatCOP } from './money.js';
@@ -198,7 +201,7 @@ function initSheet() {
     delete document.body.dataset.sheet;
   };
 
-  registrar.mount(sheet, { open, close, onSaved: (mov) => { refreshActive(currentRoute); refrescarBadge(); susurrar(mov); } });
+  registrar.mount(sheet, { open, close, onSaved: (mov) => { refreshActive(currentRoute); refrescarBadge(); susurrar(mov); ofrecerVinculacion(mov); } });
 
   // --- Abanico del FAB: + gira a X y nacen dos burbujas (gasto/ingreso) ---
   const veil = document.getElementById('fab-veil');
@@ -311,6 +314,38 @@ async function correrRecurrentes() {
   // Sin popup automático: los pendientes viven en la campana (no molesta al arrancar).
   pendientesFijos = porConfirmar;
   await refrescarBadge();
+}
+
+/* Tras guardar un GASTO manual, ofrece vincularlo con el fijo pendiente que
+   parezca corresponderle (Sura, arriendo, etc.). Vincular = ponerle el
+   recurrenteId → el recordatorio se apaga y deja de contarse doble. No-op si no
+   hay match claro; nunca molesta si el gasto ya está vinculado o es ingreso. */
+async function ofrecerVinculacion(mov) {
+  if (!mov || mov.tipo !== 'gasto' || mov.recurrenteId) return;
+  let recs;
+  let movs;
+  try {
+    [recs, movs] = await Promise.all([getAll('recurrentes'), getAll('movimientos')]);
+  } catch { return; }
+  const fijo = sugerirFijo({ gasto: mov, recurrentes: recs, movimientos: movs, hoy: new Date() });
+  if (!fijo) return;
+  mostrarVinculo({
+    nombre: fijo.nombre,
+    onVincular: async () => {
+      try {
+        const orig = await get('movimientos', mov.id);
+        if (!orig) return;
+        // Queda como EL pago del fijo: se le enlaza y pasa a fijo (nunca hormiga).
+        const upd = actualizar(orig, { recurrenteId: fijo.id, esFijo: true, esHormiga: false });
+        await put('movimientos', upd);
+        toast('Vinculado a ' + fijo.nombre);
+        await correrRecurrentes();   // recomputa pendientes → el recordatorio se apaga
+        refreshActive(currentRoute); // repinta Hoy (saldo/fijos/variable al día)
+      } catch {
+        toast('No se pudo vincular', { icono: false });
+      }
+    },
+  });
 }
 
 /* ---- notificaciones (campana) ---- */

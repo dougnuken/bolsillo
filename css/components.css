@@ -1143,6 +1143,68 @@ body.nav-min .fab {
 }
 
 /* ============================================================
+   Chip de reconciliación: "¿Este es tu pago de <fijo>? Vincular".
+   Sube desde abajo, POR ENCIMA del toast (que asoma más abajo), con
+   el mismo vidrio del resto de avisos. Persiste ~9s o hasta que actúes.
+   ============================================================ */
+.vinculo-chip {
+  position: fixed;
+  left: 50%;
+  /* apilado sobre el toast (toast + su alto de una línea + aire) */
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) + 66px);
+  transform: translate(-50%, 0);
+  z-index: var(--z-toast);
+  width: min(440px, calc(100vw - var(--sp-5)));
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  border-radius: var(--r-lg);
+  background: rgba(19, 19, 22, 0.6);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--sh-md);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  backdrop-filter: blur(30px) saturate(1.6);
+  color: var(--text-1);
+  animation: vinculoIn 0.4s var(--ease) both;
+  will-change: transform, opacity;
+}
+.vinculo-chip.is-leaving { animation: vinculoOut 0.32s var(--ease-in-out) both; }
+@keyframes vinculoIn  { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes vinculoOut { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, 16px); } }
+.vinculo-chip__ic {
+  flex: none; width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  background: var(--accent-soft); color: var(--accent);
+}
+.vinculo-chip__ic svg { width: 18px; height: 18px; }
+.vinculo-chip__txt {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--fs-sm); line-height: 1.3; color: var(--text-2);
+}
+.vinculo-chip__txt strong { color: var(--text-1); font-weight: var(--fw-semibold); }
+.vinculo-chip__act {
+  flex: none; height: 34px; padding: 0 var(--sp-3);
+  border: 1px solid var(--fab-rim); border-radius: var(--r-md);
+  background: var(--fab-grad); color: var(--text-inverse);
+  font-size: var(--fs-xs); font-weight: var(--fw-bold); cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease);
+}
+.vinculo-chip__act:active { transform: scale(0.96); }
+.vinculo-chip__x {
+  flex: none; width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border: none; background: transparent;
+  color: var(--text-3); font-size: 20px; line-height: 1; cursor: pointer;
+  border-radius: var(--r-full);
+}
+.vinculo-chip__x:active { color: var(--text-1); }
+@media (prefers-reduced-motion: reduce) {
+  .vinculo-chip, .vinculo-chip.is-leaving { animation-duration: 0.01ms; }
+}
+
+/* ============================================================
    Overlay ligero (confirmar / menú de acciones)
    ============================================================ */
 .ov-scrim {
