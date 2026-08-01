@@ -978,7 +978,14 @@ function abrirVoz() {
   STATE.vozConfianzaBaja = false;
   STATE.vozEscuchando = false;
   if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
-  paint();
+  // Agilidad: si el navegador soporta dictado y hay clave, ARRANCA a escuchar
+  // de una (se salta el paso "Tomar dictado"). start() va dentro del gesto del
+  // toque, así iOS lo permite. Sin soporte o sin clave → hoja idle (teclado).
+  if (soportaVoz() && tieneClave()) {
+    iniciarDictado(); // hace su propio paint (estado "Escuchando…")
+  } else {
+    paint();
+  }
 }
 
 /** Habilita/deshabilita "Interpretar" según haya texto (sin repintar). */
