@@ -25,6 +25,7 @@ import { calcularEstado, resumenPersonas, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAU
 import { parseCOP, formatCOP } from './money.js';
 import { bindMontosVivos } from './money-input.js';
 import { hoja } from './overlay.js';
+import { iniciarViewport } from './viewport.js';
 import { esc } from './html.js';
 
 const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
@@ -587,6 +588,9 @@ function registerSW() {
 
 /* ---- init ---- */
 function boot() {
+  // ANTES de montar nada: publica --vp-deficit y las banderas de <html> para
+  // que el dock nazca ya en su sitio (medirlo después provocaría un salto).
+  iniciarViewport();
   initTabbar();
   initHeader();
   initSheet();

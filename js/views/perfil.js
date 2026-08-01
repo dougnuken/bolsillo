@@ -21,6 +21,8 @@ import { abrirCuentas } from './cfg-cuentas.js';
 import { abrirCategorias } from './cfg-categorias.js';
 import { abrirRespaldo, respaldoVencido } from './cfg-respaldo.js';
 import { abrirApiKey } from './cfg-api.js';
+import { abrirPantalla } from './cfg-pantalla.js';
+import { aplicarViewport } from '../viewport.js';
 import { abrirUmbrales } from './cfg-umbrales.js';
 import { abrirOnboarding } from './onboarding.js';
 
@@ -57,6 +59,7 @@ const ICONS = {
   api: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M15.5 12v2"/></svg>',
   umbrales: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6h14M5 12h14M5 18h14"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>',
   tour: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 3.2c-.7.4-1 .9-1 1.7"/><circle cx="12" cy="17.4" r="0.9" fill="currentColor" stroke="none"/></svg>',
+  pantalla: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 5.2h3"/><path d="M9 18.6h6"/></svg>',
   privacidad: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 8-7 10-4-2-7-5.6-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>',
 };
 
@@ -133,6 +136,14 @@ function subApi(config) {
 }
 function subUmbrales(config) {
   return `Hormiga bajo ${formatCOP(config.umbralHormiga)}`;
+}
+/* Mide en vivo: si iOS no le da a la página toda la pantalla, el subtítulo lo
+   canta desde la lista (sin tener que entrar a mirar). */
+function subPantalla() {
+  const m = aplicarViewport();
+  if (!m.standalone) return 'Abre la app instalada para medirla bien';
+  if (m.deficit <= 0) return 'La barra usa toda la pantalla';
+  return `iOS te quita ${Math.round(m.deficit)} pt abajo${m.bordeFisico ? ' · corrección activa' : ''}`;
 }
 
 export default {
@@ -242,6 +253,7 @@ export default {
             ${row(ICONS.api, 'Clave de Anthropic', subApi(config), 'api')}
             ${row(ICONS.umbrales, 'Umbrales', subUmbrales(config), 'umbrales')}
             ${row(ICONS.tour, 'Ver la guía de inicio', 'Repite la configuración paso a paso', 'onboarding')}
+            ${row(ICONS.pantalla, 'Pantalla', subPantalla(), 'pantalla')}
             ${row(ICONS.privacidad, 'Privacidad', 'Tus datos viven solo en este dispositivo', 'privacidad')}
           </div>
         </section>
@@ -267,6 +279,7 @@ export default {
         api: abrirApiKey,
         umbrales: abrirUmbrales,
         onboarding: () => abrirOnboarding({ forzado: true, onDone: pintar }),
+        pantalla: abrirPantalla,
         privacidad: abrirPrivacidad,
       };
 

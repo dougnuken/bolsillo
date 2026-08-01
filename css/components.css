@@ -243,8 +243,15 @@
   background-position: 50% 50%;
   box-shadow: var(--sh-fab);
   border: 1px solid var(--glass-gloss);
+  /* SIN transición de `bottom`: es una propiedad de layout (contra la regla de
+     animar solo transform/opacity) y, peor, se atascaba. Cuando --dock-b
+     cambia por una VARIABLE —que es como se corrige el viewport de iOS— el
+     motor deja el `bottom` viejo pintado y no termina la transición: medido,
+     el FAB se quedaba en 38px mientras el valor calculado ya era -28px. Sin
+     transición sigue a --dock-b al instante. El colapso al hacer scroll pierde
+     6px de deslizamiento; la barra sí sigue animando su altura. */
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease),
-              bottom var(--dur) var(--ease-in-out), border-radius var(--dur) var(--ease),
+              border-radius var(--dur) var(--ease),
               background-position var(--dur) var(--ease);
   will-change: transform, background-position;
   /* long-press del + (atajo de voz): sin menú de selección ni retardos de toque */
@@ -1017,6 +1024,38 @@ body.nav-min .fab {
   box-shadow: var(--sh-sm);
 }
 .switch.is-on .switch__dot { transform: translateX(18px); background: var(--text-inverse); }
+
+/* ============================================================
+   Perfil → Pantalla: diagnóstico de viewport
+   ============================================================ */
+.vp-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;                       /* el gap deja ver el fondo = hairline entre filas */
+  background: var(--line-2);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.vp-dato {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-2);
+}
+.vp-dato__k { font-size: var(--fs-sm); color: var(--text-2); }
+.vp-dato__v { font-size: var(--fs-sm); font-weight: var(--fw-semibold); color: var(--text-1); }
+.vp-dato--alerta .vp-dato__v { color: var(--semaforo-rojo); }
+
+/* Reglas de prueba (solo mientras la hoja de Pantalla está abierta).
+   CORAL = donde termina el viewport que iOS nos da.
+   VERDE = el borde físico de la pantalla (viewport + el déficit medido).
+   Si en el equipo solo se ve la coral, iOS recorta lo que se pinta más abajo
+   y el modo "pegar al borde" no puede funcionar. Es la única incógnita que
+   ningún cálculo resuelve: hay que mirarla en el dispositivo. */
+.vp-reglas { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
+.vp-regla { position: fixed; left: 0; right: 0; height: 3px; }
+.vp-regla--vp { bottom: 0; background: var(--accent); }
+.vp-regla--fisico { bottom: calc(-1 * var(--vp-deficit)); background: var(--semaforo-verde); }
 
 /* toggle "detalles" */
 .detalles-toggle {

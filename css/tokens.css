@@ -275,15 +275,24 @@
      inset SÍ vale ~34pt; forzarlo a 0 dejaba el dock encima del home indicator.
      Ese bug nunca se vio porque nadie probó la app instalada. */
   --safe-b: env(safe-area-inset-bottom);
-  /* Anclaje inferior del CHROME FLOTANTE (dock, FAB, toast). MAX, no suma:
-     el inset del home indicator YA es aire visual, así que sumarle sp-2 encima
-     alejaba la píldora 8pt de más del borde. Con max() la píldora se apoya justo
-     en el tope de la zona del indicador —lectura de dock nativo, pegado— y en
-     navegador (inset 0) conserva los 8pt de siempre.
-     OJO: esto es solo para lo que FLOTA. El padding de CONTENIDO sigue sumando
-     --safe-b aparte, porque el contenido sí tiene que despejar dock e indicador
-     a la vez. */
-  --dock-b: max(var(--sp-2), var(--safe-b));
+
+  /* Cuánto le falta al viewport de la página para llegar al borde FÍSICO de la
+     pantalla. Lo mide viewport.js en tiempo real (0 si el viewport sí llega).
+     Ver la cabecera de ese archivo: en la PWA instalada de iPhone 16 Pro Max
+     valía 62pt —exactamente env(safe-area-inset-top)— y ese hueco NO es
+     direccionable desde CSS, por eso hacía falta medirlo. */
+  --vp-deficit: 0px;
+
+  /* Anclaje inferior del CHROME FLOTANTE (dock, FAB, toast).
+     Un dock que FLOTA no necesita despejar el home indicator entero: es una
+     píldora separada de los bordes, y el indicador se dibuja en el aire de
+     debajo (así se comportan las barras flotantes del propio iOS). Reservarle
+     los 34pt del inset la subía media pulgada de más. 16pt deja el indicador
+     (5pt de alto, a ~8pt del borde) con holgura y la píldora se lee apoyada.
+     OJO: esto es solo para lo que FLOTA. El padding de CONTENIDO se calcula
+     aparte en --view-b. */
+  --dock-gap: var(--sp-4);
+  --dock-b: var(--dock-gap);
 
   /* Reserva inferior del CONTENIDO (padding-bottom de .view). FUENTE ÚNICA:
      antes se declaraba a mano en base.css Y en views.css con la fórmula
@@ -293,9 +302,11 @@
      muerta —lo que se leía como "espacio perdido abajo".
      Ahora = geometría del dock (dock-b + nav-h) + UN aire de sp-5 (20px). El
      contenido despeja el dock exacto y deja 20px de respiro, no 48. Usa --dock-b
-     (no --safe-b) para que en la PWA instalada la reserva crezca con el inset,
-     igual que el dock. */
-  --view-b: calc(var(--dock-b) + var(--nav-h) + var(--sp-5));
+     (no --safe-b) para que la reserva siga siempre a la geometría del dock.
+     El max(...,0px) es por el modo "pegar al borde": ahí --dock-b es NEGATIVO
+     (el dock sale del viewport hacia la banda muerta) y sin ese piso la reserva
+     se volvería absurda. */
+  --view-b: calc(max(var(--dock-b), 0px) + var(--nav-h) + var(--sp-5));
 
   /* ---- Motion ---- */
   --dur-fast: 140ms;
@@ -313,6 +324,30 @@
   --z-toast: 90;
 
   color-scheme: dark;
+}
+
+/* ============================================================
+   Corrección de viewport en la PWA instalada de iOS
+   Las banderas las pone viewport.js DESPUÉS de medir; el CSS solo reacciona.
+   Ver la cabecera de js/viewport.js para la medición que las motiva.
+   ============================================================ */
+
+/* Hay banda muerta: el viewport de la página termina ANTES del borde físico.
+   Entonces env(safe-area-inset-bottom) ya no describe una zona de home
+   indicator DENTRO de nuestra página —esa zona quedó fuera del viewport— y
+   sumársela al dock es contarla dos veces. Ese doble conteo eran 34 de los
+   96 pt muertos. */
+html[data-vp-corto="1"] {
+  --dock-gap: var(--sp-3);
+}
+
+/* Modo "pegar la barra al borde físico" (Perfil → Pantalla): el chrome
+   flotante baja el déficit COMPLETO para aterrizar a --dock-gap del borde
+   real. Va detrás de un interruptor a propósito: si iOS recorta lo que se
+   pinta fuera del viewport, el dock quedaría a medias, y así se revierte en
+   un toque desde la misma pantalla que lo enciende. */
+html[data-vp-borde="1"] {
+  --dock-b: calc(var(--dock-gap) - var(--vp-deficit));
 }
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
