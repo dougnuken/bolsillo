@@ -237,18 +237,22 @@
   place-items: center;
   color: var(--text-inverse);
   background: var(--grad-cta);
+  /* lienzo un poco mayor que el FAB: permite CORRER el mismo gradiente (misma
+     intensidad) al abrir, en vez de cambiarlo. */
+  background-size: 140% 140%;
+  background-position: 50% 50%;
   box-shadow: var(--sh-fab);
   border: 1px solid var(--glass-gloss);
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease),
-              bottom var(--dur) var(--ease-in-out), border-radius var(--dur) var(--ease);
-  will-change: transform;
-  overflow: hidden;              /* recorta el aura cónica a la silueta del FAB */
+              bottom var(--dur) var(--ease-in-out), border-radius var(--dur) var(--ease),
+              background-position var(--dur) var(--ease);
+  will-change: transform, background-position;
 }
 .fab:hover { filter: brightness(1.06); }
 .fab:active { transform: translateX(-50%) scale(0.93); }
 .fab svg {
   width: 28px; height: 28px;
-  position: relative; z-index: 1;                 /* el ícono va sobre el aura */
+  position: relative; z-index: 1;                 /* el ícono va sobre el gradiente */
   transition: transform var(--dur) var(--ease-fan);
 }
 
@@ -258,30 +262,20 @@
    de vuelta al centro, como si partieran del mismo +.
    ============================================================ */
 
-/* Aura viva: gradiente cónico que gira bajo el ícono al abrir (sensación
-   de "giro con vida"). Oculta en reposo. */
-.fab::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: conic-gradient(from 0deg, #FF7A38, #C060D8, #4F7BFF, #8A7CF0, #FF7A38);
-  opacity: 0;
-  z-index: 0;
-  pointer-events: none;
-  transition: opacity var(--dur) var(--ease);
-}
+/* + → X: el ícono gira, el orbe se redondea y el MISMO gradiente firma se
+   CORRE de posición (misma intensidad) — con una deriva viva mientras está
+   abierto, en vez de cambiar el gradiente. */
 body[data-fab="open"] .fab {
   border-radius: var(--r-full);                   /* + cuadrado → orbe redondo */
-}
-body[data-fab="open"] .fab::before {
-  opacity: 0.92;
-  animation: fabAura 2.4s linear infinite;
+  animation: fabDrift 3.4s var(--ease-in-out) infinite alternate;
 }
 body[data-fab="open"] .fab svg {
   transform: rotate(135deg);                       /* + → X con recorrido de giro */
 }
-@keyframes fabAura { to { transform: rotate(360deg); } }
+@keyframes fabDrift {
+  from { background-position: 18% 82%; }
+  to   { background-position: 82% 18%; }
+}
 
 /* Burbujas: mismo ancla que el FAB; en reposo, encogidas en el centro. */
 .fab-bubble {
@@ -301,10 +295,12 @@ body[data-fab="open"] .fab svg {
   will-change: transform, opacity;
 }
 .fab-bubble svg { width: 24px; height: 24px; }
-.fab-bubble--gasto   { background: linear-gradient(150deg, #FF6A5E, #E23A2E);
-  box-shadow: 0 8px 22px -6px rgba(226, 58, 46, 0.6), var(--fab-hi); }
-.fab-bubble--ingreso { background: linear-gradient(150deg, #46D98A, #1FA15A);
-  box-shadow: 0 8px 22px -6px rgba(31, 161, 90, 0.6), var(--fab-hi); }
+/* Rojo y verde, pero con el MISMO material de gradiente de la app (150deg
+   light→deep + rim + glow) que el resto de controles semánticos. */
+.fab-bubble--gasto   { background: var(--rojo-grad);  border-color: var(--rojo-rim);
+  box-shadow: 0 8px 22px -6px var(--rojo-glow), var(--fab-hi); }
+.fab-bubble--ingreso { background: var(--verde-grad); border-color: var(--verde-rim);
+  box-shadow: 0 8px 22px -6px var(--verde-glow), var(--fab-hi); }
 
 /* Abierto: brotan en arco (izq gasto / der ingreso), con pop escalonado. */
 body[data-fab="open"] .fab-bubble { opacity: 1; pointer-events: auto; }
@@ -336,7 +332,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   .fab svg, .fab-bubble, .fab-veil,
   body[data-fab="open"] .fab-bubble--gasto,
   body[data-fab="open"] .fab-bubble--ingreso { transition-duration: 0.01ms; }
-  body[data-fab="open"] .fab::before { animation: none; }
+  body[data-fab="open"] .fab { animation: none; }
 }
 
 /* --- Barra de 4 pestañas: Hoy · Personas · [FAB] · Movimientos · Perfil --- */

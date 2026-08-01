@@ -163,7 +163,6 @@ function renderMetodos() {
 
   return `
     ${cabecera('Registrar', false)}
-    ${segmentedHTML()}
     <p class="sheet__sub">¿Cómo quieres capturar tu gasto?</p>
     ${draftBar}
     <div class="capture-grid">
@@ -385,8 +384,9 @@ function renderForm() {
   const ingreso = esIngreso();
   const puedeGuardar = monto > 0 && (ingreso ? !!STATE.ingresoId : !!STATE.categoriaId);
 
-  // El segmented se muestra al crear; al editar se conserva el tipo del movimiento.
-  const seg = STATE.editId ? '' : segmentedHTML();
+  // Sin segmented: el tipo (gasto/ingreso) ya lo eligen las burbujas del FAB
+  // (o queda fijo al editar). Se conserva el hueco por compatibilidad de layout.
+  const seg = '';
 
   const textInput = (!ingreso && STATE.modo === 'texto') ? `
     <div class="free-text">
