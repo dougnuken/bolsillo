@@ -13,6 +13,7 @@ import { aprender } from '../categorize.js';
 import { hoyISO, sumarDiasISO } from '../fechas.js';
 import { confirmar, menu } from '../overlay.js';
 import { toast } from '../toast.js';
+import { sugerirFijo } from '../reconciliacion.js';
 import registrar from './registrar.js';
 
 const ART =
@@ -27,6 +28,8 @@ const ICON_TAG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
 const ICON_TRASH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg>';
+const ICON_LINK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/></svg>';
 const ICON_SEARCH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
 const ICON_X =
@@ -322,17 +325,42 @@ export default {
     async function abrirAcciones(id, cfg) {
       const m = todos.find((x) => x.id === id);
       if (!m) return;
-      const elegido = await menu({
-        title: m.comercio || categoriaPorId(m.categoria).label,
-        items: [
-          { value: 'edit', label: 'Editar', icon: ICON_EDIT },
-          { value: 'recat', label: 'Cambiar categoría', icon: ICON_TAG },
-          { value: 'del', label: 'Borrar', icon: ICON_TRASH, danger: true },
-        ],
-      });
-      if (elegido === 'edit') registrar.abrir(m);
+      // ¿este gasto (sin vincular) parece el pago de un fijo pendiente? → ofrecer
+      // vincularlo aquí también, por si se escapó el chip al registrarlo.
+      let fijoSug = null;
+      if (m.tipo === 'gasto' && !m.recurrenteId) {
+        try {
+          const recs = await getAll('recurrentes');
+          fijoSug = sugerirFijo({ gasto: m, recurrentes: recs, movimientos: todos, hoy: new Date() });
+        } catch { /* si falla, seguimos sin la opción */ }
+      }
+      const items = [];
+      if (fijoSug) items.push({ value: 'vincular', label: `Vincular a ${fijoSug.nombre}`, icon: ICON_LINK });
+      items.push(
+        { value: 'edit', label: 'Editar', icon: ICON_EDIT },
+        { value: 'recat', label: 'Cambiar categoría', icon: ICON_TAG },
+        { value: 'del', label: 'Borrar', icon: ICON_TRASH, danger: true },
+      );
+      const elegido = await menu({ title: m.comercio || categoriaPorId(m.categoria).label, items });
+      if (elegido === 'vincular') vincularFijo(m, fijoSug);
+      else if (elegido === 'edit') registrar.abrir(m);
       else if (elegido === 'recat') recategorizar(m, cfg);
       else if (elegido === 'del') borrar(m);
+    }
+
+    async function vincularFijo(m, fijo) {
+      if (!fijo) return;
+      try {
+        // queda como EL pago del fijo: enlazado y fijo (nunca hormiga).
+        const actualizado = actualizar(m, { recurrenteId: fijo.id, esFijo: true, esHormiga: false });
+        await put('movimientos', actualizado);
+        toast('Vinculado a ' + fijo.nombre);
+        // avisa a app.js para recalcular pendientes → el recordatorio se apaga.
+        window.dispatchEvent(new CustomEvent('bolsillo:recurrentes-cambiaron'));
+        await recargar();
+      } catch (err) {
+        toast('No se pudo vincular: ' + err.message, { icono: false });
+      }
     }
 
     async function borrar(m) {

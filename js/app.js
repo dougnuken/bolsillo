@@ -555,6 +555,12 @@ function boot() {
 
   window.addEventListener('hashchange', () => navigate(routeFromHash()));
 
+  // Al vincular un gasto con su fijo desde Movimientos, recalculamos pendientes
+  // (así el recordatorio de la campana se apaga sin recargar la app).
+  window.addEventListener('bolsillo:recurrentes-cambiaron', () => {
+    correrRecurrentes().catch((err) => console.warn('[Bolsillo] recurrentes:', err));
+  });
+
   const start = routeFromHash();
   navigate(start, { replace: true });
 

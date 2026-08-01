@@ -14,7 +14,9 @@ const IC_LINK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9.5 8H8a4 4 0 0 0 0 8h1.5"/><path d="M14.5 8H16a4 4 0 0 1 0 8h-1.5"/></svg>';
 
 /**
- * Muestra el chip. Persiste ~9s o hasta que el usuario actúe.
+ * Muestra el chip. NO se auto-cierra: persiste hasta que el usuario le da
+ * Vincular o lo descarta con la ×. (Si se te escapa, también puedes vincular
+ * después desde Movimientos → tocar el gasto → "Vincular a …".)
  * @param {{nombre:string, onVincular?:Function, onDescartar?:Function}} opts
  */
 export function mostrarVinculo({ nombre, onVincular, onDescartar } = {}) {
@@ -41,7 +43,6 @@ export function mostrarVinculo({ nombre, onVincular, onDescartar } = {}) {
   document.body.appendChild(el);
   actual = el;
   hapticOk();
-  timer = setTimeout(cerrar, 9000);
 }
 
 function cerrar() {
