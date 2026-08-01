@@ -1325,6 +1325,15 @@ body.nav-min .fab {
 .seg__opt:active { transform: scale(0.98); }
 /* seleccionado: texto blanco sobre el pill glossy (coral o verde) */
 .seg__opt.is-on { color: var(--text-inverse); }
+/* Seg ESTÁTICO (sin pill deslizante, p. ej. Fijo exacto / Valor variable): la
+   opción activa se pinta directo con el material coral, porque no hay thumb
+   detrás que dé el fondo. Sin esto, el texto text-inverse (oscuro) queda sobre
+   el fondo oscuro del seg = ilegible. */
+.seg--estatico .seg__opt.is-on {
+  background: var(--fab-grad);
+  border: 1px solid var(--fab-rim);
+  box-shadow: var(--sh-chip-sel);
+}
 @media (prefers-reduced-motion: reduce) {
   .seg__thumb { transition: none; }
 }

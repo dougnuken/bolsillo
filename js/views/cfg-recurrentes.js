@@ -112,7 +112,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
           </label>
           <div class="field">
             <span class="field__label">¿Su valor es siempre igual o cambia?</span>
-            <div class="seg" role="tablist" id="rec-tipo-seg" aria-label="Tipo de valor del gasto fijo">
+            <div class="seg seg--estatico" role="tablist" id="rec-tipo-seg" aria-label="Tipo de valor del gasto fijo">
               <button type="button" class="seg__opt${esVar ? '' : ' is-on'}" role="tab"
                 aria-selected="${!esVar}" data-var="0">Fijo exacto</button>
               <button type="button" class="seg__opt${esVar ? ' is-on' : ''}" role="tab"

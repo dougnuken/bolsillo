@@ -2086,12 +2086,14 @@ body[data-route="asesor"] .nav-blur {
 .prestamo-card__abonar:active { transform: scale(0.98); }
 
 /* botón rápido "pagó todo" dentro del sheet de abono */
-.abo-quick { display: flex; margin: calc(-1 * var(--sp-2)) 0 var(--sp-1); }
+.abo-quick { display: flex; margin: var(--sp-2) 0 var(--sp-3); }
 .abo-quick__btn {
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   color: var(--accent);
-  padding: var(--sp-1) 0;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
 }
 .abo-quick__btn:active { opacity: 0.7; }
 
