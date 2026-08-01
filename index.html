@@ -12,14 +12,29 @@
   <meta name="description" content="Bolsillo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=69" />
+  <link rel="manifest" href="./manifest.webmanifest?v=70" />
   <meta name="theme-color" content="#0B0B0D" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <!-- black-translucent: el contenido llega bajo la isla dinámica (barra
-       transparente). El reloj/batería quedan en BLANCO (limitación de iOS). -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- v70 — VUELVE A `default`, y es una decisión de producto, no un descuido.
+
+       `black-translucent` (que entró el 24-jul con "barra transparente") hace
+       que el contenido pase BAJO la isla dinámica: se gana el degradado arriba.
+       Pero en standalone, combinado con viewport-fit=cover, WebKit deja el
+       layout viewport en `pantalla − barra de estado` CON EL ORIGEN EN y=0: la
+       ventana se estira por arriba y no llega abajo. El hueco que queda mide
+       exactamente la barra de estado — los 62pt que llevaban catorce versiones
+       abiertos, y que valen justo env(safe-area-inset-top).
+
+       Lo ató Doug: el hueco de abajo apareció el mismo día que la franja de la
+       isla dejó de ser negra. Son la misma línea. Y elige el otro lado del
+       trato: prefiere la franja superior negra y el dock apoyado abajo.
+
+       Con `default` el webview arranca ya bajo la barra de estado, así que
+       env(safe-area-inset-top) pasa a 0 y los diez `calc(env(...) + x)` del CSS
+       se resuelven solos, sin doble espaciado. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Bolsillo" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
@@ -32,10 +47,10 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=69" />
-  <link rel="stylesheet" href="./css/base.css?v=69" />
-  <link rel="stylesheet" href="./css/components.css?v=69" />
-  <link rel="stylesheet" href="./css/views.css?v=69" />
+  <link rel="stylesheet" href="./css/tokens.css?v=70" />
+  <link rel="stylesheet" href="./css/base.css?v=70" />
+  <link rel="stylesheet" href="./css/components.css?v=70" />
+  <link rel="stylesheet" href="./css/views.css?v=70" />
 </head>
 <body>
   <div class="app-shell">
@@ -106,6 +121,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=69"></script>
+  <script type="module" src="./js/app.js?v=70"></script>
 </body>
 </html>

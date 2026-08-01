@@ -11,7 +11,7 @@
      NUNCA se interceptan (la app llama la API de Claude ahí).
    Rutas relativas: funciona bajo cualquier subpath. */
 
-const CACHE = 'bolsillo-shell-v69';
+const CACHE = 'bolsillo-shell-v70';
 
 self.addEventListener('install', () => {
   // Activar esta versión sin esperar a que se cierren las pestañas viejas.
