@@ -361,9 +361,20 @@
    Entonces env(safe-area-inset-bottom) ya no describe una zona de home
    indicator DENTRO de nuestra página —esa zona quedó fuera del viewport— y
    sumársela al dock es contarla dos veces. Ese doble conteo eran 34 de los
-   96 pt muertos. */
+   96 pt muertos.
+
+   v62 — y el gap va a CERO, no a sp-3. Un dock flotante normalmente quiere
+   aire contra el borde de la pantalla; aquí ese aire ya lo pone iOS de sobra
+   (la franja que no nos da), así que sumarle 12pt propios era pagar dos veces
+   por el mismo margen. Medido en dispositivo: el dock terminaba a ~888 de un
+   viewport de 894 y aun así quedaban ~72pt hasta el borde físico. Con 0, el
+   dock se apoya en el borde de lo pintable y recupera esos 12.
+   No queda "cortado": debajo sigue el canvas del MISMO color (--bg-root ==
+   --bg-0 == #0B0B0D), así que la píldora se lee apoyada, no truncada.
+   Todo lo demás se reacomoda solo, porque deriva de --dock-b: el FAB baja a
+   22, --view-b pasa de 84 a 72 y .nav-blur encoge con él. */
 html[data-vp-corto="1"] {
-  --dock-gap: var(--sp-3);
+  --dock-gap: 0px;
 }
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
