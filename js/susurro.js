@@ -9,6 +9,7 @@
 import { aconsejar } from './conciencia.js';
 import { armarContexto } from './agente-datos.js';
 import { categoriaPorId } from './categories.js';
+import { hapticSusurro } from './haptics.js';
 
 const SPARK =
   '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/></svg>';
@@ -63,10 +64,9 @@ function mostrar(texto) {
     location.hash = '#/asesor';
   });
 
-  document.body.appendChild(el);
+  document.body.appendChild(el);   // la animación de entrada (susurroIn) corre sola
   actual = el;
-  void el.offsetWidth;            // fuerza reflow → la transición corre sin depender de rAF
-  el.classList.add('is-open');
+  hapticSusurro();                 // buzz sutil (Android; no-op en iOS)
   timer = setTimeout(cerrar, 7000);
 }
 
@@ -75,8 +75,8 @@ function cerrar() {
   if (!actual) return;
   const el = actual;
   actual = null;
-  el.classList.remove('is-open');
+  el.classList.add('is-leaving');  // dispara la animación de salida (susurroOut)
   const quitar = () => el.remove();
-  el.addEventListener('transitionend', quitar, { once: true });
-  setTimeout(quitar, 420);
+  el.addEventListener('animationend', quitar, { once: true });
+  setTimeout(quitar, 500);
 }

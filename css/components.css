@@ -959,28 +959,53 @@ body.nav-min .fab {
   z-index: var(--z-toast);
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  max-width: calc(100vw - var(--sp-8));
-  padding: var(--sp-3) var(--sp-5);
-  border-radius: var(--r-full);
-  /* Vidrio OSCURO de alto contraste: salta a la vista sobre el canvas claro. */
-  background: color-mix(in srgb, var(--text-1) 82%, transparent);
-  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.1);
-  backdrop-filter: blur(var(--blur-strong)) saturate(1.1);
+  gap: var(--sp-3);
+  /* ANCHO: casi a sangre (antes se ceñía al texto y los mensajes largos
+     saltaban a 2 líneas). Ahora hay sitio para una sola línea cómoda. */
+  width: min(480px, calc(100vw - var(--sp-5)));
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.3);
+  backdrop-filter: blur(var(--blur-strong)) saturate(1.3);
   border: 1px solid var(--line-3);
   box-shadow: var(--sh-md), inset 0 1px 0 var(--glass-gloss);
-  color: var(--text-inverse);
+  color: var(--text-1);
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
+  line-height: 1.35;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility 0s linear var(--dur);
 }
 .toast.is-show { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
-/* check verde aclarado para que contraste sobre el vidrio oscuro */
-.toast__ic { color: color-mix(in srgb, var(--semaforo-verde) 42%, var(--text-inverse)); display: grid; place-items: center; }
-.toast__ic svg { width: 18px; height: 18px; }
+.toast__msg { flex: 1 1 auto; min-width: 0; }
+.toast__ic { flex: none; display: grid; place-items: center; }
+.toast__ic svg { width: 20px; height: 20px; }
+
+/* --- Variante ÉXITO: vidrio VERDE glassmorphic (translúcido sobre el canvas) --- */
+.toast--ok {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--verde-light) 30%, transparent),
+      color-mix(in srgb, var(--semaforo-verde) 20%, transparent)),
+    rgba(11, 11, 13, 0.5);
+  border-color: color-mix(in srgb, var(--verde-light) 48%, transparent);
+  box-shadow: 0 10px 34px -10px var(--verde-glow), inset 0 1px 0 var(--glass-gloss);
+}
+.toast--ok .toast__ic { color: var(--verde-light); }
+
+/* --- Neutro / error: vidrio OSCURO de alto contraste --- */
+.toast--info { background: rgba(23, 23, 26, 0.72); }
+.toast--error {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--semaforo-rojo) 26%, transparent),
+      color-mix(in srgb, var(--semaforo-rojo) 16%, transparent)),
+    rgba(11, 11, 13, 0.5);
+  border-color: color-mix(in srgb, var(--semaforo-rojo) 45%, transparent);
+}
+.toast--error .toast__ic { color: var(--semaforo-rojo); }
 
 /* Susurro: baja desde arriba tras guardar un gasto. Vidrio + spark de IA;
    tocarlo abre el chat, la × lo descarta, y se va solo a los ~7s. */
@@ -999,11 +1024,11 @@ body.nav-min .fab {
   -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
   backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
   cursor: pointer;
-  opacity: 0;
-  transform: translateY(-16px);
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  animation: susurroIn 0.36s var(--ease) both;   /* entrada: baja + aparece */
 }
-.susurro.is-open { opacity: 1; transform: none; }
+.susurro.is-leaving { animation: susurroOut 0.3s var(--ease) both; }  /* salida: sube + desaparece */
+@keyframes susurroIn { from { opacity: 0; transform: translateY(-26px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes susurroOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-26px) scale(0.97); } }
 .susurro__spark {
   flex: none; width: 32px; height: 32px;
   display: grid; place-items: center;
@@ -1020,7 +1045,9 @@ body.nav-min .fab {
   color: var(--text-3); font-size: 22px; line-height: 1;
 }
 .susurro__x:active { color: var(--text-1); }
-@media (prefers-reduced-motion: reduce) { .susurro { transition: opacity var(--dur-fast) linear; } }
+@media (prefers-reduced-motion: reduce) {
+  .susurro, .susurro.is-leaving { animation-duration: 0.01ms; }
+}
 
 /* ============================================================
    Overlay ligero (confirmar / menú de acciones)

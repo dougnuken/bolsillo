@@ -4,6 +4,8 @@
    Sin estilos inline (CSP style-src 'self'): todo por clases.
    ============================================================ */
 
+import { hapticOk, hapticError } from './haptics.js';
+
 let nodo = null;
 let timer = null;
 
@@ -23,18 +25,22 @@ function asegurarNodo() {
 /**
  * Muestra un toast.
  * @param {string} mensaje
- * @param {{icono?:boolean, ms?:number}} [opts]
+ * @param {{icono?:boolean, ms?:number, tipo?:'ok'|'error'|'info'}} [opts]
+ *   tipo por defecto: 'ok' (verde) si hay ícono; 'info' (neutro) si no.
  */
-export function toast(mensaje, { icono = true, ms = 2200 } = {}) {
+export function toast(mensaje, { icono = true, ms = 2200, tipo } = {}) {
+  const t = tipo || (icono ? 'ok' : 'info');
   const el = asegurarNodo();
+  el.className = 'toast toast--' + t;   // resetea variante (sin is-show todavía)
   el.innerHTML = (icono ? `<span class="toast__ic">${ICON_OK}</span>` : '') +
     `<span class="toast__msg"></span>`;
   el.querySelector('.toast__msg').textContent = mensaje;
 
   // reinicia animación
-  el.classList.remove('is-show');
   void el.offsetWidth;
   el.classList.add('is-show');
+
+  (t === 'error' ? hapticError : hapticOk)();
 
   clearTimeout(timer);
   timer = setTimeout(() => el.classList.remove('is-show'), ms);
