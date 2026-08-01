@@ -32,16 +32,29 @@ const MENSAJES = Object.freeze({
 
 /* ---- helpers de fecha (puros) ---- */
 
-/** Normaliza un Date o ISO a 'YYYY-MM-DD'. Falla fuerte si es inválido. */
+/* 'YYYY-MM-DD' del CALENDARIO LOCAL de un Date (getters locales, no UTC). */
+function isoLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+/** Normaliza un Date o ISO a 'YYYY-MM-DD'. Falla fuerte si es inválido.
+ *  OJO — usa la fecha LOCAL, nunca toISOString() (UTC): al oeste de Greenwich,
+ *  de noche el UTC ya marca el día (y a fin de mes, el MES) siguiente. Si "hoy"
+ *  saltara a UTC, el semáforo calcularía el mes equivocado y el saldo dejaría de
+ *  bajar con cada gasto registrado esa noche. La fecha del gasto es la del
+ *  calendario del usuario (misma regla que fechas.js/hoyISO). */
 function aFechaISO(fecha) {
   if (fecha instanceof Date) {
     if (Number.isNaN(fecha.getTime())) throw new Error('calcularEstado: "hoy" es una fecha inválida.');
-    return fecha.toISOString().slice(0, 10);
+    return isoLocal(fecha);
   }
   if (typeof fecha === 'string' && fecha.trim() !== '') {
     if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) return fecha.slice(0, 10);
     const d = new Date(fecha);
-    if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    if (!Number.isNaN(d.getTime())) return isoLocal(d);
   }
   throw new Error('calcularEstado: "hoy" debe ser un Date o una fecha ISO válida.');
 }

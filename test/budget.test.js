@@ -184,6 +184,34 @@ test('febrero 2026: diasMes 28 y día 28 → avance 1 y 1 día restante', () => 
 });
 
 /* ============================================================
+   Regresión: "hoy" como Date se toma en calendario LOCAL, no UTC.
+   Bug real: de noche al oeste de Greenwich, new Date().toISOString()
+   ya marca el día (y a fin de mes, el MES) siguiente; el semáforo
+   calculaba el mes equivocado y el saldo dejaba de bajar con cada
+   gasto de esa noche (la "ruleta" del saldo no rodaba).
+   ============================================================ */
+test('hoy como Date usa la fecha LOCAL (no salta de mes de noche en UTC-5)', () => {
+  // Arrange — Bogotá (UTC-5): 31-jul 21:00 local == 1-ago 02:00 UTC.
+  const prevTZ = process.env.TZ;
+  process.env.TZ = 'America/Bogota';
+  try {
+    const hoyNoche = new Date(2026, 6, 31, 21, 0, 0); // 31 de julio, 9pm LOCAL
+    const movs = [gasto('2026-07-31', 100_000, { categoria: 'mercado' })];
+    // Act
+    const e = calcularEstado({ ingresoEmpleo: 3_000_000, movimientos: movs, recurrentes: [], hoy: hoyNoche });
+    // Assert — debe verse como 31 de julio, no como 1 de agosto.
+    assert.equal(e.dia, 31, 'el día debe ser el LOCAL (31 jul), no el UTC (1 ago)');
+    assert.equal(e.diasMes, 31);
+    assert.equal(e.diasRestantes, 1);
+    // El gasto de julio SÍ cuenta: el saldo baja (con el bug UTC quedaba en 3.000.000).
+    assert.equal(e.variableGastado, 100_000);
+    assert.equal(e.saldoDisponible, 2_900_000);
+  } finally {
+    process.env.TZ = prevTZ;
+  }
+});
+
+/* ============================================================
    fijos >= ingreso → baseVariable <= 0 → rojo + fijosSuperanIngreso
    ============================================================ */
 test('fijos igualan/superan el sueldo → ROJO con flag fijosSuperanIngreso y sin NaN', () => {

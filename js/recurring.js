@@ -6,6 +6,7 @@
    ============================================================ */
 
 import { crearMovimiento } from './model.js';
+import { hoyISO } from './fechas.js';
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
@@ -85,7 +86,10 @@ export function materializarMes(recurrentes, movimientosExistentes, anio, mes, n
   }
 
   const prefijo = prefijoMes(anio, mes);
-  const hoyISO = now.toISOString().slice(0, 10);
+  // Fecha LOCAL de hoy (no UTC): coherente con anio/mes que vienen de now local.
+  // De noche, toISOString() marcaría el día siguiente y un fijo podría "llegar"
+  // (o dejar de llegar) un día antes de tiempo.
+  const hoyStr = hoyISO(now);
 
   for (const rec of recurrentes) {
     if (!rec || rec.activo !== true) continue;
@@ -96,7 +100,7 @@ export function materializarMes(recurrentes, movimientosExistentes, anio, mes, n
 
     const fecha = fechaEnMes(rec, anio, mes);
     // Aún no llega la fecha del recurrente en este mes → no materializar.
-    if (fecha > hoyISO) continue;
+    if (fecha > hoyStr) continue;
 
     // Ya existe → idempotencia (aplica igual a exactos y variables).
     if (yaMaterializado(movimientosExistentes, rec.id, prefijo)) continue;

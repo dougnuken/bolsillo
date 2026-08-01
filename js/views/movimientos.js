@@ -10,6 +10,7 @@ import { actualizar, derivarEsHormiga } from '../model.js';
 import { formatCOP, formatMovimiento } from '../money.js';
 import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { aprender } from '../categorize.js';
+import { hoyISO, sumarDiasISO } from '../fechas.js';
 import { confirmar, menu } from '../overlay.js';
 import { toast } from '../toast.js';
 import registrar from './registrar.js';
@@ -34,8 +35,6 @@ const ICON_X =
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
 ));
-const hoyISO = () => new Date().toISOString().slice(0, 10);
-function ayerISO() { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); }
 
 const FUENTE_LABEL = { manual: 'Manual', recurrente: 'Fijo', foto: 'Foto', pdf: 'PDF' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -82,7 +81,7 @@ function sinResultadosHTML() {
 
 function etiquetaDia(iso) {
   if (iso === hoyISO()) return 'Hoy';
-  if (iso === ayerISO()) return 'Ayer';
+  if (iso === sumarDiasISO(hoyISO(), -1)) return 'Ayer';
   const f = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })
     .format(new Date(iso + 'T12:00:00'));
   return f.charAt(0).toUpperCase() + f.slice(1);
