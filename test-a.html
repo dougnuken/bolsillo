@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Prueba A · con manifest</title>
-<link rel="manifest" href="./manifest.webmanifest?probe=a" />
+<link rel="manifest" href="./probe-a.webmanifest?v=2" />
 
 <!-- Mismos metas que Bolsillo, para que al añadirla a la pantalla de inicio
      se abra en standalone exactamente igual que la app. -->
@@ -41,6 +41,12 @@
   .nota { padding: 120px 16px 40px; color: rgba(235,235,245,.64); max-width: 34em }
   .medidor { position: absolute; top: 0; left: 0; width: 1px; visibility: hidden; }
   #svh { height: 100svh } #lvh { height: 100lvh } #dvh { height: 100dvh }
+
+  #aviso { position: fixed; inset: 0; z-index: 99; display: none;
+           background: #7A1020; color: #fff; padding: 24px 20px;
+           font-size: 19px; line-height: 1.45; }
+  #aviso.on { display: block; }
+  #aviso b { font-size: 24px; display: block; margin-bottom: 10px }
 </style>
 </head>
 <body>
@@ -75,6 +81,16 @@
   inicio, y ábrela desde el ícono.
 </p>
 
+
+<div id="aviso">
+  <b>Esta medida NO sirve</b>
+  Estás en Safari, no en la app instalada. Los <span id="a-falta"></span> que faltan
+  son la barra de Safari, no el hueco que buscamos.<br><br>
+  Toca <strong>Compartir</strong> → <strong>Añadir a pantalla de inicio</strong>, cierra
+  Safari y abre la sonda <strong>desde el ícono</strong>. Cuando esté bien, esta pantalla
+  roja desaparece y «modo» dice <strong>Instalada</strong> en verde.
+</div>
+
 <div class="franja"></div>
 <div class="borde-vp"></div>
 
@@ -99,6 +115,8 @@
     $('v-max').textContent = maxInner;
     $('v-modo').textContent = standalone ? 'Instalada' : 'Navegador';
     $('v-modo').className = standalone ? 'ok' : 'mal';
+    $('aviso').className = standalone ? '' : 'on';
+    $('a-falta').textContent = falta + ' pt';
     $('v-falta').textContent = falta + ' pt';
     $('v-falta').className = falta === 0 ? 'ok' : 'mal';
   }
