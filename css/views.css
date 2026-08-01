@@ -763,6 +763,8 @@ body[data-route="hoy"] .app-header { display: none; }
 body[data-route="asesor"] .app-header,
 body[data-route="asesor"] .tabbar,
 body[data-route="asesor"] .fab,
+body[data-route="asesor"] .fab-bubble,
+body[data-route="asesor"] .fab-veil,
 body[data-route="asesor"] .nav-blur {
   opacity: 0;
   transform: translateY(24px);

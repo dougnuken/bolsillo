@@ -1140,7 +1140,7 @@ async function guardar() {
 /* ============================================================
    API pública
    ============================================================ */
-async function abrir(mov = null) {
+async function abrir(mov = null, tipoInicial = 'gasto') {
   try { cfg = await getConfig(); } catch { cfg = null; }
   await cargarFuentes();
   if (mov) {
@@ -1159,7 +1159,16 @@ async function abrir(mov = null) {
   } else {
     STATE = fresh();
     STATE.cuenta = cuentaDefault();
-    draftPend = loadDraft();
+    if (tipoInicial === 'ingreso') {
+      // La burbuja verde abre directo en modo Ingreso (sin método de captura).
+      STATE.tipo = 'ingreso';
+      STATE.screen = 'form';
+      STATE.metodoElegido = true;
+      if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+      draftPend = null; // el borrador es solo para gastos
+    } else {
+      draftPend = loadDraft();
+    }
   }
   resetPaintAnim(); // apertura fresca: no animar alto/thumb desde estado viejo
   if (openRef) openRef();

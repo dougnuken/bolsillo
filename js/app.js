@@ -200,10 +200,39 @@ function initSheet() {
 
   registrar.mount(sheet, { open, close, onSaved: (mov) => { refreshActive(currentRoute); refrescarBadge(); susurrar(mov); } });
 
-  fab.addEventListener('click', () => registrar.abrir());
+  // --- Abanico del FAB: + gira a X y nacen dos burbujas (gasto/ingreso) ---
+  const veil = document.getElementById('fab-veil');
+  const bGasto = document.getElementById('fab-gasto');
+  const bIngreso = document.getElementById('fab-ingreso');
+  let radialOpen = false;
+
+  const abrirAbanico = () => {
+    radialOpen = true;
+    document.body.dataset.fab = 'open';
+    fab.setAttribute('aria-expanded', 'true');
+    fab.setAttribute('aria-label', 'Cerrar');
+    [bGasto, bIngreso].forEach((b) => b && b.setAttribute('aria-hidden', 'false'));
+  };
+  const cerrarAbanico = () => {
+    if (!radialOpen) return;
+    radialOpen = false;
+    delete document.body.dataset.fab;
+    fab.setAttribute('aria-expanded', 'false');
+    fab.setAttribute('aria-label', 'Registrar movimiento');
+    [bGasto, bIngreso].forEach((b) => b && b.setAttribute('aria-hidden', 'true'));
+  };
+  const elegirTipo = (tipo) => { cerrarAbanico(); registrar.abrir(null, tipo); };
+
+  fab.addEventListener('click', () => (radialOpen ? cerrarAbanico() : abrirAbanico()));
+  if (bGasto) bGasto.addEventListener('click', () => elegirTipo('gasto'));
+  if (bIngreso) bIngreso.addEventListener('click', () => elegirTipo('ingreso'));
+  if (veil) veil.addEventListener('click', cerrarAbanico);
+
   scrim.addEventListener('click', () => registrar.cerrar());
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sheet.classList.contains('is-open')) registrar.cerrar();
+    if (e.key !== 'Escape') return;
+    if (radialOpen) { cerrarAbanico(); return; }
+    if (sheet.classList.contains('is-open')) registrar.cerrar();
   });
 }
 

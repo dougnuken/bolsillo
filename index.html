@@ -32,10 +32,10 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=49" />
-  <link rel="stylesheet" href="./css/base.css?v=49" />
-  <link rel="stylesheet" href="./css/components.css?v=49" />
-  <link rel="stylesheet" href="./css/views.css?v=49" />
+  <link rel="stylesheet" href="./css/tokens.css?v=50" />
+  <link rel="stylesheet" href="./css/base.css?v=50" />
+  <link rel="stylesheet" href="./css/components.css?v=50" />
+  <link rel="stylesheet" href="./css/views.css?v=50" />
 </head>
 <body>
   <div class="app-shell">
@@ -84,8 +84,19 @@
       </button>
     </nav>
 
-    <!-- FAB central: abre Registrar -->
-    <button class="fab" id="fab" type="button" aria-label="Registrar movimiento">
+    <!-- Velo para descartar el abanico del FAB tocando fuera -->
+    <div class="fab-veil" id="fab-veil" aria-hidden="true"></div>
+
+    <!-- Burbujas que nacen del + (gasto ↓ rojo / ingreso ↑ verde) -->
+    <button class="fab-bubble fab-bubble--gasto" id="fab-gasto" type="button" aria-label="Registrar gasto" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </button>
+    <button class="fab-bubble fab-bubble--ingreso" id="fab-ingreso" type="button" aria-label="Registrar ingreso" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+    </button>
+
+    <!-- FAB central: abre el abanico gasto/ingreso -->
+    <button class="fab" id="fab" type="button" aria-label="Registrar movimiento" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
 
@@ -95,6 +106,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=49"></script>
+  <script type="module" src="./js/app.js?v=50"></script>
 </body>
 </html>
