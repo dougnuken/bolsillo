@@ -72,12 +72,30 @@ body[data-route="hoy"] .app-header { display: none; }
 
 /* --- Card de balance (tipo Finora): label + flecha, cifra grande, métrica del día --- */
 .bcard {
+  position: relative;              /* ancla la ilustración wallet */
+  overflow: hidden;                /* la wallet sangra por la esquina y se recorta limpio */
   background: var(--glass-1);      /* estilo unificado (como .settings-list de Perfil) */
   border: 1px solid var(--line-1);
   border-radius: var(--r-xl);
   padding: var(--sp-5);
   margin-bottom: var(--sp-3);
 }
+/* Ilustración decorativa (empty-state wallet) asomando en la esquina derecha.
+   Puramente estética: aria-hidden, no captura toques, va por detrás del texto. */
+.bcard__deco {
+  position: absolute;
+  right: -18px;
+  bottom: -20px;
+  width: 132px;
+  height: auto;
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+}
+/* el contenido real queda siempre por encima de la ilustración */
+.bcard__top, .bcard__amt, .bcard__delta { position: relative; z-index: 1; }
 .bcard__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 .bcard__lbl { font-size: var(--fs-sm); color: var(--text-2); font-weight: var(--fw-medium); }
 .bcard__arrow { color: var(--text-3); display: grid; place-items: center; flex: 0 0 auto; }

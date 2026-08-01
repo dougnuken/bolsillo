@@ -163,6 +163,7 @@ function balanceCardHTML(saldo) {
   const bal = (saldo != null && Number.isFinite(saldo)) ? conDivisa(formatCOP(saldo)) : '—';
   return `
     <section class="bcard">
+      <img class="bcard__deco" src="img/empty-states/wallet.png" alt="" aria-hidden="true" width="132" height="132" decoding="async">
       <div class="bcard__top">
         <span class="bcard__lbl">Tu dinero</span>
         <span class="bcard__arrow" aria-hidden="true">${ICON_ARROW_UR}</span>
