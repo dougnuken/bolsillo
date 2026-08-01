@@ -199,24 +199,6 @@
   box-shadow: var(--sh-nav);
 }
 
-/* v64 — Con franja muerta el dock deja de flotar y se apoya, de borde a borde,
-   como era en la v1. Una píldora flotante necesita ver aire por sus CUATRO
-   lados para leerse bien; aquí debajo hay 62pt de negro que no podemos pintar,
-   así que ese "aire" es un vacío y la píldora se lee suspendida sobre nada.
-   Una barra que llega a los lados y se apoya en el fin de lo pintable se lee
-   como el BORDE de la app, y el negro de abajo pasa por bisel del teléfono.
-   No recupera un solo píxel —eso no depende de nosotros— pero deja de exhibir
-   lo que falta. Solo se aplica donde hay déficit: en un equipo cuyo viewport
-   sí llega al borde, la píldora flotante se mantiene. */
-html[data-vp-corto="1"] .tabbar {
-  border-radius: 0;
-  border-left: 0;
-  border-right: 0;
-  border-bottom: 0;
-  padding-left: max(0px, env(safe-area-inset-left));
-  padding-right: max(0px, env(safe-area-inset-right));
-}
-
 .tab {
   position: relative;
   display: flex;

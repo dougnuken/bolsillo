@@ -381,11 +381,11 @@
    Todo lo demás se reacomoda solo, porque deriva de --dock-b: el FAB baja a
    22, --view-b pasa de 84 a 72 y .nav-blur encoge con él. */
 html[data-vp-corto="1"] {
+  /* v67 — el dock vuelve a ser PÍLDORA flotante: el edge-to-edge de la v66 se
+     revierte porque Doug lo probó y prefiere la forma anterior. Se mantiene el
+     gap inferior en 0 (v62), que gana 12pt sin tocar la forma: la píldora se
+     apoya en el fin de lo pintable. */
   --dock-gap: 0px;
-  /* v64 — y sin margen lateral: el dock deja de ser píldora y se apoya de
-     borde a borde. Ver la nota larga junto a la regla de .tabbar. */
-  --dock-x: 0px;
-  --dock-x-min: 0px;
 }
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
