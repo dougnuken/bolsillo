@@ -837,6 +837,14 @@ body[data-route="asesor"] .nav-blur {
 }
 .chat-chip:hover { background: var(--glass-2); }
 .chat-chip:active { transform: scale(0.98); }
+.chat-chip:disabled { opacity: 0.6; }
+
+/* Pregunta de la conciencia dentro del hilo (¿de cuál crédito es este PDF?)
+   + la oferta de actualizar ese crédito. Los chips van sangrados al ancho de
+   una burbuja de IA para que se lean como parte de lo que ella dijo. */
+.chat-ask { display: flex; flex-direction: column; gap: var(--sp-2); align-items: stretch; }
+.chat-ask__chips { display: flex; flex-direction: column; gap: var(--sp-2); align-items: stretch; padding-left: var(--sp-3); }
+.chat-ask .chat-msg--yo { align-self: flex-end; }
 
 .chat-msg {
   max-width: 85%;

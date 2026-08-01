@@ -11,7 +11,8 @@ import { categoriaPorId } from './categories.js';
 import { construirContexto } from './conciencia.js';
 
 /**
- * @returns {Promise<{contexto:string, nombre:string, apiKey:string, configurado:boolean}>}
+ * @returns {Promise<{contexto:string, nombre:string, apiKey:string, modelo:string,
+ *   creditos:Array<object>, configurado:boolean}>}
  */
 export async function armarContexto() {
   const [movimientos, ingresos, recurrentes, creditos, config] = await Promise.all([
@@ -25,6 +26,10 @@ export async function armarContexto() {
   const mesAct = hist[hist.length - 1] || {};
   const catComp = gastoCategoriasComparado({ movimientos, hoy, top: 5 });
 
+  // Créditos vivos, completos: el contexto solo lleva un resumen, pero el chat
+  // necesita la ficha entera (id, día de pago) para poder vincularle un extracto.
+  const activos = (creditos || []).filter((c) => c && c.activo !== false);
+
   const facts = {
     salario,
     plataDelMes: estado.plataDelMes,
@@ -35,7 +40,7 @@ export async function armarContexto() {
     netoMes: mesAct.neto,
     etiquetaSemaforo: estado.etiqueta,
     topCategorias: (catComp.filas || []).map((f) => ({ label: categoriaPorId(f.categoriaId).label, total: f.actual })),
-    creditos: (creditos || []).filter((c) => c && c.activo).map((c) => ({
+    creditos: activos.map((c) => ({
       entidad: c.entidad, producto: c.producto, cuotaMensual: c.cuotaMensual, saldo: c.saldo, tasaEA: c.tasaEA,
     })),
   };
@@ -43,6 +48,9 @@ export async function armarContexto() {
     contexto: construirContexto(facts),
     nombre: (config && config.nombre) || '',
     apiKey: (config && config.apiKey) || '',
+    modelo: (config && config.modelos && config.modelos.conciencia) || '',
+    modeloExtractos: (config && config.modelos && config.modelos.extractos) || '',
+    creditos: activos,
     configurado: estado.configurado,
   };
 }

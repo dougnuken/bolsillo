@@ -40,6 +40,7 @@ export async function susurrar(mov) {
         categoriaLabel: categoriaPorId(mov.categoria).label,
       },
       apiKey: ctx.apiKey,
+      modelo: ctx.modelo,
     });
   } catch { return; }
   if (!r || r.estado !== 'ok' || !r.texto) return;

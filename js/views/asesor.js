@@ -4,12 +4,27 @@
    Al entrar, la app oculta navbar + header (body[data-route=asesor]),
    así que esto es un espacio íntimo solo con el agente. El cerebro
    (contexto + persona + llamada) vive en conciencia.js.
+
+   ADJUNTOS (núcleo de la vista): un PDF se descifra en el teléfono
+   (pdf.js), se rinde a imágenes y viaja con la pregunta. Tres reglas que
+   se ganaron a golpes:
+     1) el documento queda PEGADO a la conversación — las repreguntas lo
+        siguen viendo (antes se perdía en el primer turno),
+     2) al adjuntarlo, la conciencia PREGUNTA de cuál crédito es: sin eso
+        aconseja a ciegas sobre una deuda que ya tiene registrada,
+     3) si el documento es de un crédito, ofrece actualizar esa ficha con
+        lo que diga el extracto (saldo / tasa / día de pago).
    ============================================================ */
 
-import { aconsejar } from '../conciencia.js';
+import { aconsejar, MAX_PAGINAS_CHAT } from '../conciencia.js';
 import { armarContexto } from '../agente-datos.js';
 import { elegirArchivoPDF, abrirConClave, CANCELADO } from '../pdf-picker.js';
 import { paginasAImagenes } from '../pdf-render.js';
+import { analizarExtractoImagenes } from '../extracto-pdf.js';
+import { put } from '../db.js';
+import { actualizar, tasaEAaMV } from '../model.js';
+import { formatCOP } from '../money.js';
+import { confirmar } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
@@ -29,8 +44,17 @@ const SUGERENCIAS = [
   'Dime la verdad de mi mes',
 ];
 
+const NINGUNO = '__ninguno__';
+
 function burbujaHTML(rol, texto) {
   return `<div class="chat-msg chat-msg--${rol === 'assistant' ? 'ia' : 'yo'}">${esc(texto)}</div>`;
+}
+
+/** Nombre corto de un crédito para chips y etiquetas. PURA. */
+function nombreCredito(c) {
+  if (!c) return '';
+  const producto = (c.producto || c.tipo || '').trim();
+  return [(c.entidad || '').trim(), producto].filter(Boolean).join(' · ') || 'Crédito';
 }
 
 export default {
@@ -75,13 +99,14 @@ export default {
     const form = root.querySelector('#chat-form');
     const input = root.querySelector('#chat-input');
     const back = root.querySelector('#asesor-back');
-    const historial = [];   // {rol, texto}
-    let ctx = null;         // {contexto, nombre, apiKey}
+    const historial = [];   // {rol, texto, imagenes?, credito?, sinCredito?}
+    let ctx = null;         // {contexto, nombre, apiKey, modelo, creditos…}
     let ocupado = false;
 
     if (back) back.addEventListener('click', () => { location.hash = '#/hoy'; });
 
-    armarContexto().then((c) => { ctx = c; }).catch(() => { ctx = null; });
+    const cargarCtx = () => armarContexto().then((c) => { ctx = c; return c; }).catch(() => { ctx = null; return null; });
+    cargarCtx();
 
     // Baja al fondo. Síncrono (leer scrollHeight fuerza el layout) para que
     // funcione aunque rAF esté throttled; + un rAF de respaldo por si el layout
@@ -95,46 +120,174 @@ export default {
       if (suggest && !suggest.hidden) suggest.hidden = true;
       scroll.insertAdjacentHTML('beforeend', burbujaHTML(rol, texto));
       irAlFondo();
+      return scroll.lastElementChild;
     }
 
-    // --- adjunto: un PDF (extracto) → imágenes de sus páginas para que el agente lo lea ---
+    /* ---------- adjunto: un PDF (extracto) → imágenes que el agente lee ---------- */
     const attachBtn = root.querySelector('#chat-attach');
     const adjEl = root.querySelector('#chat-adjunto');
     const adjName = root.querySelector('#chat-adjunto-name');
     const adjX = root.querySelector('#chat-adjunto-x');
-    let adjunto = null; // { imagenes: [{base64, mediaType}] }
+    // { imagenes, nombre, paginas, credito:(obj|null), sinCredito:boolean }
+    let adjunto = null;
+    let bloqueVinculo = null;   // la pregunta "¿de cuál crédito es?" en curso
 
-    const mostrarAdjunto = (nombre) => { if (adjName) adjName.textContent = nombre; if (adjEl) adjEl.hidden = false; };
-    const limpiarAdjunto = () => { adjunto = null; if (adjEl) adjEl.hidden = true; if (adjName) adjName.textContent = ''; };
+    const etiquetaAdjunto = () => {
+      if (!adjunto) return '';
+      const partes = [adjunto.nombre, `${adjunto.paginas} ${adjunto.paginas === 1 ? 'pág.' : 'págs.'}`];
+      if (adjunto.credito) partes.push(nombreCredito(adjunto.credito));
+      else if (adjunto.sinCredito) partes.push('sin crédito');
+      return partes.join(' · ');
+    };
+    const pintarAdjunto = (textoDirecto) => {
+      if (adjName) adjName.textContent = textoDirecto != null ? textoDirecto : etiquetaAdjunto();
+      if (adjEl) adjEl.hidden = false;
+    };
+    const limpiarAdjunto = () => {
+      adjunto = null;
+      if (adjEl) adjEl.hidden = true;
+      if (adjName) adjName.textContent = '';
+      if (bloqueVinculo) { bloqueVinculo.remove(); bloqueVinculo = null; }
+    };
     if (adjX) adjX.addEventListener('click', limpiarAdjunto);
+
+    /* La conciencia pregunta —en el chat, no en un modal— de cuál crédito es el
+       documento. Sin esto el consejo sale desconectado de la deuda real. */
+    function preguntarPorCredito() {
+      const creditos = (ctx && Array.isArray(ctx.creditos) ? ctx.creditos : []);
+      if (!creditos.length) return;   // nada que vincular: no se molesta al usuario
+
+      const chips = creditos.map((c) => `
+        <button class="chat-chip" type="button" data-credito="${esc(c.id)}">${esc(nombreCredito(c))}</button>`).join('')
+        + `<button class="chat-chip" type="button" data-credito="${NINGUNO}">No es de ninguno</button>`;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-ask';
+      wrap.innerHTML =
+        '<div class="chat-msg chat-msg--ia">Antes de leerlo: ¿este documento es de alguno de tus créditos? '
+        + 'Dímelo y cuadro lo que dice el extracto con lo que tengo guardado.</div>'
+        + `<div class="chat-ask__chips">${chips}</div>`;
+      scroll.appendChild(wrap);
+      bloqueVinculo = wrap;
+      if (suggest && !suggest.hidden) suggest.hidden = true;
+      irAlFondo();
+
+      wrap.querySelectorAll('[data-credito]').forEach((b) => {
+        b.addEventListener('click', () => {
+          if (!adjunto) { wrap.remove(); bloqueVinculo = null; return; }
+          const id = b.dataset.credito;
+          if (id === NINGUNO) {
+            adjunto.credito = null;
+            adjunto.sinCredito = true;
+          } else {
+            adjunto.credito = creditos.find((c) => c.id === id) || null;
+            adjunto.sinCredito = false;
+          }
+          wrap.querySelector('.chat-ask__chips').remove();
+          const eco = document.createElement('div');
+          eco.className = 'chat-msg chat-msg--yo';
+          eco.textContent = adjunto.credito ? `Es de ${nombreCredito(adjunto.credito)}` : 'No es de ninguno';
+          wrap.appendChild(eco);
+          bloqueVinculo = null;
+          pintarAdjunto();
+          irAlFondo();
+          input.focus();
+        });
+      });
+    }
 
     if (attachBtn) attachBtn.addEventListener('click', async () => {
       if (ocupado) return;
       const picked = await elegirArchivoPDF();          // SÍNCRONO hasta el picker (iOS)
       if (!picked) return;
       if (picked.error) { toast(picked.error, { icono: false }); return; }
-      mostrarAdjunto('Leyendo PDF…');
+      if (bloqueVinculo) { bloqueVinculo.remove(); bloqueVinculo = null; }
+      pintarAdjunto('Leyendo PDF…');
       let pdfDoc;
       try { pdfDoc = await abrirConClave(picked.bytes); }
       catch (e) { limpiarAdjunto(); if (e !== CANCELADO) toast('No se pudo abrir el PDF', { icono: false }); return; }
       let imagenes = [];
-      try { imagenes = await paginasAImagenes(pdfDoc); }
+      try { imagenes = await paginasAImagenes(pdfDoc, { maxPag: MAX_PAGINAS_CHAT }); }
       catch { limpiarAdjunto(); toast('No se pudo procesar el PDF', { icono: false }); return; }
       if (!imagenes.length) { limpiarAdjunto(); toast('El PDF no tiene páginas legibles', { icono: false }); return; }
-      adjunto = { imagenes: imagenes.slice(0, 6) };     // tope de páginas (control de tokens)
-      mostrarAdjunto('Documento adjunto');
+
+      adjunto = { imagenes, nombre: 'Documento', paginas: imagenes.length, credito: null, sinCredito: false };
+      pintarAdjunto();
+      if (!ctx) await cargarCtx();
+      preguntarPorCredito();
       input.focus();
     });
 
+    /* ---------- actualizar el crédito con lo que diga el extracto ---------- */
+    async function actualizarCreditoDesde(credito, imagenes, boton) {
+      if (!ctx || !ctx.apiKey) { toast('Necesitas tu clave de Anthropic', { icono: false }); return; }
+      const original = boton.textContent;
+      boton.disabled = true;
+      boton.textContent = 'Leyendo el extracto…';
+
+      const r = await analizarExtractoImagenes({
+        imagenes, apiKey: ctx.apiKey, modelo: ctx.modeloExtractos || undefined,
+      });
+      boton.disabled = false;
+      boton.textContent = original;
+
+      if (r.estado !== 'ok') { toast(r.mensaje || 'No pude leer el extracto', { icono: false, ms: 3200 }); return; }
+
+      const campos = {};
+      const cambios = [];
+      if (r.saldo != null && r.saldo !== credito.saldo) {
+        campos.saldo = r.saldo;
+        cambios.push(`Saldo: ${credito.saldo != null ? formatCOP(credito.saldo) : '—'} → ${formatCOP(r.saldo)}`);
+      }
+      if (r.tasaAnual != null && r.tasaAnual !== credito.tasaEA) {
+        campos.tasaEA = r.tasaAnual;
+        campos.tasaMV = tasaEAaMV(r.tasaAnual);
+        cambios.push(`Tasa: ${credito.tasaEA != null ? credito.tasaEA + '% EA' : '—'} → ${r.tasaAnual}% EA`);
+      }
+      if (r.limite != null && r.limite !== credito.diaPago) {
+        campos.diaPago = r.limite;
+        cambios.push(`Día de pago: ${credito.diaPago != null ? credito.diaPago : '—'} → ${r.limite}`);
+      }
+      if (!cambios.length) { toast('El extracto no cambia nada de ese crédito'); return; }
+
+      const ok = await confirmar({
+        title: `Actualizar ${nombreCredito(credito)}`,
+        text: cambios.join(' · '),
+        okText: 'Actualizar',
+      });
+      if (!ok) return;
+
+      try {
+        const guardado = actualizar(credito, campos);
+        await put('creditos', guardado);
+        await cargarCtx();                       // el contexto del chat queda al día
+        Object.assign(credito, campos);          // el chip refleja lo guardado
+        toast('Crédito actualizado');
+        agregar('assistant', `Listo: actualicé ${nombreCredito(credito)} con el extracto. ${cambios.join(' · ')}`);
+      } catch (err) {
+        toast('No se pudo guardar: ' + err.message, { icono: false, ms: 3200 });
+      }
+    }
+
+    function ofrecerActualizar(credito, imagenes) {
+      const wrap = document.createElement('div');
+      wrap.className = 'chat-ask';
+      wrap.innerHTML = `<div class="chat-ask__chips"><button class="chat-chip" type="button">Actualizar ${esc(nombreCredito(credito))} con este extracto</button></div>`;
+      scroll.appendChild(wrap);
+      irAlFondo();
+      const boton = wrap.querySelector('button');
+      boton.addEventListener('click', () => actualizarCreditoDesde(credito, imagenes, boton));
+    }
+
+    /* ---------- enviar ---------- */
     async function preguntar(texto) {
       const q = String(texto || '').trim();
       if ((!q && !adjunto) || ocupado) return;
       ocupado = true;
       input.value = '';
-      const imgs = adjunto ? adjunto.imagenes : null;
-      const teniaAdjunto = !!adjunto;
+      const doc = adjunto;
       limpiarAdjunto();
-      agregar('user', (q || 'Te adjunté un documento.') + (teniaAdjunto ? '  📎' : ''));
+      agregar('user', (q || 'Te adjunté un documento.') + (doc ? '  📎' : ''));
 
       // burbuja "pensando…"
       const pensando = document.createElement('div');
@@ -143,7 +296,7 @@ export default {
       scroll.appendChild(pensando);
       irAlFondo();
 
-      if (!ctx) { try { ctx = await armarContexto(); } catch { ctx = null; } }
+      if (!ctx) await cargarCtx();
 
       let r;
       try {
@@ -152,9 +305,12 @@ export default {
           nombre: ctx ? ctx.nombre : '',
           modo: 'chat',
           pregunta: q,
-          imagenes: imgs,
+          imagenes: doc ? doc.imagenes : null,
+          creditoVinculado: doc ? doc.credito : null,
+          sinCredito: doc ? doc.sinCredito : false,
           historialChat: historial.slice(-8),
           apiKey: ctx ? ctx.apiKey : '',
+          modelo: ctx ? ctx.modelo : '',
         });
       } catch {
         r = { estado: 'error', mensaje: 'Algo falló. Intenta de nuevo.' };
@@ -162,12 +318,25 @@ export default {
       pensando.remove();
 
       if (r.estado === 'ok') {
-        historial.push({ rol: 'user', texto: q || '(documento adjunto)' }, { rol: 'assistant', texto: r.texto });
+        historial.push(
+          {
+            rol: 'user',
+            texto: q || '(documento adjunto)',
+            imagenes: doc ? doc.imagenes : null,
+            credito: doc ? doc.credito : null,
+            sinCredito: doc ? doc.sinCredito : false,
+          },
+          { rol: 'assistant', texto: r.texto },
+        );
         agregar('assistant', r.texto);
-      } else if (r.estado === 'sin-clave') {
-        agregar('assistant', 'Necesito tu clave de Anthropic para hablarte con datos. Actívala en Perfil → Conexión con IA.');
+        if (doc && doc.credito) ofrecerActualizar(doc.credito, doc.imagenes);
       } else {
-        agregar('assistant', r.mensaje || 'No pude responder. Intenta de nuevo.');
+        agregar('assistant', r.estado === 'sin-clave'
+          ? 'Necesito tu clave de Anthropic para hablarte con datos. Actívala en Perfil → Clave de Anthropic.'
+          : (r.mensaje || 'No pude responder. Intenta de nuevo.'));
+        // Falló: el adjunto vuelve al campo. Volver a escoger y descifrar un PDF
+        // de 6 páginas por un error de red sería un castigo inmerecido.
+        if (doc) { adjunto = doc; pintarAdjunto(); }
       }
       ocupado = false;
       input.focus();

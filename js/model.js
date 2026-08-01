@@ -409,7 +409,14 @@ export function configDefault() {
     // Orden personalizado del catálogo: [id, id, …].
     categoriasOrden: Object.freeze([]),
     apiKey: null,
-    modelos: Object.freeze({ vision: 'claude-haiku-4-5', extractos: 'claude-sonnet-4-5', voz: 'claude-haiku-4-5-20251001' }),
+    modelos: Object.freeze({
+      vision: 'claude-haiku-4-5',
+      extractos: 'claude-sonnet-4-5',
+      voz: 'claude-haiku-4-5-20251001',
+      // El chat/susurro de conciencia. Arranca en el mismo modelo que ya lee
+      // extractos: si la clave sirve para eso, el chat responde seguro.
+      conciencia: 'claude-sonnet-4-5',
+    }),
     tema: 'dark',
     fechaUltimoBackup: null,
     onboardingCompletado: false,

@@ -21,6 +21,7 @@ import { hojaNav, cabecera, bindCabecera, notaCfg } from './cfg-sheet.js';
 const USOS = [
   { campo: 'vision', label: 'Fotos de recibos', hint: 'Lee el monto y el comercio de una foto.' },
   { campo: 'extractos', label: 'Extractos en PDF', hint: 'Extrae los movimientos de un extracto bancario.' },
+  { campo: 'conciencia', label: 'Tu conciencia (chat)', hint: 'El agente que te habla crudo y lee los documentos que le adjuntas.' },
 ];
 
 /**
@@ -49,7 +50,7 @@ export async function abrirApiKey({ onSaved } = {}) {
       const opciones = (campo) => {
         const actual = (config.modelos && config.modelos[campo]) || '';
         if (!modelosDisponibles.length) {
-          return `<option value="${esc(actual)}" selected>${esc(actual || 'Sin definir')}</option>`;
+          return `<option value="${esc(actual)}" selected>${esc(actual || 'Predeterminado')}</option>`;
         }
         const hay = modelosDisponibles.some((m) => m.id === actual);
         return (hay ? '' : `<option value="${esc(actual)}" selected>${esc(actual)} (guardado)</option>`)
@@ -94,7 +95,7 @@ export async function abrirApiKey({ onSaved } = {}) {
         : '';
 
       const html = `
-        ${cabecera('Clave de Anthropic', { sub: 'Necesaria para leer recibos por foto y extractos en PDF.' })}
+        ${cabecera('Clave de Anthropic', { sub: 'Necesaria para el chat de tu conciencia, las fotos de recibos y los extractos en PDF.' })}
         ${notaCfg('Tu clave vive <strong>solo en este dispositivo</strong>. Nunca sale en los respaldos ni se envía a ningún otro servidor: se usa directo contra la API de Anthropic.')}
         ${bloqueClave}
         ${mensaje}
