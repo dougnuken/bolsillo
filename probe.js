@@ -10,7 +10,7 @@
 
   const caja = document.createElement('div');
   caja.className = 'probe-panel';
-  caja.innerHTML = '<b>C · copia de la app</b><pre id="probe-out">midiendo…</pre>';
+  caja.innerHTML = '<b>' + (document.title || 'sonda') + '</b><pre id="probe-out">midiendo…</pre>';
   const medidor = document.createElement('div');
   medidor.className = 'probe-lvh';
   document.body.appendChild(medidor);
