@@ -1,7 +1,0 @@
-.probe-panel { position: fixed; left: 8px; right: 8px; top: 90px; z-index: 99999;
-  background: rgba(0,0,0,.9); color: #0F0; border: 2px solid #0F0; border-radius: 8px;
-  padding: 10px 12px; font: 700 13px/1.35 ui-monospace, Menlo, monospace; pointer-events: none; }
-.probe-panel b { color: #FF0; display: block; margin-bottom: 6px }
-.probe-panel pre { margin: 0; white-space: pre; font: inherit; color: #0F0 }
-.probe-lvh { position: fixed; top: 0; left: 0; width: 1px; visibility: hidden; pointer-events: none; }
-.probe-lvh.is-svh { height: 100svh } .probe-lvh.is-lvh { height: 100lvh } .probe-lvh.is-dvh { height: 100dvh }

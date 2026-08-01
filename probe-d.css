@@ -1,5 +1,0 @@
-/* D — anula el bloqueo de propagación del overscroll. En iOS, que el gesto NO
-   se propague al documento puede impedir que el sistema retraiga el chrome que
-   nos come 62pt. La sonda B, que no llevaba overscroll-behavior, midió 956. */
-.app-shell { overscroll-behavior-y: auto !important; }
-.view { overscroll-behavior-y: auto !important; }
