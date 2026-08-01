@@ -641,6 +641,7 @@ function bind() {
   sheetRef.querySelectorAll('[data-metodo]').forEach((b) => {
     b.addEventListener('click', () => {
       const metodo = b.dataset.metodo;
+      recordarMetodo(metodo); // agilidad: la próxima vez abre directo en este método
       if (metodo === 'foto') { abrirCamara(); return; }
       if (metodo === 'voz') { abrirVoz(); return; }
       STATE.modo = metodo;
@@ -1220,6 +1221,59 @@ async function abrir(mov = null, tipoInicial = 'gasto') {
   paint();
 }
 
+/** Recuerda el ÚLTIMO método de captura de gasto (persistido) para que la
+ *  próxima vez la app abra directo ahí. Silencioso si no cambia. */
+function recordarMetodo(metodo) {
+  const validos = ['teclado', 'texto', 'voz', 'foto'];
+  if (!validos.includes(metodo)) return;
+  if (cfg && cfg.metodoGasto === metodo) return;
+  if (cfg) cfg = { ...cfg, metodoGasto: metodo };
+  saveConfig({ metodoGasto: metodo }).catch(() => { /* noop */ });
+}
+
+/** Refresca cfg/fuentes/recurrentes en segundo plano (sin bloquear el gesto del
+ *  toque). El open síncrono usa lo ya cargado en el mount; esto deja todo fresco
+ *  para la próxima. */
+function refrescarEnFondo() {
+  getConfig().then((c) => { if (c) cfg = c; }).catch(() => { /* noop */ });
+  cargarFuentes();
+}
+
+/** Apertura SÍNCRONA de un gasto nuevo en el ÚLTIMO método usado (agilidad).
+ *  Síncrona a propósito: preserva el gesto del toque para que voz/foto puedan
+ *  pedir micrófono/cámara en iOS. Sin preferencia → pantalla de métodos. */
+function abrirGasto() {
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  const pref = (cfg && cfg.metodoGasto) || null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  if (pref === 'voz') { draftPend = null; abrirVoz(); return; }
+  if (pref === 'foto') { draftPend = null; abrirCamara(); return; }
+  if (pref === 'teclado' || pref === 'texto') {
+    draftPend = loadDraft();
+    STATE.modo = pref; STATE.fuente = 'manual'; STATE.metodoElegido = true;
+    STATE.screen = 'form'; STATE.keypad = (pref === 'teclado');
+    paint();
+    return;
+  }
+  draftPend = loadDraft();
+  paint(); // sin preferencia → pantalla de métodos (screen='metodos' de fresh())
+}
+
+/** Atajo de VOZ directa (long-press del +): abre y arranca el dictado en el
+ *  mismo gesto, sin pasar por la selección de método. */
+function dictarRapido() {
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  draftPend = null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  abrirVoz(); // arranca el micrófono dentro del gesto
+}
+
 function cerrar() {
   detenerReconocimiento();
   STATE.vozEscuchando = false;
@@ -1240,5 +1294,7 @@ export default {
     bind();
   },
   abrir,
+  abrirGasto,   // apertura síncrona en el último método (burbuja de gasto)
+  dictarRapido, // atajo de voz directa (long-press del +)
   cerrar,
 };

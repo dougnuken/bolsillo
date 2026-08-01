@@ -247,6 +247,11 @@
               bottom var(--dur) var(--ease-in-out), border-radius var(--dur) var(--ease),
               background-position var(--dur) var(--ease);
   will-change: transform, background-position;
+  /* long-press del + (atajo de voz): sin menú de selección ni retardos de toque */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 .fab:hover { filter: brightness(1.06); }
 .fab:active { transform: translateX(-50%) scale(0.93); }

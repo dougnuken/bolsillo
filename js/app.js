@@ -219,6 +219,7 @@ function initSheet() {
   const bGasto = document.getElementById('fab-gasto');
   const bIngreso = document.getElementById('fab-ingreso');
   let radialOpen = false;
+  let fabLongFired = false; // el último gesto del + fue un long-press (→ voz)
 
   const abrirAbanico = () => {
     radialOpen = true;
@@ -235,12 +236,41 @@ function initSheet() {
     fab.setAttribute('aria-label', 'Registrar movimiento');
     [bGasto, bIngreso].forEach((b) => b && b.setAttribute('aria-hidden', 'true'));
   };
-  const elegirTipo = (tipo) => { cerrarAbanico(); registrar.abrir(null, tipo); };
+  const elegirTipo = (tipo) => {
+    cerrarAbanico();
+    // Gasto: apertura síncrona en el ÚLTIMO método usado (agilidad). Ingreso:
+    // directo al formulario de ingreso.
+    if (tipo === 'gasto') registrar.abrirGasto();
+    else registrar.abrir(null, tipo);
+  };
 
-  fab.addEventListener('click', () => (radialOpen ? cerrarAbanico() : abrirAbanico()));
+  fab.addEventListener('click', () => {
+    if (fabLongFired) { fabLongFired = false; return; } // fue long-press → ya abrió voz
+    radialOpen ? cerrarAbanico() : abrirAbanico();
+  });
   if (bGasto) bGasto.addEventListener('click', () => elegirTipo('gasto'));
   if (bIngreso) bIngreso.addEventListener('click', () => elegirTipo('ingreso'));
   if (veil) veil.addEventListener('click', cerrarAbanico);
+
+  // Long-press del + → VOZ directa (atajo de agilidad). Se dispara en pointerup
+  // (dentro del gesto → iOS permite el micrófono) y suprime el click para no
+  // abrir el abanico. Un toque corto sigue abriendo el abanico.
+  const LONGPRESS_MS = 450;
+  let pressAt = 0, pressX = 0, pressY = 0, pressMoved = false;
+  fab.addEventListener('pointerdown', (e) => {
+    pressAt = e.timeStamp; pressX = e.clientX; pressY = e.clientY; pressMoved = false; fabLongFired = false;
+  });
+  fab.addEventListener('pointermove', (e) => {
+    if (Math.hypot(e.clientX - pressX, e.clientY - pressY) > 12) pressMoved = true;
+  });
+  fab.addEventListener('pointerup', (e) => {
+    const held = e.timeStamp - pressAt;
+    if (pressAt && !pressMoved && !radialOpen && held >= LONGPRESS_MS) {
+      fabLongFired = true;       // el click que sigue se ignora
+      registrar.dictarRapido();  // abre y arranca el micrófono en este gesto
+    }
+    pressAt = 0;
+  });
 
   scrim.addEventListener('click', () => registrar.cerrar());
   document.addEventListener('keydown', (e) => {
