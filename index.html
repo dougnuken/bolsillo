@@ -12,16 +12,8 @@
   <meta name="description" content="Bolsillo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=63" />
-  <!-- v63 · PRUEBA: sin theme-color. Medido al píxel sobre la captura nativa,
-       el viewport de la app instalada termina en 894.0pt de una pantalla de
-       956 — 62pt exactos, y esos 62pt no son direccionables (v58 y v59 lo
-       intentaron y el chrome quedó cortado justo en 894). theme-color es la
-       última declaración que puede hacer que iOS trate la barra como OPACA y
-       le reste ese alto a la ventana, en vez de dejar que el contenido pase
-       por debajo como pide black-translucent. Si el viewport pasa a 956, era
-       esto. Si sigue en 894, se descarta y volvemos a poner el token.
-       (background_color se queda: solo pinta la splash de arranque.) -->
+  <link rel="manifest" href="./manifest.webmanifest?v=66" />
+  <meta name="theme-color" content="#0B0B0D" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -40,10 +32,10 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=63" />
-  <link rel="stylesheet" href="./css/base.css?v=63" />
-  <link rel="stylesheet" href="./css/components.css?v=63" />
-  <link rel="stylesheet" href="./css/views.css?v=63" />
+  <link rel="stylesheet" href="./css/tokens.css?v=66" />
+  <link rel="stylesheet" href="./css/base.css?v=66" />
+  <link rel="stylesheet" href="./css/components.css?v=66" />
+  <link rel="stylesheet" href="./css/views.css?v=66" />
 </head>
 <body>
   <div class="app-shell">
@@ -114,6 +106,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=63"></script>
+  <script type="module" src="./js/app.js?v=66"></script>
 </body>
 </html>

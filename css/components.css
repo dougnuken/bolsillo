@@ -177,8 +177,14 @@
      tiene transform/filter/will-change/contain, así que no captura fixed —
      mismo anclaje que ya usan .toast y .vinculo-chip sin problemas. */
   position: fixed;
-  left: max(var(--sp-4), env(safe-area-inset-left));
-  right: max(var(--sp-4), env(safe-area-inset-right));
+  /* v65 — el max() vive DENTRO del token, no aquí. Con `transition: left`
+     declarada, el motor no re-evalúa un max(var(...)) escrito en la propiedad
+     cuando cambia la custom property: se queda con el valor del primer
+     cálculo. Verificado en el pane — `bottom`, que no está en la transición,
+     sí se actualizaba; `left`/`right`, que sí lo están, no. Resolviendo el
+     max() en el token, la propiedad recibe un valor ya plano. */
+  left: var(--dock-x);
+  right: var(--dock-x);
   bottom: var(--dock-b);
   z-index: var(--z-nav);
   height: var(--nav-h);
@@ -191,6 +197,24 @@
   backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
   border: 1px solid var(--glass-nav-line);
   box-shadow: var(--sh-nav);
+}
+
+/* v64 — Con franja muerta el dock deja de flotar y se apoya, de borde a borde,
+   como era en la v1. Una píldora flotante necesita ver aire por sus CUATRO
+   lados para leerse bien; aquí debajo hay 62pt de negro que no podemos pintar,
+   así que ese "aire" es un vacío y la píldora se lee suspendida sobre nada.
+   Una barra que llega a los lados y se apoya en el fin de lo pintable se lee
+   como el BORDE de la app, y el negro de abajo pasa por bisel del teléfono.
+   No recupera un solo píxel —eso no depende de nosotros— pero deja de exhibir
+   lo que falta. Solo se aplica donde hay déficit: en un equipo cuyo viewport
+   sí llega al borde, la píldora flotante se mantiene. */
+html[data-vp-corto="1"] .tabbar {
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  padding-left: max(0px, env(safe-area-inset-left));
+  padding-right: max(0px, env(safe-area-inset-right));
 }
 
 .tab {
@@ -378,8 +402,8 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 body.nav-min .tabbar--4 {
   height: var(--nav-h-min);
   /* se angosta un poco desde los lados (recorrido corto = movimiento sutil) */
-  left: max(10%, env(safe-area-inset-left));
-  right: max(10%, env(safe-area-inset-right));
+  left: var(--dock-x-min);
+  right: var(--dock-x-min);
 }
 body.nav-min .tab__label { opacity: 0; max-height: 0; }
 /* la barrita naranja del activo también encoge */

@@ -297,6 +297,13 @@
      aparte en --view-b. */
   --dock-gap: var(--sp-4);
   --dock-b: var(--dock-gap);
+  /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
+     estaba escrito dentro del max() de .tabbar) para que la variante
+     edge-to-edge de viewport corto se active desde la cascada de <html>, sin
+     pelear especificidad contra `body.nav-min .tabbar--4`. --dock-x-min es el
+     mismo margen cuando el nav está colapsado por scroll, que se angosta más. */
+  --dock-x: max(var(--sp-4), env(safe-area-inset-left));
+  --dock-x-min: max(10%, env(safe-area-inset-left));
 
   /* Reserva inferior del CONTENIDO (padding-bottom de .view). FUENTE ÚNICA:
      antes se declaraba a mano en base.css Y en views.css con la fórmula
@@ -375,6 +382,10 @@
    22, --view-b pasa de 84 a 72 y .nav-blur encoge con él. */
 html[data-vp-corto="1"] {
   --dock-gap: 0px;
+  /* v64 — y sin margen lateral: el dock deja de ser píldora y se apoya de
+     borde a borde. Ver la nota larga junto a la regla de .tabbar. */
+  --dock-x: 0px;
+  --dock-x-min: 0px;
 }
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
