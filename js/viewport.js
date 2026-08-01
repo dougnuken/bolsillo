@@ -199,6 +199,17 @@ export function iniciarViewport() {
   // un ajuste invisible al que culpar en la próxima sesión de depuración.
   try { localStorage.removeItem(CLAVE_BORDE); } catch { /* modo privado */ }
 
+  // v69 — El empujón que suelta los 62pt. Con la holgura de 1px de base.css el
+  // documento es scrolleable; desplazarlo esa pizca es lo que hace que iOS
+  // entregue el viewport GRANDE (los 956 que `lvh` reporta siempre) en vez del
+  // pequeño (894) con el que arranca. Sin scroll disponible, iOS no lo suelta:
+  // por eso las sondas de HTML mínimo medían 956 desde el primer frame y la app
+  // se quedaba en 894. Invisible: .app-shell es fixed y no se mueve con esto.
+  // Se repite tras el load porque iOS reajusta el viewport después del primer
+  // layout en la app instalada, y ahí el scroll se pierde.
+  const soltarViewport = () => { try { window.scrollTo(0, 1); } catch { /* nada */ } };
+  soltarViewport();
+
   aplicarViewport();
 
   // v60 — Coalescido a un frame. iOS dispara visualViewport.resize DURANTE el
@@ -214,6 +225,11 @@ export function iniciarViewport() {
   window.addEventListener('orientationchange', remedir);
   // iOS ajusta el viewport DESPUÉS del primer layout en la app instalada:
   // una segunda pasada tras el load evita quedarse con la medida temprana.
-  window.addEventListener('load', () => setTimeout(remedir, 200));
+  window.addEventListener('load', () => setTimeout(() => { soltarViewport(); remedir(); }, 200));
   if (window.visualViewport) window.visualViewport.addEventListener('resize', remedir);
+  // Y al volver de segundo plano: iOS reinicia el viewport al pequeño cuando la
+  // app se reanuda, y sin esto el hueco reaparecería justo al abrirla.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) setTimeout(() => { soltarViewport(); remedir(); }, 60);
+  });
 }

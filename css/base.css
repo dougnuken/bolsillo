@@ -43,6 +43,28 @@ html {
 html, body {
   height: 100%;
 }
+
+/* v69 — HOLGURA DE SCROLL DE 1px. Es lo que suelta el viewport grande en iOS.
+   Medido con sondas instaladas en el dispositivo: `lvh` vale 956 SIEMPRE, pero
+   `innerHeight` arranca en 894 y solo sube a 956 cuando hay un scroll de por
+   medio. Las sondas de HTML mínimo arrancaban ya en 956; la app arranca en 894
+   y oscila. La diferencia no era el manifest, ni overscroll-behavior, ni el JS
+   —los tres se descartaron con las sondas A/B/C/D/E—: es que aquí el DOCUMENTO
+   no tiene NADA que scrollear (.app-shell es fixed, así que scrollHeight ==
+   clientHeight) y iOS nunca llega a soltar los 62pt.
+
+   Con 1px de holgura el documento es scrolleable y iOS entrega los 956. No se
+   ve nada: .app-shell es fixed y se pinta encima; ese píxel no desplaza
+   contenido. Y NO toca la arquitectura de scroll —.view sigue siendo el
+   scroller de las vistas—, así que no arrastra los 28 acoplamientos que sí
+   tenía la migración completa que descartamos.
+
+   El dock no necesita cambio alguno: ya es position:fixed con bottom 0, o sea
+   se apoya solo en el borde en cuanto el viewport crece. */
+body {
+  min-height: calc(100% + 1px);
+}
+
 /* iOS pinta el canvas, el overscroll y las safe-areas (incluida la franja del
    home indicator) SOLO con el background-COLOR sólido del root — nunca con un
    background-IMAGE (gradiente). Por eso <html> lleva un color sólido cálido-
