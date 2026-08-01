@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calcularDeficit, DEFICIT_MAX, DEFICIT_MIN } from '../js/viewport.js';
+import { calcularDeficit, calcularGananciaLvh, DEFICIT_MAX, DEFICIT_MIN } from '../js/viewport.js';
 import { veredicto } from '../js/views/cfg-pantalla.js';
 
 /* El caso real medido sobre una captura nativa de iPhone 16 Pro Max
@@ -44,6 +44,41 @@ test('calcularDeficit: nunca devuelve negativo ni NaN con basura', () => {
     assert.equal(Number.isFinite(d), true);
     assert.equal(d >= 0, true);
   }
+});
+
+test('calcularGananciaLvh: si lvh es el viewport grande, recupera la banda entera', () => {
+  // El caso que sospechamos en la PWA de Doug: innerHeight = viewport pequeño
+  // (como si hubiera toolbar), lvh = la pantalla completa.
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 956 }), 62);
+});
+
+test('calcularGananciaLvh: si lvh vale lo mismo, no hay nada que estirar', () => {
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 894 }), 0);
+});
+
+test('calcularGananciaLvh: sin soporte de lvh (0) no rompe ni inventa', () => {
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 0 }), 0);
+  assert.equal(calcularGananciaLvh({}), 0);
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: NaN }), 0);
+});
+
+test('calcularGananciaLvh: respeta el mismo piso y techo de cordura', () => {
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 894 + DEFICIT_MIN - 1 }), 0);
+  assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 894 + DEFICIT_MAX + 1 }), 0);
+});
+
+test('veredicto: si lvh recupera todo, lo canta como resuelto', () => {
+  const v = veredicto({ standalone: true, deficit: 62, ganancia: 62, restante: 0 });
+  assert.equal(v.tipo, 'ok');
+  assert.match(v.titulo, /Recuperados los 62 pt/);
+  assert.match(v.texto, /viewport grande/);
+});
+
+test('veredicto: si lvh recupera solo una parte, dice cuánto falta', () => {
+  const v = veredicto({ standalone: true, deficit: 62, ganancia: 40, restante: 22 });
+  assert.equal(v.tipo, 'warn');
+  assert.match(v.titulo, /40 pt de 62 pt/);
+  assert.match(v.texto, /22 pt/);
 });
 
 test('veredicto: en navegador explica que lo que sobra es Safari, no la app', () => {

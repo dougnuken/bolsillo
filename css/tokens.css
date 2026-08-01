@@ -282,6 +282,10 @@
      valía 62pt —exactamente env(safe-area-inset-top)— y ese hueco NO es
      direccionable desde CSS, por eso hacía falta medirlo. */
   --vp-deficit: 0px;
+  /* Cuánto de esa franja SÍ se recupera estirando el shell a 100lvh (viewport
+     grande). Los elementos fixed anclados abajo —toast, chip— restan este
+     valor para no quedarse flotando donde estaba el borde viejo. */
+  --vp-piso: 0px;
 
   /* Anclaje inferior del CHROME FLOTANTE (dock, FAB, toast).
      Un dock que FLOTA no necesita despejar el home indicator entero: es una
@@ -331,6 +335,21 @@
    Las banderas las pone viewport.js DESPUÉS de medir; el CSS solo reacciona.
    Ver la cabecera de js/viewport.js para la medición que las motiva.
    ============================================================ */
+
+/* iOS le está dando a la PWA el viewport PEQUEÑO (como si tuviera que retraer
+   una toolbar que no existe): `lvh` —el viewport grande— sí llega al borde.
+   Estirar el shell a 100lvh baja con él TODO lo que va anclado dentro: dock,
+   FAB, piso del dock, sheets y scrims. Es la corrección buena, sin offsets
+   negativos ni pintar fuera del viewport.
+   La bandera solo se enciende si viewport.js MIDIÓ que 100lvh > innerHeight
+   Y que había banda muerta; en un navegador de verdad no se activa nunca
+   (ahí esa diferencia es la toolbar real de Safari). */
+html[data-vp-lvh="1"] .app-shell,
+html[data-vp-lvh="1"] body::before,
+html[data-vp-lvh="1"] .ov-scrim {
+  bottom: auto;
+  height: 100lvh;
+}
 
 /* Hay banda muerta: el viewport de la página termina ANTES del borde físico.
    Entonces env(safe-area-inset-bottom) ya no describe una zona de home

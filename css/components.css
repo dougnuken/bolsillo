@@ -1087,7 +1087,9 @@ body.nav-min .fab {
   /* Por ENCIMA del FAB (que cabalga la barra flotante). El FAB corona a
      (nav-h + sp-4 + 30px) desde el borde inferior; sumamos sp-4 de aire para
      que el toast lo despeje con claridad y el FAB siga tappable. */
-  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4));
+  /* -vp-piso: si el shell se estiró a 100lvh, este fixed sigue anclado al
+     viewport viejo; se le resta la ganancia para que no quede flotando. */
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) - var(--vp-piso));
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;
@@ -1195,7 +1197,7 @@ body.nav-min .fab {
   position: fixed;
   left: 50%;
   /* apilado sobre el toast (toast + su alto de una línea + aire) */
-  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) + 66px);
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) + 66px - var(--vp-piso));
   transform: translate(-50%, 0);
   z-index: var(--z-toast);
   width: min(440px, calc(100vw - var(--sp-5)));

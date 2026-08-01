@@ -42,7 +42,7 @@ function dato(etq, valor, { alerta = false } = {}) {
  * @param {{standalone:boolean, deficit:number}} m
  * @returns {{titulo:string, texto:string, tipo:'ok'|'warn'|'err'}}
  */
-export function veredicto({ standalone, deficit } = {}) {
+export function veredicto({ standalone, deficit, ganancia = 0, restante = deficit } = {}) {
   if (!standalone) {
     return {
       titulo: 'Estás en el navegador',
@@ -56,6 +56,22 @@ export function veredicto({ standalone, deficit } = {}) {
       titulo: 'El viewport llega al borde',
       tipo: 'ok',
       texto: 'iOS le está dando a la página toda la pantalla. La barra ya se apoya lo más abajo posible.',
+    };
+  }
+  if (ganancia > 0 && restante <= 0) {
+    return {
+      titulo: `Recuperados los ${pt(ganancia)}`,
+      tipo: 'ok',
+      texto: `iOS le daba a la app el viewport pequeño —${pt(deficit)} de menos, justo el alto de la `
+        + 'barra de Safari— y la app se estiró al viewport grande. La barra ya llega al borde.',
+    };
+  }
+  if (ganancia > 0) {
+    return {
+      titulo: `Recuperados ${pt(ganancia)} de ${pt(deficit)}`,
+      tipo: 'warn',
+      texto: `Estirarse al viewport grande recuperó ${pt(ganancia)}. Quedan ${pt(restante)} `
+        + 'que solo se ganan con el interruptor de abajo.',
     };
   }
   return {
@@ -77,7 +93,8 @@ export function abrirPantalla({ onSaved } = {}) {
       const safe = medirSafeAreas();
       const v = veredicto(m);
       const activo = bordeFisicoActivo();
-      const hayDeficit = m.deficit > 0;
+      // El interruptor solo tiene sentido para lo que `lvh` NO alcanzó a tapar.
+      const hayDeficit = m.restante > 0;
 
       const html = `
         ${cabecera('Pantalla', { sub: 'Cuánta pantalla le da iOS a la app — medido en este equipo.' })}
@@ -87,7 +104,9 @@ export function abrirPantalla({ onSaved } = {}) {
         <div class="vp-datos">
           ${dato('Pantalla del equipo', `${Math.round(m.anchoPantalla)} × ${Math.round(m.alturaPantalla)}`)}
           ${dato('Viewport de la página', `${Math.round(m.anchoPagina)} × ${Math.round(m.alturaPagina)}`)}
-          ${dato('Franja que no alcanzamos', pt(m.deficit), { alerta: hayDeficit })}
+          ${dato('Viewport grande (lvh)', m.lvh ? `${Math.round(m.anchoPagina)} × ${Math.round(m.lvh)}` : 'no soportado')}
+          ${dato('Recuperado estirando a lvh', pt(m.ganancia))}
+          ${dato('Franja que sigue fuera', pt(m.restante), { alerta: hayDeficit })}
           ${dato('Safe area · arriba', pt(safe.top))}
           ${dato('Safe area · abajo', pt(safe.bottom))}
           ${dato('Modo', m.standalone ? 'Instalada' : 'Navegador')}

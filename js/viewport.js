@@ -38,6 +38,31 @@ export const DEFICIT_MIN = 8;
 export const CLAVE_BORDE = 'bolsillo:borde-fisico';
 
 /**
+ * Cuánto de la banda muerta recupera la unidad `lvh`. PURA.
+ *
+ * LA PISTA QUE FALTABA. Doug notó que el hueco de la PWA es EXACTAMENTE del
+ * alto de la barra de Safari: iOS le está dando a la app instalada el viewport
+ * PEQUEÑO, como si hubiera una toolbar que retraer. Y para eso existe una
+ * unidad: `lvh` (large viewport height) = la altura con todo el chrome
+ * retraíble oculto. `dvh` —lo único que se probó antes, y de ahí la nota de
+ * base.css— vale lo mismo que `svh` mientras la toolbar cuente como visible,
+ * así que medía los mismos 894 y parecía confirmar que no había nada que
+ * recuperar. `lvh` es la que puede valer 956.
+ *
+ * @param {{alturaPagina:number, lvh:number}} m
+ * @returns {number} pt que el shell puede estirarse usando 100lvh
+ */
+export function calcularGananciaLvh({ alturaPagina, lvh } = {}) {
+  const pagina = Number(alturaPagina);
+  const grande = Number(lvh);
+  if (!Number.isFinite(pagina) || !Number.isFinite(grande)) return 0;
+  if (pagina <= 0 || grande <= 0) return 0;
+  const g = Math.round(grande - pagina);
+  if (g < DEFICIT_MIN || g > DEFICIT_MAX) return 0;
+  return g;
+}
+
+/**
  * Cuánto le falta al viewport de la página para llegar al borde físico. PURA.
  * @param {{alturaPagina:number, alturaPantalla:number, standalone:boolean}} m
  * @returns {number} pt de banda muerta (0 = el viewport sí llega al borde)
@@ -61,12 +86,27 @@ export function esInstalada() {
   return (mm && mm.matches === true) || window.navigator.standalone === true;
 }
 
+/** Mide 100lvh con una sonda invisible (no hay API para leerlo). IMPURA. */
+export function medirLvh() {
+  if (!(window.CSS && CSS.supports && CSS.supports('height', '100lvh'))) return 0;
+  const sonda = document.createElement('div');
+  // cssText (CSSOM), NO setAttribute('style'): el CSP de index.html declara
+  // style-src 'self' sin 'unsafe-inline', así que el ATRIBUTO style se bloquea
+  // y la sonda medía 0. Por CSSOM sí pasa.
+  sonda.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:100lvh;visibility:hidden;pointer-events:none';
+  document.body.appendChild(sonda);
+  const alto = Math.round(sonda.getBoundingClientRect().height);
+  sonda.remove();
+  return alto;
+}
+
 /** Lee la geometría cruda del entorno. IMPURA. */
 export function leerEntorno() {
   const vv = window.visualViewport;
   return {
     standalone: esInstalada(),
     alturaPagina: window.innerHeight,
+    lvh: medirLvh(),
     anchoPagina: window.innerWidth,
     alturaPantalla: window.screen ? window.screen.height : 0,
     anchoPantalla: window.screen ? window.screen.width : 0,
@@ -82,12 +122,11 @@ export function leerEntorno() {
  */
 export function medirSafeAreas() {
   const sonda = document.createElement('div');
-  sonda.setAttribute(
-    'style',
-    'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;'
+  // Igual que en medirLvh: por CSSOM, nunca por el atributo style (el CSP lo
+  // bloquea y los cuatro insets salían 0 — se vio en la propia hoja).
+  sonda.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;'
     + 'padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);'
-    + 'padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);',
-  );
+    + 'padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);';
   document.body.appendChild(sonda);
   const cs = getComputedStyle(sonda);
   const n = (v) => Math.round(parseFloat(v) || 0);
@@ -117,11 +156,19 @@ export function setBordeFisico(activo) {
 export function aplicarViewport() {
   const env = leerEntorno();
   const deficit = calcularDeficit(env);
+  // `lvh` solo se usa cuando hay banda muerta que justifique estirarse: en un
+  // navegador normal la diferencia lvh/innerHeight es la toolbar de verdad y
+  // crecer hasta ahí metería el shell DEBAJO del chrome de Safari.
+  const ganancia = deficit > 0 ? Math.min(calcularGananciaLvh(env), deficit) : 0;
+  const restante = Math.max(0, deficit - ganancia);
+
   const raiz = document.documentElement;
-  raiz.style.setProperty('--vp-deficit', deficit + 'px');
+  raiz.style.setProperty('--vp-deficit', restante + 'px');
+  raiz.style.setProperty('--vp-piso', ganancia + 'px');
+  raiz.dataset.vpLvh = ganancia > 0 ? '1' : '0';
   raiz.dataset.vpCorto = deficit > 0 ? '1' : '0';
-  raiz.dataset.vpBorde = deficit > 0 && bordeFisicoActivo() ? '1' : '0';
-  return { ...env, deficit, bordeFisico: bordeFisicoActivo() };
+  raiz.dataset.vpBorde = restante > 0 && bordeFisicoActivo() ? '1' : '0';
+  return { ...env, deficit, ganancia, restante, bordeFisico: bordeFisicoActivo() };
 }
 
 /** Arranca la medición y la mantiene al día. Llamar UNA vez, al bootear. */

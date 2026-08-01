@@ -143,7 +143,8 @@ function subPantalla() {
   const m = aplicarViewport();
   if (!m.standalone) return 'Abre la app instalada para medirla bien';
   if (m.deficit <= 0) return 'La barra usa toda la pantalla';
-  return `iOS te quita ${Math.round(m.deficit)} pt abajo${m.bordeFisico ? ' · corrección activa' : ''}`;
+  if (m.restante <= 0) return `Recuperados ${Math.round(m.ganancia)} pt · la barra llega al borde`;
+  return `iOS te quita ${Math.round(m.restante)} pt abajo${m.bordeFisico ? ' · corrección activa' : ''}`;
 }
 
 export default {
