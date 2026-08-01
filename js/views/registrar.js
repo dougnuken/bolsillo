@@ -9,13 +9,15 @@
    Sin estilos inline (CSP style-src 'self').
    ============================================================ */
 
-import { get, put, getConfig, saveConfig, getAll } from '../db.js';
+import { get, put, getConfig, saveConfig, getAll, query } from '../db.js';
 import {
   crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga, crearIngreso,
 } from '../model.js';
 import { formatCOP } from '../money.js';
 import { catalogoVisible, categoriaPorId } from '../categories.js';
-import { parseTextoLibre } from '../categorize.js';
+import { parseTextoLibre, adivinarCategoria } from '../categorize.js';
+import { parseSMS } from '../sms-banco.js';
+import { hoja } from '../overlay.js';
 import { analizarRecibo, MODELO_FOTO_DEFAULT } from '../foto-gasto.js';
 import { interpretarVoz, MODELO_VOZ_DEFAULT, UMBRAL_CONFIANZA } from '../voz-gasto.js';
 import { sugerirFijo } from '../reconciliacion.js';
@@ -38,6 +40,7 @@ let recogHandled = false;      // single-flight: el resultado se procesa una sol
 
 /* ---- iconos ---- */
 const IC = {
+  sms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L3 21l1.6-4.6A8.2 8.2 0 0 1 3.6 11.5 8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z"/><path d="M8.5 11.5h7M8.5 8.5h4"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
   del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m13 9 4 6M17 9l-4 6"/></svg>',
@@ -67,6 +70,7 @@ function fresh() {
     metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
     vozTexto: '', vozConfianzaBaja: false, // captura por voz (se resalta si la IA dudó)
     vozEscuchando: false, // dictado por micrófono en curso (SpeechRecognition)
+    dedupKey: null,           // huella del SMS del banco (evita registrarlo dos veces)
     recurrenteSugerido: null, // fijo que la app reconoció (para vincular al guardar)
     fijoTocadoManual: false,  // el usuario movió el switch a mano → no lo autoseteamos
   };
@@ -200,6 +204,14 @@ function renderMetodos() {
         <span class="capture-opt__icon">${IC.text}</span>
         <span class="capture-opt__name">Texto libre</span>
         <span class="capture-opt__desc">"Pagué 50k de mercado"</span>
+      </button>
+      <button class="capture-opt capture-opt--wide" type="button" data-metodo="sms">
+        <span class="capture-opt__icon">${IC.sms}</span>
+        <span class="capture-opt__body">
+          <span class="capture-opt__name">SMS del banco</span>
+          <span class="capture-opt__desc">Copia la notificación de Occidente y la leo exacta</span>
+        </span>
+        <span class="capture-opt__go" aria-hidden="true">${IC.chev}</span>
       </button>
       <button class="capture-opt capture-opt--wide" type="button" data-metodo="voz">
         <span class="capture-opt__icon">${IC.mic}</span>
@@ -643,6 +655,7 @@ function bind() {
       const metodo = b.dataset.metodo;
       recordarMetodo(metodo); // agilidad: la próxima vez abre directo en este método
       if (metodo === 'foto') { abrirCamara(); return; }
+      if (metodo === 'sms') { abrirSMS(); return; }
       if (metodo === 'voz') { abrirVoz(); return; }
       STATE.modo = metodo;
       STATE.tipo = 'gasto';
@@ -727,6 +740,119 @@ function interpretarTexto(valor) {
   const ci = sheetRef.querySelector('#reg-detalle');
   if (ci) ci.value = STATE.comercio;
   scheduleSave();
+}
+
+/* ============================================================
+   SMS del banco → parser exacto → prellenar el formulario
+   iOS no deja que NINGUNA web lea Mensajes (no existe API), así que el
+   usuario trae el texto: del portapapeles con un toque, o pegándolo. El
+   parser es determinista (sms-banco.js): ni gasta clave ni puede alucinar
+   un monto. Mismo camino que usa el Atajo de iOS por #/registrar?sms=…
+   ============================================================ */
+
+/** Busca una cuenta cuyo nombre contenga los 4 dígitos de la tarjeta. PURA-ish. */
+function cuentaPorTarjeta(tarjeta) {
+  if (!tarjeta || !cfg || !Array.isArray(cfg.cuentas)) return '';
+  return cfg.cuentas.find((c) => typeof c === 'string' && c.includes(tarjeta)) || '';
+}
+
+/** ¿Ya se registró este SMS? Consulta el índice dedupKey. */
+async function yaRegistrado(dedupKey) {
+  if (!dedupKey) return false;
+  try {
+    const previos = await query('movimientos', 'dedupKey', IDBKeyRange.only(dedupKey));
+    return Array.isArray(previos) && previos.length > 0;
+  } catch { return false; }   // sin índice disponible, mejor dejar seguir
+}
+
+/** Vuelca un SMS ya parseado en el formulario, listo para confirmar. */
+function aplicarSMS(r) {
+  STATE.modo = 'texto';
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'manual';        // 'manual' es la única fuente válida del modelo
+  STATE.metodoElegido = true;
+  STATE.screen = 'form';
+  STATE.keypad = false;
+  STATE.montoStr = String(r.monto);
+  STATE.comercio = r.comercio;
+  if (r.fecha) STATE.fecha = r.fecha;
+  STATE.dedupKey = r.dedupKey;
+  const cta = cuentaPorTarjeta(r.tarjeta);
+  if (cta) STATE.cuenta = cta;
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  // Categoría: se reusa el mismo adivinador del texto libre, que ya aprende
+  // de lo que el usuario corrige. Si no acierta, el formulario la pide.
+  const cat = adivinarCategoria(r.comercio, cfg || {});
+  if (cat) STATE.categoriaId = cat;
+  detectarFijo();
+  syncCategoria();
+  paint();
+}
+
+/** Hoja de respaldo: pegar el SMS a mano (si el portapapeles no da permiso). */
+function pedirSMS() {
+  const html = `
+    <div class="ov-grip" aria-hidden="true"></div>
+    <h3 class="ov-title">Pega el SMS del banco</h3>
+    <p class="ov-text">Mantén pulsada la notificación en Mensajes, cópiala y pégala aquí.</p>
+    <label class="field">
+      <span class="field__label">Texto del mensaje</span>
+      <textarea class="field__input" id="sms-txt" rows="4"
+        placeholder="Banco Occidente informa que realizo Compra por…"></textarea>
+    </label>
+    <div class="ov-actions">
+      <button type="button" class="btn btn--ghost btn--block" data-ov="cancel">Cancelar</button>
+      <button type="button" class="btn btn--primary btn--block" data-ov="ok">Leer</button>
+    </div>`;
+  return hoja(html, (panel, cerrar) => {
+    const ta = panel.querySelector('#sms-txt');
+    requestAnimationFrame(() => ta && ta.focus());
+    panel.querySelector('[data-ov="ok"]').addEventListener('click', () => cerrar((ta.value || '').trim()));
+    panel.querySelector('[data-ov="cancel"]').addEventListener('click', () => cerrar(null));
+  });
+}
+
+/**
+ * Entrada del método "SMS del banco". Intenta el portapapeles (un toque) y,
+ * si iOS lo niega o no hay nada legible, cae a la hoja de pegar.
+ */
+async function abrirSMS() {
+  let texto = '';
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) texto = await navigator.clipboard.readText();
+  } catch { texto = ''; }        // permiso denegado: no es un error, es el otro camino
+
+  let r = texto ? parseSMS(texto) : null;
+  if (!r) {
+    const pegado = await pedirSMS();
+    if (pegado == null) return;                       // canceló
+    r = parseSMS(pegado);
+    if (!r) { toast('No reconocí ese mensaje como una compra', { icono: false, ms: 3200 }); return; }
+  }
+
+  if (await yaRegistrado(r.dedupKey)) {
+    toast('Esa compra ya está registrada', { icono: false, ms: 3000 });
+    return;
+  }
+  aplicarSMS(r);
+}
+
+/**
+ * Abre Registrar con un SMS ya traído de fuera (Atajo de iOS →
+ * #/registrar?sms=…). Público: lo llama app.js al arrancar.
+ * @param {string} texto  el SMS crudo
+ */
+async function abrirDesdeSMS(texto) {
+  const r = parseSMS(texto);
+  if (!r) { toast('No reconocí ese mensaje como una compra', { icono: false, ms: 3200 }); return; }
+  if (await yaRegistrado(r.dedupKey)) { toast('Esa compra ya está registrada', { icono: false, ms: 3000 }); return; }
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  draftPend = null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  aplicarSMS(r);
 }
 
 /* ============================================================
@@ -1168,7 +1294,7 @@ async function guardar() {
       const mov = crearMovimiento({
         monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
         cuenta, fecha: STATE.fecha, fuente: STATE.fuente, esFijo: STATE.esFijo, notas: STATE.notas.trim(),
-        cuotas, recurrenteId,
+        cuotas, recurrenteId, dedupKey: STATE.dedupKey,
       }, { config: cfg || undefined });
       await put('movimientos', mov);
       guardado = mov;
@@ -1295,6 +1421,7 @@ export default {
   },
   abrir,
   abrirGasto,   // apertura síncrona en el último método (burbuja de gasto)
+  abrirDesdeSMS, // deep link del Atajo de iOS: #/registrar?sms=…
   dictarRapido, // atajo de voz directa (long-press del +)
   cerrar,
 };

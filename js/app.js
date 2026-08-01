@@ -26,6 +26,7 @@ import { parseCOP, formatCOP } from './money.js';
 import { bindMontosVivos } from './money-input.js';
 import { hoja } from './overlay.js';
 import { iniciarViewport } from './viewport.js';
+import { smsDelHash } from './sms-banco.js';
 import { esc } from './html.js';
 
 const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
@@ -50,7 +51,7 @@ let currentRoute = null;
 
 /* ---- routing ---- */
 function routeFromHash() {
-  const raw = (location.hash || '').replace(/^#\/?/, '').trim();
+  const raw = (location.hash || '').replace(/^#\/?/, '').split('?')[0].trim();
   return ROUTES[raw] ? raw : DEFAULT_ROUTE;
 }
 
@@ -606,13 +607,24 @@ function boot() {
     correrRecurrentes().catch((err) => console.warn('[Bolsillo] recurrentes:', err));
   });
 
+  // Deep link del Atajo de iOS: #/registrar?sms=<texto codificado>. iOS no deja
+  // que ninguna web lea Mensajes, así que el Atajo trae el SMS por la URL.
+  // Se LEE y se LIMPIA el hash ya (para que un refresco no lo repita), pero la
+  // hoja se abre al final: durante el arranque hay repintados de ruta que la
+  // cerrarían, y además así `cfg` ya está cargada y puede acertar cuenta y
+  // categoría.
+  const smsInicial = smsDelHash(location.hash);
+  if (smsInicial) history.replaceState(null, '', location.pathname + location.search + '#/hoy');
+
   const start = routeFromHash();
   navigate(start, { replace: true });
 
   registerSW();
 
   // datos (async, no bloquea el primer render)
-  initData().catch((err) => console.warn('[Bolsillo] initData falló:', err));
+  initData()
+    .catch((err) => console.warn('[Bolsillo] initData falló:', err))
+    .finally(() => { if (smsInicial) registrar.abrirDesdeSMS(smsInicial); });
 }
 
 boot();
