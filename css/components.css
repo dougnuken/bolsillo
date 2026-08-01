@@ -170,7 +170,13 @@
    ============================================================ */
 .tabbar {
   /* Vidrio flotante tipo iPhone: pill separada ~16px de los bordes */
-  position: absolute;
+  /* v60 — FIXED, no absolute. Con absolute el bloque contenedor era .app-shell,
+     así que cualquier cosa que cambiara SU altura se llevaba el dock consigo
+     (v59 lo estiró a 100lvh y el dock quedó con 2px de 52 visibles). Anclado al
+     viewport, el dock está en cuadro mida lo que mida el shell. .app-shell no
+     tiene transform/filter/will-change/contain, así que no captura fixed —
+     mismo anclaje que ya usan .toast y .vinculo-chip sin problemas. */
+  position: fixed;
   left: max(var(--sp-4), env(safe-area-inset-left));
   right: max(var(--sp-4), env(safe-area-inset-right));
   bottom: var(--dock-b);
@@ -224,7 +230,7 @@
 
 /* FAB central elevado */
 .fab {
-  position: absolute;
+  position: fixed;                                 /* v60 — ver nota en .tabbar */
   z-index: var(--z-fab);
   left: 50%;
   /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
@@ -291,7 +297,7 @@ body[data-fab="open"] .fab svg {
 
 /* Burbujas: mismo ancla que el FAB; en reposo, encogidas en el centro. */
 .fab-bubble {
-  position: absolute;
+  position: fixed;                                 /* v60 — mismo ancla que .fab */
   z-index: 49;                                     /* justo debajo del FAB (50) */
   left: 50%;
   bottom: calc(var(--dock-b) + var(--nav-h) - 30px);
@@ -424,7 +430,7 @@ body.nav-min .fab {
    pasando por detrás, que es su función original (la v14 la perdió al quitarle
    el backdrop-filter, que en iOS teñía el safe-area). */
 .nav-blur {
-  position: absolute;
+  position: fixed;                                 /* v60 — acompaña al dock */
   left: 0;
   right: 0;
   bottom: 0;
@@ -1087,9 +1093,10 @@ body.nav-min .fab {
   /* Por ENCIMA del FAB (que cabalga la barra flotante). El FAB corona a
      (nav-h + sp-4 + 30px) desde el borde inferior; sumamos sp-4 de aire para
      que el toast lo despeje con claridad y el FAB siga tappable. */
-  /* -vp-piso: si el shell se estiró a 100lvh, este fixed sigue anclado al
-     viewport viejo; se le resta la ganancia para que no quede flotando. */
-  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) - var(--vp-piso));
+  /* v60: sin resta de --vp-piso. Existía para compensar que el shell se
+     estirara a 100lvh mientras este fixed seguía en el viewport; ahora el dock
+     también es fixed, así que ambos comparten ancla y la resta descuadraba. */
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4));
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;
@@ -1197,7 +1204,7 @@ body.nav-min .fab {
   position: fixed;
   left: 50%;
   /* apilado sobre el toast (toast + su alto de una línea + aire) */
-  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) + 66px - var(--vp-piso));
+  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4) + 66px);  /* v60: sin --vp-piso */
   transform: translate(-50%, 0);
   z-index: var(--z-toast);
   width: min(440px, calc(100vw - var(--sp-5)));

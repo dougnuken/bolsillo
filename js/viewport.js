@@ -156,14 +156,16 @@ export function setBordeFisico(activo) {
 export function aplicarViewport() {
   const env = leerEntorno();
   const deficit = calcularDeficit(env);
-  // `lvh` solo se usa cuando hay banda muerta que justifique estirarse: en un
-  // navegador normal la diferencia lvh/innerHeight es la toolbar de verdad y
-  // crecer hasta ahí metería el shell DEBAJO del chrome de Safari.
   const ganancia = deficit > 0 ? Math.min(calcularGananciaLvh(env), deficit) : 0;
   const restante = Math.max(0, deficit - ganancia);
 
   const raiz = document.documentElement;
-  raiz.style.setProperty('--vp-deficit', restante + 'px');
+  // v60: publica el déficit REAL, no el restante. Mientras `--vp-deficit` valía
+  // `restante`, la regla verde de diagnóstico (.vp-regla--fisico, anclada a
+  // calc(-1 * var(--vp-deficit))) caía en 0 y se superponía exactamente con la
+  // coral: el instrumento con el que medimos dejó de medir lo que fue diseñado
+  // para medir, y por eso tres versiones se depuraron a ciegas.
+  raiz.style.setProperty('--vp-deficit', deficit + 'px');
   raiz.style.setProperty('--vp-piso', ganancia + 'px');
   raiz.dataset.vpLvh = ganancia > 0 ? '1' : '0';
   raiz.dataset.vpCorto = deficit > 0 ? '1' : '0';
@@ -173,8 +175,27 @@ export function aplicarViewport() {
 
 /** Arranca la medición y la mantiene al día. Llamar UNA vez, al bootear. */
 export function iniciarViewport() {
+  // v60 — Limpieza de estado fantasma. El interruptor "pegar al borde físico"
+  // de v58 vive en localStorage, sobrevive recargas y actualizaciones, y nada
+  // lo reseteaba. Si quedó en '1' de una prueba vieja producía —sin lvh de por
+  // medio— EXACTAMENTE la misma geometría rota (--dock-b negativo): dock con
+  // 2px visibles y FAB partido. Peor: con restante=0 el switch se dibuja
+  // deshabilitado, así que se veía apagado mientras seguía encendido. Su regla
+  // CSS ya no existe (tokens.css), pero se borra la clave para que no quede
+  // un ajuste invisible al que culpar en la próxima sesión de depuración.
+  try { localStorage.removeItem(CLAVE_BORDE); } catch { /* modo privado */ }
+
   aplicarViewport();
-  const remedir = () => aplicarViewport();
+
+  // v60 — Coalescido a un frame. iOS dispara visualViewport.resize DURANTE el
+  // gesto de scroll/rubber-band, con alturas transitorias: sin esto, las
+  // banderas se reescribían a media docena de valores por gesto y el chrome
+  // parpadeaba (el "al hacer swipe se ve el navbar y al soltar desaparece").
+  let pendiente = 0;
+  const remedir = () => {
+    if (pendiente) return;
+    pendiente = requestAnimationFrame(() => { pendiente = 0; aplicarViewport(); });
+  };
   window.addEventListener('resize', remedir);
   window.addEventListener('orientationchange', remedir);
   // iOS ajusta el viewport DESPUÉS del primer layout en la app instalada:

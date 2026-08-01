@@ -67,18 +67,16 @@ test('calcularGananciaLvh: respeta el mismo piso y techo de cordura', () => {
   assert.equal(calcularGananciaLvh({ alturaPagina: 894, lvh: 894 + DEFICIT_MAX + 1 }), 0);
 });
 
-test('veredicto: si lvh recupera todo, lo canta como resuelto', () => {
+// v61 — se retiraron los casos "lvh recuperó N pt". Estirar el shell a 100lvh
+// nunca recuperó nada: solo empujaba el chrome fuera del área que iOS compone.
+// Que `ganancia` valga lo que valga, el veredicto NO puede prometer terreno
+// ganado, porque el déficit es del marco nativo y sigue ahí.
+test('veredicto: aunque lvh ofrezca ganancia, no promete haber recuperado nada', () => {
   const v = veredicto({ standalone: true, deficit: 62, ganancia: 62, restante: 0 });
-  assert.equal(v.tipo, 'ok');
-  assert.match(v.titulo, /Recuperados los 62 pt/);
-  assert.match(v.texto, /viewport grande/);
-});
-
-test('veredicto: si lvh recupera solo una parte, dice cuánto falta', () => {
-  const v = veredicto({ standalone: true, deficit: 62, ganancia: 40, restante: 22 });
   assert.equal(v.tipo, 'warn');
-  assert.match(v.titulo, /40 pt de 62 pt/);
-  assert.match(v.texto, /22 pt/);
+  assert.doesNotMatch(v.titulo, /Recuperad/i);
+  assert.doesNotMatch(v.texto, /interruptor/i);
+  assert.match(v.texto, /62 pt/);
 });
 
 test('veredicto: en navegador explica que lo que sobra es Safari, no la app', () => {
@@ -94,9 +92,11 @@ test('veredicto: sin déficit confirma que la barra ya está lo más abajo posib
   assert.match(v.titulo, /llega al borde/);
 });
 
-test('veredicto: con déficit dice cuántos pt se pierden y qué hacer', () => {
+test('veredicto: con déficit dice cuántos pt se pierden y que no son recuperables', () => {
   const v = veredicto({ standalone: true, deficit: 62 });
-  assert.equal(v.tipo, 'err');
+  assert.equal(v.tipo, 'warn');
   assert.match(v.titulo, /62 pt/);
-  assert.match(v.texto, /interruptor/);
+  // No debe mandar al usuario a tocar un interruptor que ya no existe.
+  assert.doesNotMatch(v.texto, /interruptor/i);
+  assert.match(v.texto, /no hay forma/i);
 });

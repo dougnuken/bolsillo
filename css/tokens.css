@@ -336,20 +336,26 @@
    Ver la cabecera de js/viewport.js para la medición que las motiva.
    ============================================================ */
 
-/* iOS le está dando a la PWA el viewport PEQUEÑO (como si tuviera que retraer
-   una toolbar que no existe): `lvh` —el viewport grande— sí llega al borde.
-   Estirar el shell a 100lvh baja con él TODO lo que va anclado dentro: dock,
-   FAB, piso del dock, sheets y scrims. Es la corrección buena, sin offsets
-   negativos ni pintar fuera del viewport.
-   La bandera solo se enciende si viewport.js MIDIÓ que 100lvh > innerHeight
-   Y que había banda muerta; en un navegador de verdad no se activa nunca
-   (ahí esa diferencia es la toolbar real de Safari). */
-html[data-vp-lvh="1"] .app-shell,
-html[data-vp-lvh="1"] body::before,
-html[data-vp-lvh="1"] .ov-scrim {
-  bottom: auto;
-  height: 100lvh;
-}
+/* v60 — LA BANDA DE 62pt NO ES RECUPERABLE DESDE CSS. Se retiraron aquí los
+   dos mecanismos que intentaron recuperarla, porque ambos ROMPÍAN la app:
+
+   · v58 `html[data-vp-borde="1"]` → --dock-b: calc(--dock-gap - --vp-deficit),
+     o sea un bottom NEGATIVO para "pintar fuera del viewport". No se puede
+     pintar fuera del viewport: lo que queda debajo simplemente no se compone.
+   · v59 `html[data-vp-lvh="1"]` → .app-shell/body::before/.ov-scrim a 100lvh.
+     Estirar el shell NO añade área pintable: solo baja 62pt todo lo que va
+     anclado a su fondo. Medido en dispositivo: la tabbar quedaba con 2px de 52
+     visibles (desaparece), el FAB partido a la mitad, y —lo que el video no
+     mostraba— los .ov-panel de TODOS los overlays con los botones cortados,
+     el .sheet comiéndose contenido real y la .chat-bar del asesor entera fuera.
+
+   La cabecera de js/viewport.js ya lo había concluido en su día y luego se
+   ignoró: "62 de esos 96 pt viven FUERA de lo que el CSS puede direccionar".
+   Ese sigue siendo el hecho. El objetivo NO es recuperar la banda —no se
+   puede— sino que la app no se rompa por intentarlo: el chrome inferior se
+   ancla al viewport REAL con position:fixed (ver components.css) y así queda
+   dentro de cuadro mida lo que mida el shell. Correcto por construcción: no
+   depende de medir nada en runtime, que es justo lo que falló 3 veces. */
 
 /* Hay banda muerta: el viewport de la página termina ANTES del borde físico.
    Entonces env(safe-area-inset-bottom) ya no describe una zona de home
@@ -358,15 +364,6 @@ html[data-vp-lvh="1"] .ov-scrim {
    96 pt muertos. */
 html[data-vp-corto="1"] {
   --dock-gap: var(--sp-3);
-}
-
-/* Modo "pegar la barra al borde físico" (Perfil → Pantalla): el chrome
-   flotante baja el déficit COMPLETO para aterrizar a --dock-gap del borde
-   real. Va detrás de un interruptor a propósito: si iOS recorta lo que se
-   pinta fuera del viewport, el dock quedaría a medias, y así se revierte en
-   un toque desde la misma pantalla que lo enciende. */
-html[data-vp-borde="1"] {
-  --dock-b: calc(var(--dock-gap) - var(--vp-deficit));
 }
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px

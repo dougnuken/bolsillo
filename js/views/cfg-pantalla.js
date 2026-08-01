@@ -1,7 +1,7 @@
 /* ============================================================
    Bolsillo · views/cfg-pantalla.js
-   "Pantalla": mide la geometría real del dispositivo y deja pegar la
-   barra al borde FÍSICO cuando iOS no le da a la página toda la pantalla.
+   "Pantalla": mide la geometría real del dispositivo y la muestra sin
+   adivinar. Es un INSTRUMENTO, no un panel de ajustes.
 
    POR QUÉ EXISTE ESTA HOJA
    El dock quedaba flotando lejos del borde inferior en la PWA instalada.
@@ -12,16 +12,16 @@
    arriba, así que el hueco cae abajo. Ese hueco NO se puede direccionar con
    CSS: por eso doce rondas de ajustes al padding nunca cerraron.
 
-   Aquí se ve el número en el propio teléfono —sin adivinar— y se puede
-   empujar el chrome flotante hacia esa banda. El interruptor existe porque
-   queda una incógnita que solo el dispositivo responde: si iOS RECORTA lo
-   que se pinta fuera del viewport, la barra se vería a medias. Si pasa eso,
-   se apaga aquí mismo y todo vuelve como estaba.
+   v61 — SE QUITÓ EL INTERRUPTOR "pegar la barra al borde físico". Su premisa
+   era que quizá iOS sí pintaba ahí; la respuesta resultó ser no, y encenderlo
+   dejaba el dock con 2 px visibles y el + partido. Vivía en localStorage, o
+   sea sobrevivía a las actualizaciones, y con el déficit ya cubierto se
+   dibujaba deshabilitado: se veía apagado mientras seguía encendido. Un
+   ajuste que solo puede romper y que además miente sobre su estado no es un
+   ajuste. Lo que queda son las medidas y las dos reglas de prueba.
    ============================================================ */
 
-import {
-  aplicarViewport, medirSafeAreas, bordeFisicoActivo, setBordeFisico,
-} from '../viewport.js';
+import { aplicarViewport, medirSafeAreas } from '../viewport.js';
 import { esc } from '../html.js';
 import { hojaNav, cabecera, bindCabecera, notaCfg } from './cfg-sheet.js';
 
@@ -58,27 +58,13 @@ export function veredicto({ standalone, deficit, ganancia = 0, restante = defici
       texto: 'iOS le está dando a la página toda la pantalla. La barra ya se apoya lo más abajo posible.',
     };
   }
-  if (ganancia > 0 && restante <= 0) {
-    return {
-      titulo: `Recuperados los ${pt(ganancia)}`,
-      tipo: 'ok',
-      texto: `iOS le daba a la app el viewport pequeño —${pt(deficit)} de menos, justo el alto de la `
-        + 'barra de Safari— y la app se estiró al viewport grande. La barra ya llega al borde.',
-    };
-  }
-  if (ganancia > 0) {
-    return {
-      titulo: `Recuperados ${pt(ganancia)} de ${pt(deficit)}`,
-      tipo: 'warn',
-      texto: `Estirarse al viewport grande recuperó ${pt(ganancia)}. Quedan ${pt(restante)} `
-        + 'que solo se ganan con el interruptor de abajo.',
-    };
-  }
   return {
     titulo: `iOS te está quitando ${pt(deficit)}`,
-    tipo: 'err',
+    tipo: 'warn',
     texto: `La página termina ${pt(deficit)} antes del borde físico y ahí abajo queda una franja `
-      + 'que la app no puede pintar. Enciende el interruptor para empujar la barra hacia esa franja.',
+      + 'negra que la app no puede pintar. No es un ajuste pendiente: es el marco que iOS le da a '
+      + 'la ventana, y desde la web no hay forma de entrar ahí. Lo que sí está garantizado es que '
+      + 'la barra y el + quedan dentro de lo visible.',
   };
 }
 
@@ -92,9 +78,9 @@ export function abrirPantalla({ onSaved } = {}) {
       const m = aplicarViewport();
       const safe = medirSafeAreas();
       const v = veredicto(m);
-      const activo = bordeFisicoActivo();
-      // El interruptor solo tiene sentido para lo que `lvh` NO alcanzó a tapar.
-      const hayDeficit = m.restante > 0;
+      // v60: el déficit REAL, no lo que quedaba tras una "recuperación" que
+      // nunca ocurrió. De esto dependen las reglas de prueba de abajo.
+      const hayDeficit = m.deficit > 0;
 
       const html = `
         ${cabecera('Pantalla', { sub: 'Cuánta pantalla le da iOS a la app — medido en este equipo.' })}
@@ -105,23 +91,20 @@ export function abrirPantalla({ onSaved } = {}) {
           ${dato('Pantalla del equipo', `${Math.round(m.anchoPantalla)} × ${Math.round(m.alturaPantalla)}`)}
           ${dato('Viewport de la página', `${Math.round(m.anchoPagina)} × ${Math.round(m.alturaPagina)}`)}
           ${dato('Viewport grande (lvh)', m.lvh ? `${Math.round(m.anchoPagina)} × ${Math.round(m.lvh)}` : 'no soportado')}
-          ${dato('Recuperado estirando a lvh', pt(m.ganancia))}
-          ${dato('Franja que sigue fuera', pt(m.restante), { alerta: hayDeficit })}
+          ${dato('Franja fuera del viewport', pt(m.deficit), { alerta: hayDeficit })}
           ${dato('Safe area · arriba', pt(safe.top))}
           ${dato('Safe area · abajo', pt(safe.bottom))}
           ${dato('Modo', m.standalone ? 'Instalada' : 'Navegador')}
         </div>
 
-        <div class="cfg-sep"></div>
-        <label class="field toggle-row">
-          <span class="field__label">Pegar la barra al borde físico</span>
-          <span class="switch${activo ? ' is-on' : ''}" role="switch" aria-checked="${activo}"
-            tabindex="0" data-act="borde"${hayDeficit ? '' : ' aria-disabled="true"'}><span class="switch__dot"></span></span>
-        </label>
-        <p class="cfg-hint">${hayDeficit
-    ? 'Baja la barra y el botón + los ' + esc(pt(m.deficit)) + ' que iOS nos quita. '
-      + 'Míralos mientras lo enciendes: si la barra se ve cortada por abajo, apágalo y queda como estaba.'
-    : 'No hace falta: no hay franja muerta que recuperar en este equipo.'}</p>
+        ${hayDeficit ? `
+          <div class="cfg-sep"></div>
+          <p class="cfg-hint">Esa franja está <strong>fuera</strong> de lo que iOS le deja pintar a la
+            app: no se puede recuperar desde la web. Se intentó dos veces —bajando la barra con un
+            margen negativo (v58) y estirando la app al viewport grande (v59)— y las dos veces el
+            resultado fue el dock y el + cortados, porque mover algo a una zona que no se compone es
+            lo mismo que esconderlo. Desde la v61 la barra se ancla al viewport de verdad y queda
+            siempre en cuadro; la franja sigue ahí, en negro, y así se queda.</p>` : ''}
 
         ${hayDeficit ? `
           <div class="cfg-sep"></div>
@@ -134,18 +117,6 @@ export function abrirPantalla({ onSaved } = {}) {
       api.pintar(html, (panel) => {
         bindCabecera(panel, { cerrar: () => { limpiarReglas(); api.cerrar(); } });
 
-        const sw = panel.querySelector('[data-act="borde"]');
-        const alternar = () => {
-          if (!hayDeficit) return;
-          const ahora = setBordeFisico(!bordeFisicoActivo());
-          sw.classList.toggle('is-on', ahora);
-          sw.setAttribute('aria-checked', String(ahora));
-          if (typeof onSaved === 'function') onSaved();
-        };
-        sw.addEventListener('click', alternar);
-        sw.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternar(); }
-        });
 
         if (hayDeficit) pintarReglas(); else limpiarReglas();
       });
