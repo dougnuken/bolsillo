@@ -128,6 +128,16 @@ export function normalizarTipo(raw) {
   return (t === 'ingreso' || t === 'pago') ? t : 'gasto';
 }
 
+/** Normaliza un nombre de cuenta para comparar: minúsculas, sin acentos ni
+ *  espacios. Así "Nu Bank", "nubank" y "NuBank" comparan igual. PURA. */
+function normCuenta(s) {
+  return String(s == null ? '' : s)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '');
+}
+
 /** Confianza a [0,1]. Desconocida → 0.5 (queda por debajo del umbral → se revisa). PURA. */
 function normalizarConfianza(v) {
   const n = typeof v === 'number' ? v : (typeof v === 'string' ? parseFloat(v) : NaN);
@@ -164,12 +174,20 @@ export function normalizarResultado(input, { idsValidos, cuentasValidas } = {}) 
   let categoriaId = typeof obj.categoria === 'string' ? obj.categoria.trim().toLowerCase() : '';
   if (!validos.has(categoriaId)) categoriaId = '';
 
-  // cuenta: solo si coincide (sin distinguir mayúsculas) con una del usuario;
-  // devuelve el nombre EXACTO guardado para que el chip la seleccione bien.
+  // cuenta: se empareja tolerando mayúsculas, acentos y ESPACIOS ("Nu Bank" ~
+  // "nubank"), y como respaldo por contención ("nubank" ~ "Nubank Ahorros").
+  // Devuelve el nombre EXACTO guardado para que el chip la seleccione bien.
   let cuenta = '';
   if (typeof obj.cuenta === 'string' && obj.cuenta.trim() !== '') {
-    const buscada = obj.cuenta.trim().toLowerCase();
-    const match = cuentas.find((c) => typeof c === 'string' && c.trim().toLowerCase() === buscada);
+    const buscada = normCuenta(obj.cuenta);
+    let match = cuentas.find((c) => typeof c === 'string' && normCuenta(c) === buscada);
+    if (!match && buscada.length >= 3) {
+      match = cuentas.find((c) => {
+        if (typeof c !== 'string') return false;
+        const cn = normCuenta(c);
+        return cn.length >= 3 && (cn.includes(buscada) || buscada.includes(cn));
+      });
+    }
     if (match) cuenta = match;
   }
 

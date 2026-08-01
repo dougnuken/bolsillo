@@ -18,6 +18,7 @@ import { catalogoVisible, categoriaPorId } from '../categories.js';
 import { parseTextoLibre } from '../categorize.js';
 import { analizarRecibo, MODELO_FOTO_DEFAULT } from '../foto-gasto.js';
 import { interpretarVoz, MODELO_VOZ_DEFAULT, UMBRAL_CONFIANZA } from '../voz-gasto.js';
+import { sugerirFijo } from '../reconciliacion.js';
 import { toast } from '../toast.js';
 import { hoyISO, etiquetaFecha, esISOValida } from '../fechas.js';
 import { abrirFecha } from './fecha-sheet.js';
@@ -66,12 +67,16 @@ function fresh() {
     metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
     vozTexto: '', vozConfianzaBaja: false, // captura por voz (se resalta si la IA dudó)
     vozEscuchando: false, // dictado por micrófono en curso (SpeechRecognition)
+    recurrenteSugerido: null, // fijo que la app reconoció (para vincular al guardar)
+    fijoTocadoManual: false,  // el usuario movió el switch a mano → no lo autoseteamos
   };
 }
 let STATE = fresh();
 let cfg = null;
 let draftPend = null;
 let fuentes = []; // fuentes de ingreso de negocio (para el modo Ingreso)
+let recurrentesCache = []; // gastos fijos (para reconocer y prellenar el switch)
+let movimientosCache = []; // movimientos (para saber qué fijo sigue pendiente este mes)
 
 let sheetRef = null, openRef = null, closeRef = null, onSavedRef = null;
 
@@ -99,6 +104,26 @@ async function cargarFuentes() {
     const todos = await getAll('ingresos');
     fuentes = todos.filter((i) => i && i.fuente !== 'empleo');
   } catch { fuentes = []; }
+  try {
+    [recurrentesCache, movimientosCache] = await Promise.all([getAll('recurrentes'), getAll('movimientos')]);
+  } catch { recurrentesCache = []; movimientosCache = []; }
+}
+
+/* ¿El gasto que se está armando calza con un fijo pendiente? Si sí, reconoce el
+   fijo: enciende el switch "gasto fijo" y recuerda cuál, para vincularlo al
+   guardar. Respeta al usuario: si ya movió el switch a mano, no lo pisa. */
+function detectarFijo() {
+  if (STATE.tipo !== 'gasto' || STATE.fijoTocadoManual) return;
+  const gasto = {
+    tipo: 'gasto', comercio: STATE.comercio, categoria: STATE.categoriaId,
+    monto: montoActual(), recurrenteId: null,
+  };
+  const fijo = sugerirFijo({ gasto, recurrentes: recurrentesCache, movimientos: movimientosCache, hoy: new Date() });
+  if (fijo) {
+    STATE.recurrenteSugerido = fijo.id;
+    STATE.esFijo = true;
+    STATE.detalles = true; // revela la sección para que se VEA el switch encendido
+  }
 }
 const fuenteActual = () => fuentes.find((f) => f.id === STATE.ingresoId) || null;
 const nombreFuente = (f) => (f && f.nombre && f.nombre.trim() ? f.nombre.trim() : 'Negocio');
@@ -595,7 +620,13 @@ function bind() {
     else if (act === 'fuente-new') el.addEventListener('click', () => { STATE.agregandoFuente = true; paint(); const i = sheetRef.querySelector('#reg-nueva-fuente'); if (i) i.focus(); });
     else if (act === 'fuente-add') el.addEventListener('click', agregarFuente);
     else if (act === 'fijo') {
-      const toggle = () => { STATE.esFijo = !STATE.esFijo; scheduleSave(); paint(); };
+      const toggle = () => {
+        STATE.esFijo = !STATE.esFijo;
+        STATE.fijoTocadoManual = true;            // el usuario decide: no lo autoseteamos más
+        if (!STATE.esFijo) STATE.recurrenteSugerido = null; // lo apagó → no vincular
+        scheduleSave();
+        paint();
+      };
       el.addEventListener('click', toggle);
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     }
@@ -690,6 +721,7 @@ function interpretarTexto(valor) {
   STATE.montoStr = monto ? String(monto) : '';
   if (categoriaId) STATE.categoriaId = categoriaId;
   STATE.comercio = comercio || '';
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
   syncCategoria();
   const ci = sheetRef.querySelector('#reg-detalle');
   if (ci) ci.value = STATE.comercio;
@@ -798,6 +830,7 @@ async function onFotoElegida(e) {
   STATE.metodoElegido = true;
   STATE.screen = 'form';
   STATE.keypad = !r.monto; // si no leyó monto, abre el teclado para escribirlo
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
   scheduleSave();
   paint();
   toast(r.monto ? 'Recibo leído · revisa y guarda' : 'No leí el monto: escríbelo', { icono: !!r.monto, ms: 3400 });
@@ -972,6 +1005,7 @@ function aplicarResultadoVoz(r) {
   if (r.nota) STATE.notas = r.nota;
   STATE.fuente = 'voz';
   STATE.vozConfianzaBaja = r.confianza < UMBRAL_CONFIANZA;
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
 }
 
 /** Manda el texto dictado a Claude y prellena la tarjeta de revisión. */
@@ -1119,10 +1153,14 @@ async function guardar() {
       await put('movimientos', mov);
       toast('Ingreso registrado');
     } else {
+      // Si la app reconoció el fijo y el switch quedó encendido, lo VINCULAMOS al
+      // guardar (recurrenteId): así no se cuenta doble y el recordatorio se apaga,
+      // sin necesitar el chip posterior. El switch visible es la confirmación.
+      const recurrenteId = (STATE.esFijo && STATE.recurrenteSugerido) ? STATE.recurrenteSugerido : null;
       const mov = crearMovimiento({
         monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
         cuenta, fecha: STATE.fecha, fuente: STATE.fuente, esFijo: STATE.esFijo, notas: STATE.notas.trim(),
-        cuotas,
+        cuotas, recurrenteId,
       }, { config: cfg || undefined });
       await put('movimientos', mov);
       guardado = mov;

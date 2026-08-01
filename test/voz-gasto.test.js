@@ -92,6 +92,15 @@ test('normalizarResultado empareja cuenta sin distinguir mayúsculas y devuelve 
   assert.equal(normalizarResultado({ monto: 1, cuenta: 'Ahorros' }, { idsValidos: IDS, cuentasValidas: CUENTAS }).cuenta, '');
 });
 
+test('normalizarResultado empareja cuenta tolerando espacios, acentos y contención', () => {
+  const cuentas = ['Efectivo', 'Nubank', 'Bancolombia'];
+  const cta = (heard) => normalizarResultado({ monto: 1, cuenta: heard }, { idsValidos: IDS, cuentasValidas: cuentas }).cuenta;
+  assert.equal(cta('nu bank'), 'Nubank');     // espacios
+  assert.equal(cta('NUBANK'), 'Nubank');      // mayúsculas
+  assert.equal(cta('banco'), 'Bancolombia');  // contención
+  assert.equal(cta('daviplata'), '');         // no existe → vacío (cae a la default)
+});
+
 test('normalizarResultado clampa la confianza a [0,1] y la desconocida → 0.5', () => {
   assert.equal(normalizarResultado({ monto: 1, confianza: 1.7 }, { idsValidos: IDS }).confianza, 1);
   assert.equal(normalizarResultado({ monto: 1, confianza: -3 }, { idsValidos: IDS }).confianza, 0);

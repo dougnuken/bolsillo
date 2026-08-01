@@ -201,7 +201,18 @@ function initSheet() {
     delete document.body.dataset.sheet;
   };
 
-  registrar.mount(sheet, { open, close, onSaved: (mov) => { refreshActive(currentRoute); refrescarBadge(); susurrar(mov); ofrecerVinculacion(mov); } });
+  registrar.mount(sheet, { open, close, onSaved: (mov) => {
+    refreshActive(currentRoute);
+    refrescarBadge();
+    susurrar(mov);
+    if (mov && mov.recurrenteId) {
+      // ya se guardó vinculado a un fijo (la app lo reconoció) → recalcula
+      // pendientes para apagar el recordatorio; el chip no hace falta.
+      correrRecurrentes().catch((err) => console.warn('[Bolsillo] recurrentes:', err));
+    } else {
+      ofrecerVinculacion(mov);
+    }
+  } });
 
   // --- Abanico del FAB: + gira a X y nacen dos burbujas (gasto/ingreso) ---
   const veil = document.getElementById('fab-veil');
