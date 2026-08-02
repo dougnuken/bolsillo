@@ -296,7 +296,13 @@
      OJO: esto es solo para lo que FLOTA. El padding de CONTENIDO se calcula
      aparte en --view-b. */
   --dock-gap: var(--sp-4);
-  --dock-b: var(--dock-gap);
+  /* v71 — max(), no suma. Ahora que el viewport SÍ llega al borde físico (v70),
+     la zona del home indicator vuelve a estar DENTRO de la página y hay que
+     respetarla: con --dock-b = --dock-gap a secas la píldora aterrizaba encima.
+     Sumar los dos (16+34 = 50) la subía media pulgada de más —es justo el error
+     que documenta la nota de --safe-b—, así que se toma el mayor: se apoya por
+     encima del indicador y sigue leyéndose flotante. */
+  --dock-b: max(var(--dock-gap), var(--safe-b));
   /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
      estaba escrito dentro del max() de .tabbar) para que la variante
      edge-to-edge de viewport corto se active desde la cascada de <html>, sin
@@ -380,13 +386,11 @@
    --bg-0 == #0B0B0D), así que la píldora se lee apoyada, no truncada.
    Todo lo demás se reacomoda solo, porque deriva de --dock-b: el FAB baja a
    22, --view-b pasa de 84 a 72 y .nav-blur encoge con él. */
-html[data-vp-corto="1"] {
-  /* v67 — el dock vuelve a ser PÍLDORA flotante: el edge-to-edge de la v66 se
-     revierte porque Doug lo probó y prefiere la forma anterior. Se mantiene el
-     gap inferior en 0 (v62), que gana 12pt sin tocar la forma: la píldora se
-     apoya en el fin de lo pintable. */
-  --dock-gap: 0px;
-}
+/* v71 — RETIRADO el override que ponía --dock-gap en 0 con viewport corto.
+   Existía para arañar 12pt cuando la franja inferior era inalcanzable; desde la
+   v70 el viewport llega al borde y ese apaño solo servía para pegar la píldora
+   al canto. La bandera data-vp-corto se sigue publicando —vale como
+   diagnóstico— pero ya no toca la geometría del dock. */
 
 /* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
    creyendo que iOS dejaba el home indicator fuera del viewport en la PWA
