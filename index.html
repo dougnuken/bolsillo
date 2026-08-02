@@ -12,32 +12,38 @@
   <meta name="description" content="Bolsillo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=72" />
+  <link rel="manifest" href="./manifest.webmanifest?v=73" />
   <meta name="theme-color" content="#0B0B0D" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <!-- v72 — SE INTENTA TENER LAS DOS COSAS: el degradado subiendo hasta la isla
-       dinámica Y el dock apoyado abajo.
+  <!-- ⚠️ NO CAMBIAR A `black-translucent`. Está probado en dispositivo, dos
+       veces, y el resultado es siempre el mismo.
 
-       Historia corta. `black-translucent` (que entró el 24-jul) mete el
-       contenido BAJO la barra de estado: de ahí el degradado arriba. Pero en
-       standalone, junto a viewport-fit=cover, WebKit dejaba el layout viewport
-       en `pantalla − barra de estado` con el origen todavía en y=0 — la ventana
-       se estiraba por arriba y no llegaba abajo, y el hueco resultante medía
-       justo la barra de estado (los 62pt de catorce versiones). Por eso la v70
-       volvió a `default`: franja negra arriba, dock bien abajo.
+       EL TRADE-OFF, medido y cerrado:
+         · `black-translucent` → el contenido pasa BAJO la barra de estado y el
+           degradado sube hasta la isla dinámica. PERO en standalone, junto a
+           viewport-fit=cover, WebKit deja el layout viewport en
+           `pantalla − barra de estado` con el origen todavía en y=0: la ventana
+           se estira por arriba y NO llega abajo. El hueco resultante mide justo
+           la barra de estado — 62pt en un 16 Pro Max, que es exactamente
+           env(safe-area-inset-top).
+         · `default` → franja superior negra, pero el viewport llega al borde y
+           el dock se apoya donde debe.
+       No se pueden tener las dos. Doug eligió el dock.
 
-       POR QUÉ SE REINTENTA AHORA. Cuando `black-translucent` rompía el
-       viewport, la app NO tenía la holgura de 1px de scroll de la v69 — el
-       documento no tenía nada que scrollear y iOS nunca soltaba el viewport
-       grande. La holgura y el `default` entraron juntos (v69+v70), así que
-       nunca se han probado por separado. Si lo que suelta el viewport es la
-       holgura, `black-translucent` puede volver sin traerse el hueco.
+       QUÉ SE DESCARTÓ POR EL CAMINO, para que nadie lo repita: el manifest
+       (sonda A), el scroll de documento (sonda B — con ella cayó una migración
+       de arquitectura que iba a tocar 28 acoplamientos), overscroll-behavior
+       (sonda D), el JS de la app (sonda E), theme-color, reinstalar el ícono y
+       la caché del Service Worker. Todo con sondas instaladas en el dispositivo.
 
-       Vuelta atrás si falla: cambiar esta línea a `default`, subir el buster y
-       reinstalar el ícono. Nada más depende de esto. -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+       La holgura de 1px de la v69 (base.css + viewport.js) se queda, pero OJO:
+       la v72 demostró que NO es ella la que suelta el viewport — con
+       `black-translucent` y la holgura puesta, el hueco volvió igual. Manda
+       este meta. La holgura no estorba y no se ha probado quitarla, pero no se
+       le atribuya un mérito que no tiene. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Bolsillo" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
@@ -50,10 +56,10 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=72" />
-  <link rel="stylesheet" href="./css/base.css?v=72" />
-  <link rel="stylesheet" href="./css/components.css?v=72" />
-  <link rel="stylesheet" href="./css/views.css?v=72" />
+  <link rel="stylesheet" href="./css/tokens.css?v=73" />
+  <link rel="stylesheet" href="./css/base.css?v=73" />
+  <link rel="stylesheet" href="./css/components.css?v=73" />
+  <link rel="stylesheet" href="./css/views.css?v=73" />
 </head>
 <body>
   <div class="app-shell">
@@ -124,6 +130,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=72"></script>
+  <script type="module" src="./js/app.js?v=73"></script>
 </body>
 </html>
