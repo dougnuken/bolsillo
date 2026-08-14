@@ -14,6 +14,7 @@ import { getAll } from '../db.js';
 import { formatCOP } from '../money.js';
 import { esc } from '../html.js';
 import { abrirCreditos } from './cfg-creditos.js';
+import { SKINS_TARJETA } from '../model.js';
 import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
@@ -24,10 +25,12 @@ const ICON_ORB =
   '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/></svg>';
 
 /* ---- identidad visual de la tarjeta ---- */
-/** Clase de skin (fondo del plástico) a partir del producto. */
+/** Clase de skin (fondo del plástico) a partir del producto.
+    La lista válida sale de SKINS_TARJETA (model.js) — antes estaba duplicada
+    aquí y al agregar colores nuevos caían al fallback sin avisar. */
 function skinClase(c) {
   const s = c && typeof c.skin === 'string' ? c.skin : '';
-  if (s === 'grafito' || s === 'platino' || s === 'azul' || s === 'verde' || s === 'olbo') return 'skin-' + s;
+  if (SKINS_TARJETA.includes(s)) return 'skin-' + s;
   return c && c.franquicia ? 'skin-grafito' : 'skin-olbo'; // con plástico → negro; crédito → morado
 }
 function productoDe(c) {

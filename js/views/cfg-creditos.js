@@ -438,7 +438,10 @@ export async function abrirCreditos({ onSaved, creditoId } = {}) {
             await recargar();
             toast(esNuevo ? 'Crédito agregado' : 'Crédito actualizado');
             avisar();
-            pantallaLista();
+            // Si se entró directo a este producto (desde la cartera), guardar
+            // CIERRA: mandar a la lista de créditos ahí se lee como "no pasó nada".
+            if (creditoId) api.cerrar();
+            else pantallaLista();
           } catch (err) {
             toast('No se pudo guardar: ' + err.message, { icono: false, ms: 3200 });
           }
