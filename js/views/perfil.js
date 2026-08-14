@@ -157,10 +157,10 @@ export default {
   render() {
     return `
       <header class="perfil-head" id="perfil-head">
-        <button class="perfil-head__avatar" id="perfil-avatar" type="button" aria-label="Cambiar foto de perfil">
-          ${ICON_USER}
+        <span class="perfil-head__avatar-wrap">
+          <button class="perfil-head__avatar" id="perfil-avatar" type="button" aria-label="Cambiar foto de perfil">${ICON_USER}</button>
           <span class="perfil-head__cam" aria-hidden="true">${ICON_CAM}</span>
-        </button>
+        </span>
         <input type="file" id="perfil-foto-input" accept="image/*" hidden />
         <div class="perfil-head__id">
           <p class="perfil-head__name perfil-head__name--empty" id="perfil-name">Tu nombre</p>
@@ -199,14 +199,15 @@ export default {
       }
       // Avatar: foto si hay; si no, iniciales; si no, ícono neutro. La cámara
       // se superpone siempre (invita a cambiarla).
+      // El badge de cámara vive FUERA del botón (el avatar recorta con
+      // overflow:hidden para la foto y se lo comería).
       const avEl = root.querySelector('#perfil-avatar');
-      const camHTML = `<span class="perfil-head__cam" aria-hidden="true">${ICON_CAM}</span>`;
       if (avEl) {
         const foto = config && typeof config.fotoPerfil === 'string' ? config.fotoPerfil : '';
         const ini = iniciales(nom);
-        if (foto) avEl.innerHTML = `<img src="${esc(foto)}" alt="" />` + camHTML;
-        else if (ini) avEl.innerHTML = `<span class="perfil-head__ini">${esc(ini)}</span>` + camHTML;
-        else avEl.innerHTML = ICON_USER + camHTML;
+        if (foto) avEl.innerHTML = `<img src="${esc(foto)}" alt="" />`;
+        else if (ini) avEl.innerHTML = `<span class="perfil-head__ini">${esc(ini)}</span>`;
+        else avEl.innerHTML = ICON_USER;
         avEl.classList.toggle('perfil-head__avatar--foto', !!foto);
       }
 
@@ -214,7 +215,9 @@ export default {
       const inputFoto = root.querySelector('#perfil-foto-input');
       if (avEl && inputFoto && !avEl.dataset.wired) {
         avEl.dataset.wired = '1';
-        avEl.addEventListener('click', () => inputFoto.click());
+        // stopPropagation: sin nombre, el header entero es un CTA que abre el
+        // onboarding. Sin esto, tocar el avatar para poner la foto se lo llevaba.
+        avEl.addEventListener('click', (e) => { e.stopPropagation(); inputFoto.click(); });
         inputFoto.addEventListener('change', async () => {
           const file = inputFoto.files && inputFoto.files[0];
           inputFoto.value = '';                 // permite reelegir la misma foto
