@@ -408,6 +408,9 @@ export function configDefault() {
     id: CONFIG_ID,
     // Nombre del usuario (se pide primero en el onboarding, personaliza el saludo).
     nombre: '',
+    // Foto de perfil como data URL (JPEG ~256px). null = sin foto (avatar por
+    // iniciales). Vive en config porque ya va redimensionada y pesa poco.
+    fotoPerfil: null,
     umbralHormiga: UMBRAL_HORMIGA_DEFAULT,
     umbralesSemaforo: Object.freeze({ amarillo: 1.25 }),
     presupuestos: Object.freeze({}),

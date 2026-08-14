@@ -1954,17 +1954,35 @@ body[data-route="asesor"] .nav-blur {
   display: grid;
   place-items: center;
   border-radius: var(--r-full);
-  background: var(--bg-3);
-  border: none;
-  box-shadow: none;
-  color: var(--text-1);
+  /* vidrio morado, no gris opaco (igual criterio que los íconos de ajustes) */
+  background: radial-gradient(120% 120% at 30% 0%, rgba(169,140,255,.22), transparent 60%), var(--accent-soft);
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 1px 0 var(--glass-gloss);
+  color: var(--accent-light);
   font-size: var(--fs-h1);
   font-weight: var(--fw-bold);
   overflow: hidden;
   user-select: none;
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.perfil-head__avatar img { width: 100%; height: 100%; object-fit: cover; }
-.perfil-head__avatar svg { width: 30px; height: 30px; color: var(--text-2); }
+.perfil-head__avatar:active { transform: scale(.97); }
+.perfil-head__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.perfil-head__avatar svg { width: 30px; height: 30px; color: var(--accent-light); }
+.perfil-head__ini { color: var(--accent-light); }
+/* Badge de cámara: indica que el avatar se puede cambiar. */
+.perfil-head__cam {
+  position: absolute; right: -1px; bottom: -1px;
+  width: 22px; height: 22px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--accent-strong); color: #fff;
+  border: 2px solid var(--bg-0);
+}
+.perfil-head__cam svg { width: 12px; height: 12px; color: #fff; }
+/* Con foto, el aro morado sobra: la imagen manda. */
+.perfil-head__avatar--foto { background: var(--glass-2); border-color: var(--line-3); }
 .perfil-head__name { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em; color: var(--text-1); }
 /* Sin nombre (onboarding saltado): placeholder atenuado, no un nombre inventado. */
 .perfil-head__name--empty { color: var(--text-3); }

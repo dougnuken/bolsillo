@@ -6,7 +6,9 @@
    (Reemplaza la antigua vista Ajustes; se llega desde la pestaña Perfil.)
    ============================================================ */
 
-import { getAll, getConfig } from '../db.js';
+import { getAll, getConfig, saveConfig } from '../db.js';
+import { fotoADataURL } from '../foto-perfil.js';
+import { toast } from '../toast.js';
 import { formatCOP } from '../money.js';
 import { catalogo } from '../categories.js';
 import { enmascararClave } from '../anthropic.js';
@@ -35,6 +37,8 @@ const CHEVRON =
    no una inicial inventada. */
 const ICON_USER =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>';
+const ICON_CAM =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.4-2h7.2L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.2" r="3.1"/></svg>';
 
 /** Iniciales para el avatar: "Ana Pérez" → "AP". Vacío → ''. */
 function iniciales(nombre) {
@@ -153,7 +157,11 @@ export default {
   render() {
     return `
       <header class="perfil-head" id="perfil-head">
-        <span class="perfil-head__avatar" id="perfil-avatar" aria-hidden="true">${ICON_USER}</span>
+        <button class="perfil-head__avatar" id="perfil-avatar" type="button" aria-label="Cambiar foto de perfil">
+          ${ICON_USER}
+          <span class="perfil-head__cam" aria-hidden="true">${ICON_CAM}</span>
+        </button>
+        <input type="file" id="perfil-foto-input" accept="image/*" hidden />
         <div class="perfil-head__id">
           <p class="perfil-head__name perfil-head__name--empty" id="perfil-name">Tu nombre</p>
           <p class="perfil-head__sub">Tu perfil y ajustes</p>
@@ -189,11 +197,37 @@ export default {
         nameEl.textContent = nom || 'Tu nombre';
         nameEl.classList.toggle('perfil-head__name--empty', !nom);
       }
+      // Avatar: foto si hay; si no, iniciales; si no, ícono neutro. La cámara
+      // se superpone siempre (invita a cambiarla).
       const avEl = root.querySelector('#perfil-avatar');
+      const camHTML = `<span class="perfil-head__cam" aria-hidden="true">${ICON_CAM}</span>`;
       if (avEl) {
+        const foto = config && typeof config.fotoPerfil === 'string' ? config.fotoPerfil : '';
         const ini = iniciales(nom);
-        if (ini) avEl.textContent = ini;
-        else avEl.innerHTML = ICON_USER;
+        if (foto) avEl.innerHTML = `<img src="${esc(foto)}" alt="" />` + camHTML;
+        else if (ini) avEl.innerHTML = `<span class="perfil-head__ini">${esc(ini)}</span>` + camHTML;
+        else avEl.innerHTML = ICON_USER + camHTML;
+        avEl.classList.toggle('perfil-head__avatar--foto', !!foto);
+      }
+
+      // Elegir foto: tap en el avatar → picker → redimensiona → guarda en config.
+      const inputFoto = root.querySelector('#perfil-foto-input');
+      if (avEl && inputFoto && !avEl.dataset.wired) {
+        avEl.dataset.wired = '1';
+        avEl.addEventListener('click', () => inputFoto.click());
+        inputFoto.addEventListener('change', async () => {
+          const file = inputFoto.files && inputFoto.files[0];
+          inputFoto.value = '';                 // permite reelegir la misma foto
+          if (!file) return;
+          try {
+            const dataUrl = await fotoADataURL(file);
+            await saveConfig({ fotoPerfil: dataUrl });
+            toast('Foto de perfil actualizada');
+            pintar();
+          } catch (err) {
+            toast(err && err.message ? err.message : 'No se pudo usar esa imagen', { icono: false });
+          }
+        });
       }
       const headEl = root.querySelector('#perfil-head');
       if (headEl) {

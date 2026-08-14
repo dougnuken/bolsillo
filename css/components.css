@@ -139,15 +139,20 @@
   padding: var(--sp-8) var(--sp-4) var(--sp-6);
   gap: var(--sp-4);
 }
+/* Losa del empty state: vidrio con tinte MORADO, no gris opaco. Con --bg-3 se
+   leía como un cuadro negro pegado encima del canvas violeta. */
 .empty__art {
   width: 96px;
   height: 96px;
   display: grid;
   place-items: center;
   border-radius: var(--r-2xl);
-  color: var(--text-1);
-  background: var(--bg-3);
-  border: none;
+  color: var(--accent-light);
+  background:
+    radial-gradient(120% 120% at 30% 0%, rgba(169, 140, 255, .18), transparent 60%),
+    var(--accent-soft);
+  border: 1px solid var(--line-2);
+  box-shadow: inset 0 1px 0 var(--glass-gloss), 0 12px 28px -16px var(--accent-glow);
 }
 .empty__art svg { width: 46px; height: 46px; }
 .empty__title {
@@ -252,7 +257,10 @@
      intensidad) al abrir, en vez de cambiarlo. */
   background-size: 140% 140%;
   background-position: 50% 50%;
-  box-shadow: var(--sh-fab);
+  /* + anillo interno de 1px: el borde solo no se ve porque el gradiente firma
+     llega hasta el canto (background-size 140%). El inset ring lo dibuja por
+     dentro y le da el mismo acabado que el CTA primario. */
+  box-shadow: var(--sh-fab), inset 0 0 0 1px rgba(255, 255, 255, 0.30);
   border: 1px solid var(--glass-gloss);
   /* SIN transición de `bottom`: es una propiedad de layout (contra la regla de
      animar solo transform/opacity) y, peor, se atascaba. Cuando --dock-b
