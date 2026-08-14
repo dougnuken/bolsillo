@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   crearPrestamo,
+  esDeuda,
+  porDireccion,
   validarPrestamo,
   agregarAbono,
   saldoPendiente,
@@ -107,4 +109,34 @@ test('rehidratar desde datos guardados preserva id y abonos válidos', () => {
   assert.equal(p.abonos.length, 1); // el abono inválido se descartó
   assert.equal(saldoPendiente(p), 250000);
   assert.equal(p.creadoEn, '2026-07-31T00:00:00.000Z');
+});
+
+/* ---------------- dirección (me deben / debo) + tasa ---------------- */
+
+test('crearPrestamo: por defecto es "me deben" (retrocompat)', () => {
+  const p = crearPrestamo({ persona: 'Persona 1', monto: 500_000 });
+  assert.equal(p.direccion, 'me-deben');
+  assert.equal(p.tasaEA, null);
+});
+
+test('crearPrestamo: acepta dirección "debo" y tasa opcional', () => {
+  const p = crearPrestamo({ persona: 'Persona 2', monto: 2_000_000, direccion: 'debo', tasaEA: 5 });
+  assert.equal(p.direccion, 'debo');
+  assert.equal(p.tasaEA, 5);
+});
+
+test('crearPrestamo: dirección basura cae a "me-deben"; tasa basura a null', () => {
+  const p = crearPrestamo({ persona: 'X', monto: 1000, direccion: 'raro', tasaEA: 'abc' });
+  assert.equal(p.direccion, 'me-deben');
+  assert.equal(p.tasaEA, null);
+});
+
+test('porDireccion / esDeuda: separan las dos listas', () => {
+  const meDeben = crearPrestamo({ persona: 'A', monto: 100_000 });
+  const debo = crearPrestamo({ persona: 'B', monto: 200_000, direccion: 'debo' });
+  const viejo = { persona: 'C', monto: 300_000, abonos: [] }; // sin campo (legado)
+  assert.equal(esDeuda(debo), true);
+  assert.equal(esDeuda(meDeben), false);
+  assert.deepEqual(porDireccion([meDeben, debo, viejo]).map((p) => p.persona), ['A', 'C']);
+  assert.deepEqual(porDireccion([meDeben, debo, viejo], 'debo').map((p) => p.persona), ['B']);
 });

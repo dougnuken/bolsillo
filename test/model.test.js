@@ -453,9 +453,9 @@ test('crearCredito: sin identidad de tarjeta → los campos quedan en null (cré
 test('crearCredito: normaliza últimos 4 (toma solo dígitos, últimos 4) y descarta franquicia/skin inválidos', () => {
   const c = crearCredito({
     entidad: 'Banco Dos', producto: 'Libre inversión', cuotaMensual: 1200000,
-    ultimosCuatro: '**** 1234', franquicia: 'diners', skin: 'dorado',
+    ultimosCuatro: '**** 1234', franquicia: 'diners', skin: 'fucsia',
   });
   assert.equal(c.ultimosCuatro, '1234');
   assert.equal(c.franquicia, null); // 'diners' no está en la lista
-  assert.equal(c.skin, null);       // 'dorado' no está en la lista
+  assert.equal(c.skin, null);       // 'fucsia' no está en la lista
 });

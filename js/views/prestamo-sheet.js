@@ -33,32 +33,46 @@ function cuentaDefault(config) {
 
 /* ---- alta de préstamo ---- */
 function nuevoHTML() {
+  return nuevoHTMLDir('me-deben');
+}
+
+/** Formulario según la dirección: 'me-deben' (presté) o 'debo' (me prestaron). */
+function nuevoHTMLDir(direccion) {
+  const debo = direccion === 'debo';
   return `
     <div class="ov-grip" aria-hidden="true"></div>
     <div class="sueldo-head">
       <span class="sueldo-head__ic">${ICON_HAND}</span>
       <div>
-        <h3 class="ov-title">Nuevo préstamo</h3>
-        <p class="sueldo-hint">Dinero que prestaste y te van a devolver. No descuenta tu dinero: el pago ya lo registras como gasto.</p>
+        <h3 class="ov-title">${debo ? 'Nueva deuda' : 'Nuevo préstamo'}</h3>
+        <p class="sueldo-hint">${debo
+    ? 'Dinero que alguien te prestó y tienes que devolver. Aquí llevas el saldo y tus abonos.'
+    : 'Dinero que prestaste y te van a devolver. No descuenta tu dinero: el pago ya lo registras como gasto.'}</p>
       </div>
     </div>
     <form class="sueldo-form" id="pre-form" novalidate>
       <label class="field">
-        <span class="field__label">¿A quién le prestaste?</span>
+        <span class="field__label">${debo ? '¿Quién te prestó?' : '¿A quién le prestaste?'}</span>
         <input class="field__input" id="pre-persona" type="text" autocomplete="off"
           autocapitalize="words" maxlength="40" placeholder="Ej. un familiar" />
       </label>
       <label class="field">
         <span class="field__label">¿Por qué? (opcional)</span>
         <input class="field__input" id="pre-concepto" type="text" autocomplete="off"
-          maxlength="80" placeholder="Ej. medicina prepagada + plan celular" />
+          maxlength="80" placeholder="Ej. una emergencia" />
       </label>
       <label class="field">
-        <span class="field__label">Monto prestado</span>
+        <span class="field__label">${debo ? 'Monto que te prestaron' : 'Monto prestado'}</span>
         <input class="field__input" id="pre-monto" type="text" data-monto inputmode="numeric"
           autocomplete="off" placeholder="400.000" />
       </label>
-      <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">Guardar préstamo</button>
+      <label class="field">
+        <span class="field__label">Interés % E.A. · opcional</span>
+        <input class="field__input" id="pre-tasa" type="number" min="0" max="100" step="0.01"
+          inputmode="decimal" placeholder="Sin interés" />
+        <span class="sueldo-hint">Si se pactó un interés, escríbelo. Déjalo vacío si es un favor sin intereses.</span>
+      </label>
+      <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">${debo ? 'Guardar deuda' : 'Guardar préstamo'}</button>
     </form>`;
 }
 
@@ -66,21 +80,26 @@ function nuevoHTML() {
  * Abre el sheet para crear un préstamo.
  * @param {{onSaved?: () => void}} [opts]
  */
-export function abrirNuevoPrestamo({ onSaved } = {}) {
-  return hoja(nuevoHTML(), (panel, cerrar) => {
+export function abrirNuevoPrestamo({ onSaved, direccion = 'me-deben' } = {}) {
+  const debo = direccion === 'debo';
+  return hoja(nuevoHTMLDir(direccion), (panel, cerrar) => {
     const $ = (sel) => panel.querySelector(sel);
     bindMontosVivos(panel);
     $('#pre-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const persona = ($('#pre-persona').value || '').trim();
       const monto = parseCOP($('#pre-monto').value);
-      if (!persona) { toast('¿A quién le prestaste?'); $('#pre-persona').focus(); return; }
+      if (!persona) { toast(debo ? '¿Quién te prestó?' : '¿A quién le prestaste?'); $('#pre-persona').focus(); return; }
       if (!Number.isInteger(monto) || monto <= 0) { toast('Escribe un monto válido'); $('#pre-monto').focus(); return; }
       try {
-        const prestamo = crearPrestamo({ persona, concepto: ($('#pre-concepto').value || '').trim(), monto });
+        const tasaCruda = ($('#pre-tasa') && $('#pre-tasa').value || '').trim();
+        const prestamo = crearPrestamo({
+          persona, concepto: ($('#pre-concepto').value || '').trim(), monto,
+          direccion, tasaEA: tasaCruda === '' ? null : parseFloat(tasaCruda),
+        });
         await put('prestamos', prestamo);
         cerrar(true);
-        toast(`Anotado: ${esc(persona)} te debe ${formatCOP(monto)}`);
+        toast(debo ? `Anotado: le debes ${formatCOP(monto)} a ${esc(persona)}` : `Anotado: ${esc(persona)} te debe ${formatCOP(monto)}`);
         if (typeof onSaved === 'function') onSaved();
       } catch (err) {
         console.warn('[Bolsillo] guardar préstamo falló:', err);

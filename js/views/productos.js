@@ -14,6 +14,8 @@ import { getAll } from '../db.js';
 import { formatCOP } from '../money.js';
 import { esc } from '../html.js';
 import { abrirCreditos } from './cfg-creditos.js';
+import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar } from '../prestamos.js';
+import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
 
 const ICON_BACK =
@@ -100,28 +102,93 @@ function tarjetaHTML(cred, cortes) {
     </button>`;
 }
 
-/* ---- LISTA (cartera) ---- */
-function listaHTML(creditos, cortes) {
+/* ---- tarjeta de préstamo (me deben / debo) ---- */
+function prestamoHTML(p, debo) {
+  const saldo = saldoPendiente(p);
+  const pagado = totalAbonado(p);
+  const pct = Math.round(fraccionAbonada(p) * 100);
+  const liquidado = saldo <= 0;
+  const meta = [p.concepto || (debo ? 'Deuda personal' : 'Préstamo')];
+  if (p.tasaEA != null) meta.push(`${String(p.tasaEA).replace('.', ',')}% E.A.`);
+  return `
+    <article class="pcard${liquidado ? ' pcard--ok' : ''}">
+      <div class="pcard__top">
+        <div class="pcard__id">
+          <p class="pcard__name">${esc(p.persona)}</p>
+          <p class="pcard__sub">${esc(meta.join(' · '))}</p>
+        </div>
+        <div class="pcard__saldo">
+          <p class="pcard__pend num">${esc(formatCOP(saldo))}</p>
+          <p class="pcard__lbl">${liquidado ? (debo ? 'pagada' : 'saldado') : (debo ? 'le debes' : 'te debe')}</p>
+        </div>
+      </div>
+      <div class="pcard__track"><span class="pcard__fill" data-fill="${pct}"></span></div>
+      <div class="pcard__foot">
+        <span class="pcard__abonado">${esc(formatCOP(pagado))} de ${esc(formatCOP(p.monto))}${pct ? ` · ${pct}%` : ''}</span>
+        ${liquidado ? '' : `<button class="pcard__btn" type="button" data-abono="${esc(p.id)}">${debo ? 'Abonar' : 'Registrar abono'}</button>`}
+      </div>
+    </article>`;
+}
+
+/* ---- LISTA (cartera) con 3 tabs ---- */
+const TABS = [['productos', 'Mis productos'], ['me-deben', 'Me deben'], ['debo', 'Debo']];
+let tabActivo = 'productos';
+
+function tabsHTML() {
+  return `<div class="wallet-tabs" role="tablist">${TABS.map(([id, label]) =>
+    `<button class="wallet-tab${id === tabActivo ? ' is-on' : ''}" type="button" role="tab" data-tab="${id}" aria-selected="${id === tabActivo}">${label}</button>`).join('')}</div>`;
+}
+
+function listaHTML(creditos, cortes, prestamos) {
   const head = `
     <header class="view-greet">
       <p class="view-greet__eyebrow">Mi cartera</p>
-      <h1 class="view-greet__title">Mis productos</h1>
-    </header>`;
+      <h1 class="view-greet__title">${esc((TABS.find((t) => t[0] === tabActivo) || TABS[0])[1])}</h1>
+    </header>
+    ${tabsHTML()}`;
 
-  if (!creditos.length) {
+  if (tabActivo === 'productos') {
+    if (!creditos.length) {
+      return `${head}
+        <div class="empty">
+          <h2 class="empty__title">Aún no tienes productos</h2>
+          <p class="empty__text">Agrega tus tarjetas y créditos para verlos aquí y seguir tu deuda mes a mes.</p>
+          <button class="btn btn--primary" id="wallet-add" type="button">+ Agregar producto</button>
+        </div>`;
+    }
+    return `${head}
+      <p class="wallet-sub">Toca una tarjeta para ver el detalle.</p>
+      <div class="wallet-cards">${creditos.map((c) => tarjetaHTML(c, cortes)).join('')}</div>
+      <button class="btn btn--ghost btn--block wallet-add-btn" id="wallet-add" type="button">+ Agregar producto</button>`;
+  }
+
+  // Tabs de préstamos: 'me-deben' (presté) y 'debo' (me prestaron).
+  const debo = tabActivo === 'debo';
+  const lista = porDireccion(prestamos, tabActivo);
+  const activos = lista.filter((p) => saldoPendiente(p) > 0).sort((a, b) => saldoPendiente(b) - saldoPendiente(a));
+  const saldados = lista.filter((p) => saldoPendiente(p) <= 0);
+  const total = totalPorCobrar(activos);
+  const cta = `<button class="btn btn--ghost btn--block wallet-add-btn" id="wallet-add-prestamo" type="button">+ ${debo ? 'Anotar una deuda' : 'Prestar dinero'}</button>`;
+
+  if (!lista.length) {
     return `${head}
       <div class="empty">
-        <h2 class="empty__title">Aún no tienes productos</h2>
-        <p class="empty__text">Agrega tus tarjetas y créditos para verlos aquí y seguir tu deuda mes a mes.</p>
-        <button class="btn btn--primary" id="wallet-add" type="button">+ Agregar producto</button>
+        <h2 class="empty__title">${debo ? 'No debes nada a nadie' : 'Nadie te debe'}</h2>
+        <p class="empty__text">${debo
+    ? 'Anota el dinero que alguien te prestó (con o sin interés) y lleva el control de tus abonos.'
+    : 'Anota el dinero que prestaste y ve cómo te lo van abonando.'}</p>
+        <button class="btn btn--primary" id="wallet-add-prestamo" type="button">+ ${debo ? 'Anotar una deuda' : 'Prestar dinero'}</button>
       </div>`;
   }
 
-  const cards = creditos.map((c) => tarjetaHTML(c, cortes)).join('');
   return `${head}
-    <p class="wallet-sub">Toca una tarjeta para ver el detalle.</p>
-    <div class="wallet-cards">${cards}</div>
-    <button class="btn btn--ghost btn--block wallet-add-btn" id="wallet-add" type="button">+ Agregar producto</button>`;
+    <div class="wallet-total">
+      <span class="wallet-total__lbl">${debo ? 'Debes en total' : 'Te deben en total'}</span>
+      <span class="wallet-total__val num">${esc(formatCOP(total))}</span>
+    </div>
+    <div class="wallet-prestamos">${activos.map((p) => prestamoHTML(p, debo)).join('')}</div>
+    ${saldados.length ? `<p class="wallet-sub wallet-sub--sec">${debo ? 'Pagadas' : 'Saldados'}</p><div class="wallet-prestamos">${saldados.map((p) => prestamoHTML(p, debo)).join('')}</div>` : ''}
+    ${cta}`;
 }
 
 /* ---- fila de diferido ---- */
@@ -179,7 +246,11 @@ function detalleHTML(cred, cortes, monedaSel) {
       <span class="cc__mini-num">${cred.ultimosCuatro ? '•••• ' + esc(cred.ultimosCuatro) + ' · ' : ''}${esc(productoDe(cred))}</span>
     </div>`;
 
-  const back = `<button class="wallet-back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>`;
+  const back = `
+    <div class="wallet-detalle-top">
+      <button class="wallet-back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
+      <button class="wallet-edit" type="button" data-editar>Editar</button>
+    </div>`;
 
   if (!g || !g.ultimo) {
     // Sin corte con diferidos: crédito de cuota fija o tarjeta sin diferidos este
@@ -230,10 +301,13 @@ async function montar(root) {
   if (!wallet) return;
   let creditos = [];
   let cortes = [];
+  let prestamos = [];
 
   async function cargar() {
     try {
-      [creditos, cortes] = await Promise.all([getAll('creditos'), getAll('cortes').catch(() => [])]);
+      [creditos, cortes, prestamos] = await Promise.all([
+        getAll('creditos'), getAll('cortes').catch(() => []), getAll('prestamos').catch(() => []),
+      ]);
     } catch (err) {
       console.warn('[olbo] no se pudo cargar la cartera:', err);
       wallet.innerHTML = '<p class="hoy-error">No se pudo cargar tu cartera. Reintenta.</p>';
@@ -243,14 +317,43 @@ async function montar(root) {
   }
 
   function pintarLista() {
-    wallet.innerHTML = listaHTML(creditos, cortes);
+    wallet.innerHTML = listaHTML(creditos, cortes, prestamos);
+    const recargar = async () => { await cargar(); pintarLista(); };
+
+    // tabs
+    wallet.querySelectorAll('[data-tab]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (b.dataset.tab === tabActivo) return;
+        tabActivo = b.dataset.tab;
+        pintarLista();
+        const view = wallet.closest('.view');
+        if (view) view.scrollTop = 0;
+      });
+    });
+
     const add = wallet.querySelector('#wallet-add');
-    if (add) add.addEventListener('click', () => abrirCreditos({ onSaved: async () => { await cargar(); pintarLista(); } }));
+    if (add) add.addEventListener('click', () => abrirCreditos({ onSaved: recargar }));
+
+    const addPre = wallet.querySelector('#wallet-add-prestamo');
+    if (addPre) addPre.addEventListener('click', () => abrirNuevoPrestamo({ direccion: tabActivo, onSaved: recargar }));
+
+    wallet.querySelectorAll('[data-abono]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const p = prestamos.find((x) => x.id === b.dataset.abono);
+        if (p) abrirAbono(p, { onSaved: recargar });
+      });
+    });
+
     wallet.querySelectorAll('[data-cred]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const c = creditos.find((x) => x.id === btn.dataset.cred);
         if (c) pintarDetalle(c);
       });
+    });
+
+    // barras de progreso (se animan por ancho tras pintar)
+    wallet.querySelectorAll('.pcard__fill').forEach((el) => {
+      requestAnimationFrame(() => { el.style.width = (el.dataset.fill || 0) + '%'; });
     });
   }
 
@@ -260,6 +363,15 @@ async function montar(root) {
     if (view) view.scrollTop = 0;
     const back = wallet.querySelector('[data-back]');
     if (back) back.addEventListener('click', pintarLista);
+    // Editar el producto sin salir de la cartera (misma hoja que vive en Perfil).
+    const editar = wallet.querySelector('[data-editar]');
+    if (editar) editar.addEventListener('click', () => {
+      abrirCreditos({ onSaved: async () => {
+        await cargar();
+        const fresco = creditos.find((x) => x.id === cred.id);
+        if (fresco) pintarDetalle(fresco, moneda); else pintarLista();
+      } });
+    });
     wallet.querySelectorAll('[data-moneda]').forEach((b) => {
       b.addEventListener('click', () => pintarDetalle(cred, b.dataset.moneda));
     });

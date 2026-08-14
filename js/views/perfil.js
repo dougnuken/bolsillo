@@ -234,7 +234,6 @@ export default {
             ${row(ICONS.sueldo, 'Sueldo de empleado', subSueldo(empleo), 'sueldo', { alerta: !empleo })}
             ${row(ICONS.negocios, 'Ingresos de negocios', subNegocios(negocios), 'negocios')}
             ${row(ICONS.fijos, 'Gastos fijos', subFijos(recs), 'recurrentes')}
-            ${row(ICONS.creditos, 'Créditos', subCreditos(creds), 'creditos')}
             ${row(ICONS.presupuestos, 'Presupuestos por categoría', subPresupuestos(config), 'presupuestos')}
           </div>
         </section>

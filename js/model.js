@@ -221,7 +221,10 @@ export function tasaEAaMV(ea) {
 /* Identidad visual de la tarjeta en la CARTERA (todos opcionales). La franquicia
    pinta la marca (Mastercard/Visa…); el skin, el color del plástico. */
 export const FRANQUICIAS = Object.freeze(['mastercard', 'visa', 'amex', 'otra']);
-export const SKINS_TARJETA = Object.freeze(['platino', 'grafito', 'azul', 'verde', 'olbo']);
+export const SKINS_TARJETA = Object.freeze([
+  'platino', 'grafito', 'gris', 'azul', 'teal', 'verde',
+  'dorado', 'naranja', 'rojo', 'rosa', 'olbo',
+]);
 
 /** Últimos 1–4 dígitos (string), o null. Ignora todo lo que no sea dígito. PURA. */
 function ult4Opcional(v) {

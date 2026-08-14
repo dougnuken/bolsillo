@@ -37,11 +37,16 @@ function sanearAbono(a, now) {
  * @throws {Error} si falta persona o el monto no es válido (fail-fast).
  */
 export function crearPrestamo(datos = {}, { now = new Date() } = {}) {
+  // Tasa opcional (% E.A.) para préstamos con interés. null = sin interés.
+  const tasaCruda = datos.tasaEA == null || datos.tasaEA === '' ? null : Number(datos.tasaEA);
   const base = {
     persona: typeof datos.persona === 'string' ? datos.persona.trim() : '',
     concepto: typeof datos.concepto === 'string' ? datos.concepto.trim() : '',
     monto: entero(datos.monto),
     fecha: esTexto(datos.fecha) ? datos.fecha.trim() : hoyISO(now),
+    // Dirección de la deuda. RETROCOMPAT: sin el campo = 'me-deben' (lo de antes).
+    direccion: datos.direccion === 'debo' ? 'debo' : 'me-deben',
+    tasaEA: Number.isFinite(tasaCruda) && tasaCruda >= 0 ? tasaCruda : null,
     abonos: Array.isArray(datos.abonos)
       ? datos.abonos.map((a) => sanearAbono(a, now)).filter(Boolean)
       : [],
@@ -61,8 +66,10 @@ export function crearPrestamo(datos = {}, { now = new Date() } = {}) {
 export function validarPrestamo(obj = {}) {
   const errores = [];
   if (!obj || typeof obj !== 'object') return { ok: false, errores: ['El préstamo no es un objeto.'] };
-  if (!esTexto(obj.persona)) errores.push('¿A quién le prestaste? El nombre es obligatorio.');
+  if (!esTexto(obj.persona)) errores.push('¿Con quién es? El nombre es obligatorio.');
   if (!Number.isInteger(obj.monto) || obj.monto <= 0) errores.push('El monto debe ser un entero de pesos mayor a 0.');
+  if (obj.direccion != null && obj.direccion !== 'me-deben' && obj.direccion !== 'debo') errores.push('La dirección debe ser me-deben o debo.');
+  if (obj.tasaEA != null && (!Number.isFinite(obj.tasaEA) || obj.tasaEA < 0)) errores.push('La tasa debe ser un número ≥ 0, o quedar vacía.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }
 
@@ -113,6 +120,17 @@ export function agregarAbono(prestamo, datosAbono = {}, { now = new Date() } = {
 /** Total por cobrar de una lista (suma de saldos pendientes). */
 export function totalPorCobrar(prestamos) {
   return (Array.isArray(prestamos) ? prestamos : []).reduce((s, p) => s + saldoPendiente(p), 0);
+}
+
+/** ¿Es dinero que YO debo? (retrocompat: sin campo = me deben). PURA. */
+export function esDeuda(p) {
+  return !!p && p.direccion === 'debo';
+}
+
+/** Filtra por dirección: 'me-deben' (default) o 'debo'. PURA. */
+export function porDireccion(prestamos, direccion = 'me-deben') {
+  const lista = Array.isArray(prestamos) ? prestamos.filter(Boolean) : [];
+  return direccion === 'debo' ? lista.filter(esDeuda) : lista.filter((p) => !esDeuda(p));
 }
 
 /** Separa activos (con saldo) de saldados y da el total por cobrar. */

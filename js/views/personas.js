@@ -107,6 +107,21 @@ function prestamoCardHTML(p) {
     </article>`;
 }
 
+/* Los préstamos se movieron a Mi cartera: aquí solo queda un acceso con el
+   total, para no tener dos puntos de entrada al mismo dato. */
+function enlaceCarteraHTML(prestamos) {
+  const { activos, totalPorCobrar } = resumenPrestamos(prestamos);
+  if (!activos.length) return '';
+  return `
+    <button type="button" class="prestamos-link" data-ir-cartera>
+      <span class="prestamos-link__txt">
+        <span class="prestamos-link__kicker">Te deben</span>
+        <span class="prestamos-link__val num">${esc(formatCOP(totalPorCobrar))}</span>
+      </span>
+      <span class="prestamos-link__go">Ver en Mi cartera →</span>
+    </button>`;
+}
+
 function seccionPrestamosHTML(prestamos) {
   const { activos, totalPorCobrar } = resumenPrestamos(prestamos);
   const total = activos.length
@@ -160,6 +175,11 @@ export default {
     if (!body) return;
 
     /* Cablea los botones de préstamos (alta + abono). Idempotente por render. */
+    function wireCartera(root) {
+      const ir = root.querySelector('[data-ir-cartera]');
+      if (ir) ir.addEventListener('click', () => { location.hash = '#/productos'; });
+    }
+
     function wirePrestamos(prestamos) {
       const nuevo = body.querySelector('[data-pre-nuevo]');
       if (nuevo) nuevo.addEventListener('click', () => abrirNuevoPrestamo({ onSaved: pintar }));
@@ -199,11 +219,12 @@ export default {
       });
 
       // "Te deben" no depende del sueldo: se muestra siempre, arriba de todo.
-      const prestamosHTML = seccionPrestamosHTML(prestamos);
+      // Los préstamos viven en Mi cartera (#/productos). Aquí queda un acceso.
+      const prestamosHTML = enlaceCarteraHTML(prestamos);
 
       if (!estado.configurado) {
         body.innerHTML = prestamosHTML + sinSueldoHTML();
-        wirePrestamos(prestamos);
+        wireCartera(body);
         const ir = body.querySelector('[data-act="ir-sueldo"]');
         if (ir) ir.addEventListener('click', () => { location.hash = '#/perfil'; });
         return;
@@ -229,7 +250,7 @@ export default {
           <section class="personas-grid">${categorias.map(tarjeta).join('')}</section>` : ''}
         ${bonusHTML(estado)}`;
 
-      wirePrestamos(prestamos);
+      wireCartera(body);
 
       // Ancho de las barras por JS (CSP style-src 'self' bloquea style= inline).
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

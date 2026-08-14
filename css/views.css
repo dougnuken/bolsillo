@@ -2225,8 +2225,15 @@ body[data-route="asesor"] .nav-blur {
    ============================================================ */
 .wallet-sub { font-size: var(--fs-sm); color: var(--text-2); margin: 0 var(--sp-1) var(--sp-4); }
 
-/* En la cartera no va la campana de notificaciones. */
-body[data-route="productos"] #open-notif { display: none; }
+/* En la cartera no va la campana → el header queda vacío: se oculta entero y
+   el contenido sube (si no, deja una banda muerta arriba). */
+body[data-route="productos"] .app-header { display: none; }
+body[data-route="productos"] .view { padding-top: var(--sp-4); }
+
+/* cabecera del detalle: volver + editar */
+.wallet-detalle-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
+.wallet-edit { background: var(--glass-2); border: 1px solid var(--line-2); color: var(--text-1); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); padding: 7px 14px; border-radius: var(--r-full); cursor: pointer; }
+.wallet-edit:active { background: var(--glass-3); }
 
 /* --- card "Mi cartera" en Hoy (glass + peek de tarjetas en abanico) --- */
 .hoy-productos {
@@ -2257,6 +2264,45 @@ body[data-route="productos"] #open-notif { display: none; }
 .wcard--2 { top: 42px; right: -18px; transform: rotate(-3deg); z-index: 2; }
 .wcard--3 { top: 80px; right: -4px; transform: rotate(6deg); z-index: 3; }
 
+/* Acceso a préstamos desde Personas (el dato vive en Mi cartera). */
+.prestamos-link { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); width: 100%; text-align: left;
+  background: var(--glass-1); border: 1px solid var(--line-2); border-radius: var(--r-lg); padding: var(--sp-4); margin-bottom: var(--sp-4); cursor: pointer; }
+.prestamos-link__txt { display: flex; flex-direction: column; }
+.prestamos-link__kicker { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
+.prestamos-link__val { font-size: var(--fs-h2); font-weight: var(--fw-bold); font-family: var(--font-num); margin-top: 2px; }
+.prestamos-link__go { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--accent-light); flex: 0 0 auto; }
+
+/* --- tabs de la cartera --- */
+.wallet-tabs { display: flex; gap: 6px; margin: 0 -2px var(--sp-4); overflow-x: auto; scrollbar-width: none; }
+.wallet-tabs::-webkit-scrollbar { display: none; }
+.wallet-tab { flex: 0 0 auto; font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-3);
+  background: transparent; border: 1px solid var(--line-1); border-radius: var(--r-full); padding: 8px 15px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+.wallet-tab.is-on { color: var(--accent-light); background: var(--accent-soft); border-color: var(--line-accent); }
+
+/* --- total de préstamos --- */
+.wallet-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.wallet-total__lbl { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
+.wallet-total__val { font-size: 1.5rem; font-weight: var(--fw-bold); letter-spacing: -.02em; font-family: var(--font-num); }
+.wallet-sub--sec { margin-top: var(--sp-5); font-weight: var(--fw-bold); color: var(--text-3); text-transform: uppercase; font-size: var(--fs-xs); letter-spacing: .05em; }
+
+/* --- tarjeta de préstamo (me deben / debo) --- */
+.wallet-prestamos { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+.pcard { background: var(--glass-1); border: 1px solid var(--line-2); border-radius: var(--r-md); padding: var(--sp-4); }
+.pcard--ok { opacity: .62; }
+.pcard__top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.pcard__name { font-size: var(--fs-body); font-weight: var(--fw-bold); }
+.pcard__sub { font-size: var(--fs-xs); color: var(--text-2); margin-top: 2px; }
+.pcard__saldo { text-align: right; flex: 0 0 auto; }
+.pcard__pend { font-size: var(--fs-h3); font-weight: var(--fw-bold); font-family: var(--font-num); }
+.pcard__lbl { font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px; }
+.pcard__track { height: 6px; border-radius: var(--r-full); background: var(--track); overflow: hidden; margin: var(--sp-3) 0 var(--sp-2); }
+.pcard__fill { display: block; height: 100%; width: 0; border-radius: var(--r-full); background: var(--grad-gauge); transition: width var(--dur-slow) var(--ease); }
+.pcard__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+.pcard__abonado { font-size: var(--fs-xs); color: var(--text-2); }
+.pcard__btn { font: inherit; font-size: var(--fs-xs); font-weight: var(--fw-bold); color: var(--accent-light);
+  background: var(--accent-soft); border: 1px solid var(--line-accent); border-radius: var(--r-full); padding: 6px 12px; cursor: pointer; }
+
 /* --- lista de tarjetas --- */
 .wallet-cards { display: grid; gap: 15px; margin: 0 -6px var(--sp-4); }
 .wallet-add-btn { margin-top: var(--sp-1); }
@@ -2267,9 +2313,9 @@ body[data-route="productos"] #open-notif { display: none; }
    producto a la derecha. Fondo por SKIN (variables --skin-*).
    ============================================================ */
 .cc {
-  position: relative; display: grid; grid-template-rows: auto 1fr; width: 100%; text-align: left;
+  position: relative; display: flex; flex-direction: column; width: 100%; text-align: left;
   margin: 0; padding: 0; font: inherit; /* reset del <button>: sin padding propio que inset la banda */
-  aspect-ratio: 2.2 / 1; border-radius: 22px; overflow: hidden; isolation: isolate; cursor: pointer;
+  border-radius: 20px; overflow: hidden; isolation: isolate; cursor: pointer;
   background: var(--skin-bg); color: var(--skin-text); border: 1px solid var(--skin-edge);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 20px 40px -24px rgba(0,0,0,.72);
   -webkit-tap-highlight-color: transparent; transition: transform var(--dur) var(--ease);
@@ -2284,7 +2330,7 @@ body[data-route="productos"] #open-notif { display: none; }
 .cc__bandtext { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .cc__entity { font-size: 13px; font-weight: var(--fw-bold); letter-spacing: .005em; color: var(--skin-text); }
 .cc__logo { display: flex; align-items: center; flex: 0 0 auto; }
-.cc__body { position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 0 16px 14px; }
+.cc__body { position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 14px 16px 15px; }
 .cc__left { display: flex; flex-direction: column; min-width: 0; }
 .cc__eyebrow { font-size: 9.5px; font-weight: var(--fw-semibold); letter-spacing: .14em; text-transform: uppercase; color: var(--skin-text-dim); }
 .cc__amount { font-size: 25px; font-weight: 800; letter-spacing: -.02em; line-height: 1; margin-top: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--skin-text); }
@@ -2315,6 +2361,24 @@ body[data-route="productos"] #open-notif { display: none; }
 .skin-olbo { --skin-edge: rgba(255,255,255,.22); --skin-text: #1b1140; --skin-text-dim: rgba(27,17,64,.56); --skin-band: rgba(255,255,255,.22); --skin-hairline: rgba(255,255,255,.28);
   --skin-bg: repeating-linear-gradient(135deg, rgba(255,255,255,0) 0 8px, rgba(255,255,255,.06) 8px 9px), radial-gradient(120% 120% at 14% 0%, rgba(255,255,255,.28), transparent 46%), linear-gradient(146deg,#A98CFF 0%,#7C5CFC 46%,#5B3FE0 100%);
   --skin-sheen: radial-gradient(130% 150% at 88% -14%, rgba(255,255,255,.22), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.12) 50%, transparent 74%); }
+.skin-gris { --skin-edge: rgba(255,255,255,.1); --skin-text: #F2F3F6; --skin-text-dim: rgba(235,235,245,.52); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.11);
+  --skin-bg: repeating-linear-gradient(45deg, rgba(255,255,255,0) 0 5px, rgba(255,255,255,.012) 5px 6px), radial-gradient(120% 120% at 12% 0%, rgba(255,255,255,.06), transparent 44%), linear-gradient(148deg,#3b3f47 0%,#2a2d34 52%,#1d1f24 100%);
+  --skin-sheen: radial-gradient(130% 150% at 88% -14%, rgba(255,255,255,.1), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.05) 50%, transparent 74%); }
+.skin-teal { --skin-edge: rgba(255,255,255,.1); --skin-text: #E6FAF8; --skin-text-dim: rgba(220,255,250,.56); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.1);
+  --skin-bg: repeating-linear-gradient(116deg, rgba(255,255,255,0) 0 6px, rgba(255,255,255,.02) 6px 7px), radial-gradient(120% 120% at 14% 0%, rgba(94,234,212,.12), transparent 44%), linear-gradient(150deg,#0d4a48 0%,#093433 52%,#062120 100%);
+  --skin-sheen: radial-gradient(130% 150% at 86% -14%, rgba(94,234,212,.14), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.045) 50%, transparent 74%); }
+.skin-rosa { --skin-edge: rgba(255,255,255,.1); --skin-text: #FCEAF3; --skin-text-dim: rgba(255,224,240,.56); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.1);
+  --skin-bg: repeating-linear-gradient(82deg, rgba(255,255,255,0) 0 7px, rgba(255,255,255,.02) 7px 8px), radial-gradient(120% 120% at 14% 0%, rgba(244,114,182,.14), transparent 44%), linear-gradient(150deg,#6e1a4a 0%,#4a1030 52%,#2e0a1e 100%);
+  --skin-sheen: radial-gradient(130% 150% at 86% -14%, rgba(255,255,255,.12), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.05) 50%, transparent 74%); }
+.skin-rojo { --skin-edge: rgba(255,255,255,.1); --skin-text: #FCEAEA; --skin-text-dim: rgba(255,224,224,.56); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.1);
+  --skin-bg: repeating-linear-gradient(45deg, rgba(255,255,255,0) 0 5px, rgba(255,255,255,.012) 5px 6px), radial-gradient(120% 120% at 14% 0%, rgba(248,113,113,.14), transparent 44%), linear-gradient(150deg,#5e1526 0%,#3d0e1a 52%,#280a12 100%);
+  --skin-sheen: radial-gradient(130% 150% at 86% -14%, rgba(255,255,255,.1), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.05) 50%, transparent 74%); }
+.skin-naranja { --skin-edge: rgba(255,255,255,.1); --skin-text: #FCEFE2; --skin-text-dim: rgba(255,236,220,.56); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.1);
+  --skin-bg: repeating-linear-gradient(116deg, rgba(255,255,255,0) 0 6px, rgba(255,255,255,.02) 6px 7px), radial-gradient(120% 120% at 14% 0%, rgba(251,146,60,.14), transparent 44%), linear-gradient(150deg,#6e3410 0%,#4a2109 52%,#2e1405 100%);
+  --skin-sheen: radial-gradient(130% 150% at 86% -14%, rgba(255,255,255,.1), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.05) 50%, transparent 74%); }
+.skin-dorado { --skin-edge: rgba(0,0,0,.1); --skin-text: #2a2410; --skin-text-dim: rgba(42,36,16,.55); --skin-band: rgba(255,255,255,.34); --skin-hairline: rgba(0,0,0,.12);
+  --skin-bg: repeating-linear-gradient(116deg, rgba(255,255,255,0) 0px, rgba(255,255,255,.35) 1px, rgba(0,0,0,.02) 2px, rgba(255,255,255,0) 4.5px), linear-gradient(146deg,#f2e3a8 0%,#dcc478 38%,#efe2b0 62%,#cbb25c 100%);
+  --skin-sheen: radial-gradient(120% 140% at 14% -18%, rgba(255,255,255,.5), transparent 48%), linear-gradient(112deg, transparent 24%, rgba(255,255,255,.24) 50%, transparent 76%); }
 
 /* card mini (cabecera del detalle): banda + una línea con últimos 4 · producto */
 .cc--mini { display: flex; flex-direction: column; aspect-ratio: auto; margin-bottom: var(--sp-4); }

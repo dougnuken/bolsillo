@@ -217,9 +217,15 @@ export async function abrirCreditos({ onSaved } = {}) {
             <select class="field__input" id="cre-skin">
               <option value="">Automático</option>
               <option value="platino"${cre && cre.skin === 'platino' ? ' selected' : ''}>Plateado (platinum)</option>
-              <option value="grafito"${cre && cre.skin === 'grafito' ? ' selected' : ''}>Grafito / black</option>
+              <option value="grafito"${cre && cre.skin === 'grafito' ? ' selected' : ''}>Negro / black</option>
+              <option value="gris"${cre && cre.skin === 'gris' ? ' selected' : ''}>Gris grafito</option>
               <option value="azul"${cre && cre.skin === 'azul' ? ' selected' : ''}>Azul</option>
+              <option value="teal"${cre && cre.skin === 'teal' ? ' selected' : ''}>Turquesa</option>
               <option value="verde"${cre && cre.skin === 'verde' ? ' selected' : ''}>Verde</option>
+              <option value="dorado"${cre && cre.skin === 'dorado' ? ' selected' : ''}>Dorado (gold)</option>
+              <option value="naranja"${cre && cre.skin === 'naranja' ? ' selected' : ''}>Naranja</option>
+              <option value="rojo"${cre && cre.skin === 'rojo' ? ' selected' : ''}>Rojo</option>
+              <option value="rosa"${cre && cre.skin === 'rosa' ? ' selected' : ''}>Rosa</option>
               <option value="olbo"${cre && cre.skin === 'olbo' ? ' selected' : ''}>Morado (olbo)</option>
             </select>
             <span class="sueldo-hint">Para créditos sin tarjeta (un préstamo, una libranza), deja Franquicia en “—”: se ven como tile de color.</span>
