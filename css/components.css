@@ -321,9 +321,9 @@ body[data-fab="open"] .fab svg {
 /* Rojo y verde, pero con el MISMO material de gradiente de la app (150deg
    light→deep + rim + glow) que el resto de controles semánticos. */
 .fab-bubble--gasto   { background: var(--rojo-grad);  border-color: var(--rojo-rim);
-  box-shadow: 0 8px 22px -6px var(--rojo-glow), var(--fab-hi); }
+  box-shadow: 0 8px 22px -6px var(--rojo-glow), inset 0 1px 0 var(--fab-hi); }
 .fab-bubble--ingreso { background: var(--verde-grad); border-color: var(--verde-rim);
-  box-shadow: 0 8px 22px -6px var(--verde-glow), var(--fab-hi); }
+  box-shadow: 0 8px 22px -6px var(--verde-glow), inset 0 1px 0 var(--fab-hi); }
 
 /* Abierto: brotan en arco (izq gasto / der ingreso), con pop escalonado. */
 body[data-fab="open"] .fab-bubble { opacity: 1; pointer-events: auto; }

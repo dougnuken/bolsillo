@@ -467,13 +467,18 @@ body[data-route="hoy"] .app-header { display: none; }
 .settings-row + .settings-row { border-top: 1px solid var(--line-1); }
 .settings-row:hover { background: var(--glass-2); }
 .settings-row:active { background: var(--glass-3); }
+/* Losa del ícono: vidrio TRANSLÚCIDO, no gris opaco. Con --bg-3 (#23232A) el
+   cuadro tapaba el morado del canvas y se leía como un parche flotante; con
+   blanco-alpha + hairline toma el tinte de lo que tenga detrás y se integra. */
 .settings-row__icon {
   width: 34px; height: 34px;
   flex: 0 0 auto;
   display: grid; place-items: center;
-  border-radius: var(--r-xs);
+  border-radius: var(--r-sm);
   color: var(--text-1);
-  background: var(--bg-3);
+  background: var(--glass-2);
+  border: 1px solid var(--line-1);
+  box-shadow: inset 0 1px 0 var(--glass-gloss);
 }
 .settings-row__icon svg { width: 19px; height: 19px; }
 .settings-row__body { flex: 1 1 auto; min-width: 0; }
