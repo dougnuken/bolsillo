@@ -1,0 +1,739 @@
+/* ============================================================
+   Bolsillo · budget.js
+   MOTOR PURO del semáforo financiero. Sin db ni window ni DOM
+   en el top-level: importable y testeable en Node.
+   El "hoy" es SIEMPRE inyectable (Date o ISO) — nunca Date.now()
+   dentro de la matemática. Dinero en enteros de pesos.
+
+   Idea central: el color NO mira cuánto llevas gastado en bruto,
+   sino tu RITMO relativo al día del mes. Gastar 90% del bolsillo
+   variable el día 28 va bien; gastar 80% el día 10 es alerta.
+   ============================================================ */
+
+/* Umbral de la banda ámbar→rojo (razón ritmo/avance). Configurable. */
+export const UMBRAL_AMARILLO_DEFAULT = 1.25;
+
+const CATEGORIA_FALLBACK = 'otros';
+
+const ETIQUETAS = Object.freeze({
+  verde: 'Vas bien',
+  ambar: 'Cuidado',
+  rojo: 'Alerta',
+  'sin-config': 'Sin configurar',
+});
+
+const MENSAJES = Object.freeze({
+  verde: 'Vas al ritmo del mes',
+  ambar: 'Vas un poco rápido, ojo',
+  rojo: 'Gastando más rápido que el mes',
+  'sin-config': 'Configura tu sueldo para empezar',
+  fijosSuperan: 'Tus gastos fijos ya se comen todo tu sueldo',
+});
+
+/* ---- helpers de fecha (puros) ---- */
+
+/* 'YYYY-MM-DD' del CALENDARIO LOCAL de un Date (getters locales, no UTC). */
+function isoLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+/** Normaliza un Date o ISO a 'YYYY-MM-DD'. Falla fuerte si es inválido.
+ *  OJO — usa la fecha LOCAL, nunca toISOString() (UTC): al oeste de Greenwich,
+ *  de noche el UTC ya marca el día (y a fin de mes, el MES) siguiente. Si "hoy"
+ *  saltara a UTC, el semáforo calcularía el mes equivocado y el saldo dejaría de
+ *  bajar con cada gasto registrado esa noche. La fecha del gasto es la del
+ *  calendario del usuario (misma regla que fechas.js/hoyISO). */
+function aFechaISO(fecha) {
+  if (fecha instanceof Date) {
+    if (Number.isNaN(fecha.getTime())) throw new Error('calcularEstado: "hoy" es una fecha inválida.');
+    return isoLocal(fecha);
+  }
+  if (typeof fecha === 'string' && fecha.trim() !== '') {
+    if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) return fecha.slice(0, 10);
+    const d = new Date(fecha);
+    if (!Number.isNaN(d.getTime())) return isoLocal(d);
+  }
+  throw new Error('calcularEstado: "hoy" debe ser un Date o una fecha ISO válida.');
+}
+
+/** Partes de una fecha (Date/ISO): año, mes 1-based, día y prefijo 'YYYY-MM'. */
+function partes(fecha) {
+  const iso = aFechaISO(fecha);
+  return {
+    anio: Number(iso.slice(0, 4)),
+    mes: Number(iso.slice(5, 7)),
+    dia: Number(iso.slice(8, 10)),
+    prefijo: iso.slice(0, 7),
+  };
+}
+
+/** Días del mes calendario de `fecha` (Date/ISO). Ej: febrero 2026 → 28. */
+export function diasEnMes(fecha) {
+  const { anio, mes } = partes(fecha);
+  // new Date(anio, mes, 0) = último día del mes 1-based; getDate() es TZ-independiente.
+  return new Date(anio, mes, 0).getDate();
+}
+
+/* ---- helpers de dominio (puros) ---- */
+
+const esEntero = (n) => Number.isInteger(n);
+const redondear = (n) => (Number.isFinite(n) ? Math.round(n) : 0);
+
+/** ¿La fecha del movimiento cae en el mes `prefijo` ('YYYY-MM')? */
+function enMes(mov, prefijo) {
+  return mov && typeof mov.fecha === 'string' && mov.fecha.slice(0, 7) === prefijo;
+}
+
+/**
+ * Porción del monto de un movimiento que cae en el mes (anio, mes 1-based).
+ * - Compra normal (cuotas ≤ 1): monto completo si es su mes de compra, si no 0.
+ * - Compra a N cuotas: monto/N en cada uno de los N meses desde la compra
+ *   (Modelo A: lo que realmente pagas cada mes). PURA.
+ */
+export function porcionEnMes(mov, anio, mes) {
+  if (!mov || typeof mov.fecha !== 'string' || mov.fecha.length < 7) return 0;
+  const monto = Number.isFinite(mov.monto) ? mov.monto : 0;
+  const py = Number(mov.fecha.slice(0, 4));
+  const pm = Number(mov.fecha.slice(5, 7));
+  const n = Number.isInteger(mov.cuotas) && mov.cuotas > 1 ? mov.cuotas : 1;
+  if (n <= 1) return (py === anio && pm === mes) ? monto : 0;
+  const offset = (anio - py) * 12 + (mes - pm);
+  if (offset < 0 || offset >= n) return 0;
+  return Math.round(monto / n);
+}
+
+/** Umbral amarillo desde config, con default seguro. */
+function leerUmbralAmarillo(config) {
+  const raw = config && config.umbralesSemaforo && config.umbralesSemaforo.amarillo;
+  return Number.isFinite(raw) && raw > 0 ? raw : UMBRAL_AMARILLO_DEFAULT;
+}
+
+/** Color del presupuesto de una categoría según cuánto de él lleva gastado. */
+function colorPresupuesto(total, presupuesto) {
+  if (!(presupuesto > 0)) return null;
+  const r = total / presupuesto;
+  if (r > 1) return 'rojo';
+  if (r > 0.85) return 'ambar';
+  return 'verde';
+}
+
+/**
+ * Gasto variable por categoría del mes (solo gasto no-fijo).
+ * Devuelve [{categoriaId, total, pct, presupuesto?, color?}] ordenado desc.
+ */
+function desglosarCategorias(variables, variableGastado, config) {
+  const presupuestos = (config && config.presupuestos) || {};
+  const acum = new Map();
+  for (const m of variables) {
+    const id = typeof m.categoria === 'string' && m.categoria.trim() !== '' ? m.categoria : CATEGORIA_FALLBACK;
+    acum.set(id, (acum.get(id) || 0) + m.montoMes);
+  }
+  const filas = [];
+  for (const [categoriaId, total] of acum) {
+    const fila = {
+      categoriaId,
+      total: redondear(total),
+      pct: variableGastado > 0 ? total / variableGastado : 0,
+    };
+    const presupuesto = presupuestos[categoriaId];
+    if (esEntero(presupuesto) && presupuesto > 0) {
+      fila.presupuesto = presupuesto;
+      fila.color = colorPresupuesto(total, presupuesto);
+    }
+    filas.push(Object.freeze(fila));
+  }
+  filas.sort((a, b) => b.total - a.total);
+  return Object.freeze(filas);
+}
+
+/**
+ * Fijos comprometidos del mes SIN doble conteo. Tres fuentes:
+ *  (A) movimientos con esFijo===true del mes (materializados o a mano), MÁS
+ *  (B) recurrentes EXACTOS activos aún NO materializados este mes (compromiso
+ *      pendiente), respetando excepciones["YYYY-MM"] (saltar→no cuenta,
+ *      monto→ese monto). Los de VALOR VARIABLE NO reservan (se excluyen), MÁS
+ *  (C) cuotas de créditos activos: cada crédito aporta su cuota UNA vez. Si ya
+ *      hay un movimiento ligado a ese crédito este mes (creditoId), su pago real
+ *      manda: los esFijo ya están en (A) y los pago_credito/no-fijo se suman
+ *      aquí; en ambos casos NO se agrega también la cuota abstracta.
+ *
+ * @returns {{fijos:number, creditos:number}} total de fijos y su porción de créditos
+ */
+function calcularFijos(movimientos, recurrentes, creditos, prefijo) {
+  // (A) fijos ya registrados (materializados o capturados a mano) +
+  //     índice de movimientos ligados a un crédito este mes.
+  let fijosMaterializados = 0;
+  const recIdsMaterializados = new Set();
+  const movsPorCredito = new Map(); // creditoId → { hay:true, noFijo:number }
+  for (const m of movimientos) {
+    if (!enMes(m, prefijo)) continue;
+    if (m.esFijo === true) {
+      fijosMaterializados += m.monto;
+      if (m.recurrenteId) recIdsMaterializados.add(m.recurrenteId);
+    }
+    if (m.creditoId) {
+      const acc = movsPorCredito.get(m.creditoId) || { hay: true, noFijo: 0 };
+      // Un esFijo con creditoId ya está en (A); solo acumulamos aquí lo NO-fijo
+      // (p. ej. un pago_credito) para no perderlo ni duplicarlo.
+      if (m.esFijo !== true) acc.noFijo += m.monto;
+      movsPorCredito.set(m.creditoId, acc);
+    }
+  }
+
+  // (B) recurrentes activos pendientes (sin movimiento propio este mes).
+  let fijosPendientes = 0;
+  for (const rec of recurrentes) {
+    if (!rec || rec.activo !== true) continue;
+    // Un fijo de VALOR VARIABLE (luz, agua, gasolina…) NO reserva su estimado:
+    // solo pesa cuando el usuario registra su valor real del mes (ahí entra
+    // como movimiento esFijo en la parte A). Los exactos siguen igual.
+    if (rec.esVariable === true) continue;
+    if (recIdsMaterializados.has(rec.id)) continue; // ya contado en (A): no duplicar
+    const exc = rec.excepciones && rec.excepciones[prefijo];
+    if (exc && exc.saltar === true) continue; // saltado este mes: no compromete
+    const monto = exc && esEntero(exc.monto) ? exc.monto : rec.monto;
+    if (esEntero(monto)) fijosPendientes += monto;
+  }
+
+  // (C) cuotas de créditos activos, sin doble conteo.
+  let cuotasCredito = 0;
+  for (const c of creditos) {
+    if (!c || c.activo === false) continue; // inactivo (undefined = activo, retrocompat)
+    if (!esEntero(c.cuotaMensual) || c.cuotaMensual <= 0) continue; // sin cuota → no rompe
+    const mov = movsPorCredito.get(c.id);
+    // Si ya hay movimiento(s) ligados: cuenta su pago real (solo la parte no-fija,
+    // porque la esFija ya entró en (A)); si no, la cuota abstracta comprometida.
+    cuotasCredito += mov ? mov.noFijo : c.cuotaMensual;
+  }
+
+  return {
+    fijos: redondear(fijosMaterializados + fijosPendientes + cuotasCredito),
+    creditos: redondear(cuotasCredito),
+  };
+}
+
+/**
+ * calcularEstado — corazón del semáforo. PURO y de solo lectura.
+ *
+ * @param {object} args
+ * @param {number|null} args.ingresoEmpleo  sueldo mensual (entero de pesos)
+ * @param {object[]}    args.movimientos    movimientos del usuario
+ * @param {object[]}    args.recurrentes    gastos fijos definidos
+ * @param {object[]}    args.creditos       créditos del usuario (sus cuotas pesan)
+ * @param {Date|string} args.hoy            fecha de referencia (inyectable)
+ * @param {object}      args.config         config (umbrales, presupuestos)
+ * @returns {Readonly<object>} estado congelado con color + números del mes
+ */
+export function calcularEstado({ ingresoEmpleo, movimientos = [], recurrentes = [], creditos = [], hoy, config = {} } = {}) {
+  const movs = Array.isArray(movimientos) ? movimientos.filter(Boolean) : [];
+  const recs = Array.isArray(recurrentes) ? recurrentes.filter(Boolean) : [];
+  const creds = Array.isArray(creditos) ? creditos.filter(Boolean) : [];
+
+  const { anio, mes: mesN, dia, prefijo } = partes(hoy);
+  const diasMes = diasEnMes(hoy);
+  const diasRestantes = diasMes - dia + 1; // hoy cuenta
+  const avance = dia / diasMes; // fracción de mes transcurrida (dia>=1 ⇒ >0)
+
+  // Gasto VARIABLE del mes: gasto y NO fijo. Cada compra aporta su PORCIÓN del
+  // mes (monto completo si es normal; monto/N si es a cuotas — Modelo A). Así una
+  // compra a cuotas de un mes anterior sigue pesando su parte este mes.
+  const variables = movs
+    .filter((m) => m.tipo === 'gasto' && m.esFijo === false)
+    .map((m) => ({ ...m, montoMes: porcionEnMes(m, anio, mesN) }))
+    .filter((m) => m.montoMes > 0);
+  const variableGastado = redondear(variables.reduce((s, m) => s + m.montoMes, 0));
+
+  // Gasto TOTAL del mes (fijo + variable) para la card "Tu dinero": es el
+  // descuento real sobre la plata que entró. A diferencia de fijosDelMes (que
+  // presupuesta TODO el fijo del mes de entrada, pagado o no), aquí solo cuenta
+  // lo efectivamente REGISTRADO, así el saldo arranca en el sueldo completo y
+  // baja a medida que gastas —no arranca ya descontado.
+  const gastadoTotal = redondear(
+    movs
+      .filter((m) => m.tipo === 'gasto')
+      .map((m) => porcionEnMes(m, anio, mesN))
+      .reduce((s, p) => s + (p > 0 ? p : 0), 0),
+  );
+
+  // Ingresos RECIBIDOS del mes: solo lo que el usuario registró que entró (los
+  // negocios varían; el "esperado" es referencia, no entra al cálculo).
+  const ingresosRecibidos = redondear(
+    movs.filter((m) => m.tipo === 'ingreso' && enMes(m, prefijo)).reduce((s, m) => s + m.monto, 0),
+  );
+
+  const { fijos: fijosDelMes, creditos: fijosCreditos } = calcularFijos(movs, recs, creds, prefijo);
+  // Gasto "hormiga": compras variables pequeñas (bajo el umbral). Cada una
+  // aporta su porción del mes; contamos las que efectivamente pesan este mes
+  // y proyectamos el total al cierre con el mismo avance del semáforo.
+  const hormigaMes = movs
+    .filter((m) => m.esHormiga === true)
+    .map((m) => porcionEnMes(m, anio, mesN))
+    .filter((p) => p > 0);
+  const totalHormiga = redondear(hormigaMes.reduce((s, p) => s + p, 0));
+  const hormigaCount = hormigaMes.length;
+  const proyeccionHormiga = totalHormiga > 0 ? redondear(totalHormiga / avance) : 0;
+  const porCategoria = desglosarCategorias(variables, variableGastado, config);
+
+  const proyeccionVariable = redondear(variableGastado / avance);
+  const proyeccionTotal = fijosDelMes + proyeccionVariable;
+
+  const base = {
+    diasMes,
+    dia,
+    diasRestantes,
+    avance,
+    variableGastado,
+    gastadoTotal,
+    ingresosRecibidos,
+    fijosDelMes,
+    fijosCreditos,
+    totalHormiga,
+    hormigaCount,
+    proyeccionHormiga,
+    porCategoria,
+    proyeccionVariable,
+    proyeccionTotal,
+  };
+
+  // --- Sin sueldo configurado: nada de NaN ni divisiones por cero ---
+  // La base del semáforo sigue siendo el SUELDO: sin él no hay ritmo que medir.
+  const ingreso = esEntero(ingresoEmpleo) ? ingresoEmpleo : (Number.isFinite(ingresoEmpleo) ? Math.round(ingresoEmpleo) : 0);
+  if (!(ingreso > 0)) {
+    return Object.freeze({
+      ...base,
+      configurado: false,
+      color: 'sin-config',
+      etiqueta: ETIQUETAS['sin-config'],
+      mensaje: MENSAJES['sin-config'],
+      ingresoEmpleo: 0,
+      plataDelMes: ingresosRecibidos,
+      baseVariable: null,
+      ritmo: null,
+      razon: null,
+      porcentajeIngreso: null,
+      disponibleRestante: null,
+      disponiblePorDia: null,
+      saldoDisponible: null,
+      fijosSuperanIngreso: false,
+    });
+  }
+
+  // Plata del mes = sueldo (base fija) + lo que efectivamente entró de negocios.
+  const plataDelMes = ingreso + ingresosRecibidos;
+  const baseVariable = plataDelMes - fijosDelMes;
+  const porcentajeIngreso = plataDelMes > 0 ? variableGastado / plataDelMes : 0;
+
+  // --- Los fijos igualan o superan el sueldo: rojo, sin dividir por cero ---
+  if (baseVariable <= 0) {
+    const disponibleRestante = baseVariable - variableGastado;
+    return Object.freeze({
+      ...base,
+      configurado: true,
+      color: 'rojo',
+      etiqueta: ETIQUETAS.rojo,
+      mensaje: MENSAJES.fijosSuperan,
+      ingresoEmpleo: ingreso,
+      plataDelMes,
+      baseVariable,
+      ritmo: null,
+      razon: null,
+      porcentajeIngreso,
+      disponibleRestante,
+      disponiblePorDia: redondear(disponibleRestante / diasRestantes),
+      saldoDisponible: plataDelMes - gastadoTotal,
+      fijosSuperanIngreso: true,
+    });
+  }
+
+  // --- Caso normal ---
+  const ritmo = variableGastado / baseVariable;
+  const razon = ritmo / avance;
+  const amarillo = leerUmbralAmarillo(config);
+
+  let color;
+  if (razon > amarillo || ritmo >= 1) color = 'rojo';
+  else if (razon > 1) color = 'ambar';
+  else color = 'verde';
+
+  const disponibleRestante = baseVariable - variableGastado;
+
+  return Object.freeze({
+    ...base,
+    configurado: true,
+    color,
+    etiqueta: ETIQUETAS[color],
+    mensaje: MENSAJES[color],
+    ingresoEmpleo: ingreso,
+    plataDelMes,
+    baseVariable,
+    ritmo,
+    razon,
+    porcentajeIngreso,
+    disponibleRestante,
+    disponiblePorDia: redondear(disponibleRestante / diasRestantes),
+    saldoDisponible: plataDelMes - gastadoTotal,
+    fijosSuperanIngreso: false,
+  });
+}
+
+const esTextoNoVacio = (v) => typeof v === 'string' && v.trim() !== '';
+
+/** Nombre legible de un crédito. PURA. (Retrocompat: producto o `tipo` viejo.) */
+function etiquetaCredito(c) {
+  const producto = esTextoNoVacio(c.producto) ? c.producto.trim()
+    : (esTextoNoVacio(c.tipo) ? c.tipo.trim() : 'Crédito');
+  const entidad = esTextoNoVacio(c.entidad) ? c.entidad.trim() : '';
+  return entidad ? `${entidad} · ${producto}` : producto;
+}
+
+/**
+ * Resumen por fuente de negocio para el dashboard: cuánto entró este mes vs.
+ * la cuota del crédito que cubre. Responde de un vistazo si el negocio se
+ * paga solo o si el sueldo está tapando el hueco. PURA y de solo lectura.
+ *
+ * @param {object} args
+ * @param {object[]} args.fuentes      fuentes de ingreso (se ignora `empleo`)
+ * @param {object[]} args.movimientos  movimientos (tipo:'ingreso' con ingresoId)
+ * @param {object[]} args.creditos     créditos (para leer la cuota vinculada)
+ * @param {Date|string} args.hoy       fecha de referencia (inyectable)
+ * @returns {Readonly<object>[]} una fila por fuente de negocio
+ */
+export function resumenNegocios({ fuentes = [], movimientos = [], creditos = [], hoy } = {}) {
+  const { prefijo } = partes(hoy);
+  const negocios = (Array.isArray(fuentes) ? fuentes : []).filter((f) => f && f.fuente !== 'empleo');
+  if (!negocios.length) return Object.freeze([]);
+
+  // Recibido este mes por fuente (suma de ingresos con ese ingresoId).
+  const recibidoPorFuente = new Map();
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'ingreso' || !enMes(m, prefijo) || !m.ingresoId) continue;
+    recibidoPorFuente.set(m.ingresoId, (recibidoPorFuente.get(m.ingresoId) || 0) + m.monto);
+  }
+  const creditoPorId = new Map((Array.isArray(creditos) ? creditos : []).filter(Boolean).map((c) => [c.id, c]));
+
+  const filas = negocios.map((f) => {
+    const recibido = redondear(recibidoPorFuente.get(f.id) || 0);
+    const credito = f.creditoId ? creditoPorId.get(f.creditoId) : null;
+    const cuota = credito && esEntero(credito.cuotaMensual) && credito.cuotaMensual > 0 ? credito.cuotaMensual : null;
+    const cobertura = cuota != null ? recibido / cuota : null;
+    let color = null;
+    if (cobertura != null) {
+      if (cobertura >= 1) color = 'verde';
+      else if (cobertura >= 0.6) color = 'ambar';
+      else color = 'rojo';
+    }
+    return Object.freeze({
+      id: f.id,
+      nombre: esTextoNoVacio(f.nombre) ? f.nombre.trim() : 'Negocio',
+      esperado: esEntero(f.montoEsperado) && f.montoEsperado > 0 ? f.montoEsperado : null,
+      recibido,
+      creditoId: f.creditoId || null,
+      creditoLabel: credito ? etiquetaCredito(credito) : null,
+      cuota,
+      cobertura,
+      color,
+    });
+  });
+  return Object.freeze(filas);
+}
+
+/* ============================================================
+   Personas — guardarraíl de gasto por persona/categoría vigilada
+   ============================================================ */
+
+/**
+ * Topes por defecto como FRACCIÓN del ingreso neto del mes.
+ * Guardarraíl estilo 50/30/20 (proteger ahorro; "gustos" acotados).
+ * El id es la categoría; el tope es el punto ROJO (mala práctica).
+ * Valores genéricos de arranque (no identifican a nadie); el usuario los ajusta
+ * en config.topesPersona (merge por id).
+ */
+export const TOPES_PERSONA_DEFAULT = Object.freeze({
+  persona1: 0.15,
+  persona2: 0.10,
+  persona3: 0.10,
+  yo: 0.15,
+  ocio: 0.10, // ocio algo más bajo: gasto discrecional
+});
+
+/** Banda ámbar: cuántos PUNTOS de fracción antes del tope avisa (2 pts). */
+export const AVISO_PUNTOS_DEFAULT = 0.02;
+
+/** Ids vigilados por defecto en el dashboard de Personas (orden de la barra). */
+export const VIGILADOS_DEFAULT = Object.freeze(['persona1', 'persona2', 'persona3', 'yo', 'ocio']);
+
+/**
+ * Resumen de gasto por "vigilado" (persona o categoría) contra su tope,
+ * medido como fracción del ingreso NETO del mes. PURA y de solo lectura.
+ *
+ * Cuenta TODO el gasto del mes con esa categoría (fijo + variable): es
+ * "cuánto va en esta persona", no solo lo discrecional.
+ *
+ * @param {object} args
+ * @param {object[]}    args.movimientos  movimientos del usuario
+ * @param {object[]}    args.vigilados    [{id, label}] a vigilar (personas + ocio…)
+ * @param {number}      args.netoDelMes   ingreso neto del mes (sueldo + negocios recibidos)
+ * @param {object}      [args.topes]      {id: fracción} tope por id (rojo)
+ * @param {number}      [args.avisoPuntos] banda ámbar en puntos (default 0.02)
+ * @param {Date|string} args.hoy          fecha de referencia (inyectable)
+ * @returns {Readonly<object>[]} una fila por vigilado, ordenada por gasto desc
+ */
+export function resumenPersonas({ movimientos = [], vigilados = [], netoDelMes = 0, topes = TOPES_PERSONA_DEFAULT, avisoPuntos = AVISO_PUNTOS_DEFAULT, hoy } = {}) {
+  const { anio, mes } = partes(hoy);
+  const neto = esEntero(netoDelMes) ? netoDelMes : (Number.isFinite(netoDelMes) ? Math.round(netoDelMes) : 0);
+  const aviso = Number.isFinite(avisoPuntos) && avisoPuntos >= 0 ? avisoPuntos : AVISO_PUNTOS_DEFAULT;
+
+  // Gasto TOTAL del mes por categoría (fijo + variable), repartiendo cuotas.
+  const gastoPorCat = new Map();
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'gasto') continue;
+    const porcion = porcionEnMes(m, anio, mes);
+    if (porcion <= 0) continue;
+    const id = esTextoNoVacio(m.categoria) ? m.categoria : CATEGORIA_FALLBACK;
+    gastoPorCat.set(id, (gastoPorCat.get(id) || 0) + porcion);
+  }
+
+  const filas = (Array.isArray(vigilados) ? vigilados : []).map((v) => {
+    const gastado = redondear(gastoPorCat.get(v.id) || 0);
+    const topeFrac = Number.isFinite(topes[v.id]) && topes[v.id] > 0 ? topes[v.id] : 0;
+    const pctIngreso = neto > 0 ? gastado / neto : 0;              // fracción del neto (0..1)
+    const topeMonto = topeFrac > 0 ? redondear(neto * topeFrac) : null;
+    const avanceTope = topeFrac > 0 ? pctIngreso / topeFrac : 0;   // 1 = justo en el tope
+    const faltanPuntos = topeFrac > 0 ? topeFrac - pctIngreso : null; // >0 aún hay margen
+
+    let color = 'verde';
+    if (topeFrac > 0) {
+      if (pctIngreso >= topeFrac) color = 'rojo';
+      else if (pctIngreso >= topeFrac - aviso) color = 'ambar';
+    }
+    return Object.freeze({
+      id: v.id,
+      label: esTextoNoVacio(v.label) ? v.label : v.id,
+      gastado,
+      pctIngreso,     // fracción del neto
+      topeFrac,       // fracción tope (rojo)
+      topeMonto,      // pesos del tope
+      avanceTope,     // gastado / tope (0..>1)
+      faltanPuntos,   // puntos de fracción para el tope (negativo = ya pasó)
+      color,
+    });
+  });
+  filas.sort((a, b) => b.gastado - a.gastado);
+  return Object.freeze(filas);
+}
+
+/* ============================================================
+   Tarjeta de crédito — resumen del ciclo (corte / pago)
+   ============================================================ */
+
+/** Día efectivo del mes (clamp a [1, último día del mes]). PURA. */
+function diaClamp(anio, mes, dia) {
+  const ultimo = new Date(anio, mes, 0).getDate(); // mes 1-based → último día
+  return Math.min(Math.max(1, Number(dia) || 1), ultimo);
+}
+
+/** ISO 'YYYY-MM-DD' desde año, mes (1-based) y día. PURA. */
+function isoDe(anio, mes, dia) {
+  return `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
+/** Días entre dos ISO 'YYYY-MM-DD' (b − a), en UTC para evitar TZ. PURA. */
+function diasEntreISO(aISO, bISO) {
+  const a = Date.UTC(+aISO.slice(0, 4), +aISO.slice(5, 7) - 1, +aISO.slice(8, 10));
+  const b = Date.UTC(+bISO.slice(0, 4), +bISO.slice(5, 7) - 1, +bISO.slice(8, 10));
+  return Math.round((b - a) / 86400000);
+}
+
+/**
+ * Resumen del ciclo de una tarjeta de crédito. PURA y de solo lectura.
+ * - acumulado: cargos del ciclo actual = compras de CONTADO en la ventana
+ *   (corte anterior, próximo corte] + la cuota del mes del corte para compras
+ *   a cuotas.
+ * - corteISO / pagoISO: próximo corte y su fecha límite de pago.
+ * - cuotasActivas / cuotasMensual: planes de cuotas vivos este mes en la tarjeta.
+ * - saldoRotativo / interesEstimado: el CONTADO del ciclo (lo que rota si no
+ *   pagas el total) y su interés estimado del próximo mes (saldo × tasa mensual).
+ *   Las compras a cuotas se EXCLUYEN: ya traen su interés en cada cuota. Si pagas
+ *   el total antes del límite, el interés real es 0. Con tasa nula → interesEstimado=null.
+ *
+ * @param {object} args
+ * @param {object[]}    args.movimientos
+ * @param {string}      args.cuenta      nombre de la tarjeta
+ * @param {number}      args.corteDia    día del mes del corte (1..31)
+ * @param {number}      [args.limiteDia] día límite de pago (1..31)
+ * @param {number}      [args.tasa]      tasa mensual % (para estimar la financiación)
+ * @param {Date|string} args.hoy
+ * @returns {Readonly<object>|null} null si no hay día de corte válido
+ */
+export function resumenTarjeta({ movimientos = [], cuenta, corteDia, limiteDia, tasa, hoy } = {}) {
+  if (!Number.isInteger(corteDia) || corteDia < 1 || corteDia > 31) return null;
+  const { anio, mes, dia } = partes(hoy);
+  const hoyISO = isoDe(anio, mes, dia);
+
+  // Próximo corte: este mes si aún no pasó; si ya pasó, el mes siguiente.
+  const corteEsteMes = diaClamp(anio, mes, corteDia);
+  let ncA = anio, ncM = mes;
+  if (dia > corteEsteMes) { ncM += 1; if (ncM > 12) { ncM = 1; ncA += 1; } }
+  const corteISO = isoDe(ncA, ncM, diaClamp(ncA, ncM, corteDia));
+
+  // Corte anterior: inicio del ciclo actual (el día después de él cuenta ya adentro).
+  let pcA = ncA, pcM = ncM - 1; if (pcM < 1) { pcM = 12; pcA -= 1; }
+  const pcISO = isoDe(pcA, pcM, diaClamp(pcA, pcM, corteDia));
+
+  // Pago: día límite en el mes del corte (o el siguiente si límite < corte).
+  const lim = Number.isInteger(limiteDia) && limiteDia >= 1 && limiteDia <= 31 ? limiteDia : null;
+  let pagoISO = null;
+  if (lim != null) {
+    let pgA = ncA, pgM = ncM;
+    if (lim < corteDia) { pgM += 1; if (pgM > 12) { pgM = 1; pgA += 1; } }
+    pagoISO = isoDe(pgA, pgM, diaClamp(pgA, pgM, lim));
+  }
+
+  let acumulado = 0, contadoCiclo = 0, cuotasActivas = 0, cuotasMensual = 0;
+  for (const m of (Array.isArray(movimientos) ? movimientos : [])) {
+    if (!m || m.tipo !== 'gasto' || m.cuenta !== cuenta) continue;
+    const n = Number.isInteger(m.cuotas) && m.cuotas > 1 ? m.cuotas : 1;
+    if (n > 1) {
+      acumulado += porcionEnMes(m, ncA, ncM); // la cuota que cae en el mes del corte
+      if (porcionEnMes(m, anio, mes) > 0) { cuotasActivas += 1; cuotasMensual += Math.round(m.monto / n); }
+    } else if (typeof m.fecha === 'string' && m.fecha > pcISO && m.fecha <= corteISO) {
+      const monto = Number.isFinite(m.monto) ? m.monto : 0;
+      acumulado += monto;      // contado dentro de la ventana del ciclo
+      contadoCiclo += monto;   // ...y ese contado es lo que ROTA si no pagas el total
+    }
+  }
+
+  // Estimación de financiación (honesta): si NO pagas el total, el CONTADO del
+  // ciclo rota y genera ~tasa% el próximo mes. Las cuotas NO cuentan aquí (ya
+  // traen su interés). Pagando el total antes del límite, el interés real es 0.
+  const tasaMensual = Number.isFinite(tasa) && tasa > 0 ? tasa : null;
+  const saldoRotativo = redondear(contadoCiclo);
+  const interesEstimado = tasaMensual != null ? redondear(saldoRotativo * tasaMensual / 100) : null;
+
+  return Object.freeze({
+    acumulado: redondear(acumulado),
+    corteISO,
+    pagoISO,
+    diasParaCorte: diasEntreISO(hoyISO, corteISO),
+    diasParaPago: pagoISO ? diasEntreISO(hoyISO, pagoISO) : null,
+    cuotasActivas,
+    cuotasMensual: redondear(cuotasMensual),
+    tasa: tasaMensual,
+    saldoRotativo,
+    interesEstimado,
+  });
+}
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/**
+ * Historial de AHORRO mes a mes (para el barchart de "cuánto ahorré").
+ * Ahorro del mes = ingresos − gastos, donde:
+ *   - ingresos = sueldo de empleo (constante; se usa el actual como referencia)
+ *     + ingresos de negocio REGISTRADOS ese mes.
+ *   - gastos = la porción del mes de cada gasto (monto completo; monto/N si va
+ *     a cuotas). Incluye fijos (materializados como movimientos).
+ * `tieneDatos` marca los meses con actividad real (para no mostrar como "ahorro"
+ * un mes sin registros previos = solo el sueldo). PURA.
+ *
+ * @param {{movimientos?:object[], ingresoEmpleo?:number, hoy:Date|string, meses?:number}} args
+ * @returns {Array<{anio:number, mes:number, label:string, ingresos:number, gastos:number, ahorro:number, tieneDatos:boolean, esActual:boolean}>}
+ */
+export function historialAhorro({ movimientos = [], ingresoEmpleo = 0, creditos = [], hoy, meses = 6 } = {}) {
+  const movs = Array.isArray(movimientos) ? movimientos.filter(Boolean) : [];
+  const { anio, mes } = partes(hoy);
+  const salario = esEntero(ingresoEmpleo) && ingresoEmpleo > 0 ? ingresoEmpleo
+    : (Number.isFinite(ingresoEmpleo) && ingresoEmpleo > 0 ? Math.round(ingresoEmpleo) : 0);
+  const n = Number.isInteger(meses) && meses > 0 ? Math.min(meses, 24) : 6;
+
+  // Cuota mensual comprometida en créditos ACTIVOS. Es la pata que el "ahorro"
+  // simple (ingresos − gastos) escondía: para quien vive apalancado, ignorarla
+  // infla el ahorro. Se aplica constante a cada mes del historial (usamos el
+  // compromiso ACTUAL como referencia; la app no guarda cuotas históricas).
+  const cuotasCredito = redondear(
+    (Array.isArray(creditos) ? creditos : [])
+      .filter((c) => c && c.activo && Number.isFinite(c.cuotaMensual))
+      .reduce((s, c) => s + c.cuotaMensual, 0),
+  );
+
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    let a = anio, m = mes - i;
+    while (m < 1) { m += 12; a -= 1; }
+    const prefijo = `${a}-${String(m).padStart(2, '0')}`;
+    const ingMovs = redondear(
+      movs.filter((x) => x.tipo === 'ingreso' && enMes(x, prefijo))
+        .reduce((s, x) => s + (Number.isFinite(x.monto) ? x.monto : 0), 0),
+    );
+    const gastos = redondear(
+      movs.filter((x) => x.tipo === 'gasto').reduce((s, x) => s + porcionEnMes(x, a, m), 0),
+    );
+    const ingresos = redondear(salario + ingMovs);
+    const ahorro = redondear(ingresos - gastos);        // compat: NO incluye cuotas
+    out.push({
+      anio: a,
+      mes: m,
+      label: MESES_CORTOS[m - 1],
+      ingresos,
+      gastos,
+      cuotasCredito,
+      ahorro,
+      neto: redondear(ahorro - cuotasCredito),           // flujo REAL: ya descuenta las cuotas
+      tieneDatos: gastos > 0 || ingMovs > 0,
+      esActual: a === anio && m === mes,
+    });
+  }
+  return out;
+}
+
+/**
+ * Gasto por categoría de ESTE mes vs el PASADO (para el barchart "en qué se va,
+ * mes a mes"). Cuenta TODO gasto (fijo + variable), prorrateando cuotas. PURA.
+ * @returns {{filas:Array<{categoriaId,actual,previo,delta,deltaPct:(number|null),pct}>, totalEste:number, hayPasado:boolean}}
+ *   deltaPct null = categoría NUEVA este mes (no había gasto el mes pasado).
+ */
+export function gastoCategoriasComparado({ movimientos = [], hoy, top = 6 } = {}) {
+  const movs = (Array.isArray(movimientos) ? movimientos : []).filter(Boolean);
+  const { anio, mes } = partes(hoy);
+  let ap = anio, mp = mes - 1;
+  if (mp < 1) { mp = 12; ap -= 1; }
+
+  const totalesMes = (a, m) => {
+    const acc = new Map();
+    for (const x of movs) {
+      if (x.tipo !== 'gasto') continue;
+      const p = porcionEnMes(x, a, m);
+      if (!(p > 0)) continue;
+      const id = (typeof x.categoria === 'string' && x.categoria.trim() !== '') ? x.categoria : CATEGORIA_FALLBACK;
+      acc.set(id, (acc.get(id) || 0) + p);
+    }
+    return acc;
+  };
+  const esteMap = totalesMes(anio, mes);
+  const pasMap = totalesMes(ap, mp);
+  const totalEste = redondear([...esteMap.values()].reduce((s, v) => s + v, 0));
+
+  const filas = [];
+  for (const id of new Set([...esteMap.keys(), ...pasMap.keys()])) {
+    const actual = redondear(esteMap.get(id) || 0);
+    const previo = redondear(pasMap.get(id) || 0);
+    filas.push(Object.freeze({
+      categoriaId: id,
+      actual,
+      previo,
+      delta: actual - previo,
+      // null = nueva (no había el mes pasado); si sigue en 0, delta 0.
+      deltaPct: previo > 0 ? (actual - previo) / previo : (actual > 0 ? null : 0),
+      pct: totalEste > 0 ? actual / totalEste : 0,
+    }));
+  }
+  filas.sort((a, b) => b.actual - a.actual);
+  return {
+    filas: filas.filter((f) => f.actual > 0).slice(0, Number.isInteger(top) && top > 0 ? top : 6),
+    totalEste,
+    hayPasado: [...pasMap.values()].some((v) => v > 0),
+  };
+}

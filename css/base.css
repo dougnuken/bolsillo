@@ -1,0 +1,303 @@
+/* ============================================================
+   Bolsillo · Base
+   Reset, fuentes self-hosted, shell mobile y safe-areas iOS.
+   ============================================================ */
+
+/* ---- Fuentes self-hosted (variable, subset latin) ---- */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../fonts/inter-latin-var.woff2') format('woff2');
+}
+/* Fuente estilizada de referencia (geométrica moderna, look fintech de los
+   ejemplos): Plus Jakarta Sans variable, self-hosted. Es la fuente general. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('../fonts/plusjakarta-latin-var.woff2') format('woff2');
+}
+
+/* ---- Reset acotado ---- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* v69 — HOLGURA DE SCROLL DE 1px. Es lo que suelta el viewport grande en iOS.
+   Medido con sondas instaladas en el dispositivo: `lvh` vale 956 SIEMPRE, pero
+   `innerHeight` arranca en 894 y solo sube a 956 cuando hay un scroll de por
+   medio. Las sondas de HTML mínimo arrancaban ya en 956; la app arranca en 894
+   y oscila. La diferencia no era el manifest, ni overscroll-behavior, ni el JS
+   —los tres se descartaron con las sondas A/B/C/D/E—: es que aquí el DOCUMENTO
+   no tiene NADA que scrollear (.app-shell es fixed, así que scrollHeight ==
+   clientHeight) y iOS nunca llega a soltar los 62pt.
+
+   Con 1px de holgura el documento es scrolleable y iOS entrega los 956. No se
+   ve nada: .app-shell es fixed y se pinta encima; ese píxel no desplaza
+   contenido. Y NO toca la arquitectura de scroll —.view sigue siendo el
+   scroller de las vistas—, así que no arrastra los 28 acoplamientos que sí
+   tenía la migración completa que descartamos.
+
+   El dock no necesita cambio alguno: ya es position:fixed con bottom 0, o sea
+   se apoya solo en el borde en cuanto el viewport crece. */
+body {
+  min-height: calc(100% + 1px);
+}
+
+/* iOS pinta el canvas, el overscroll y las safe-areas (incluida la franja del
+   home indicator) SOLO con el background-COLOR sólido del root — nunca con un
+   background-IMAGE (gradiente). Por eso <html> lleva un color sólido cálido-
+   oscuro como red de seguridad, y el gradiente de ambiente se pinta aparte en
+   una capa fija a pantalla completa (body::before, más abajo). */
+html { background-color: var(--bg-root); }
+/* Durante la INTRO del onboarding el borde inferior visible es el sheet neutro
+   (--bg-2), no el ambiente cálido: el root cambia de color para que la franja
+   del home indicator se funda con el sheet (el JS marca la fase en <html>). */
+html[data-ob-fase='intro'] { background-color: var(--bg-root); }
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: 1.45;
+  color: var(--text-1);
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+/* Capa de ambiente a PANTALLA COMPLETA. position:fixed + inset:0 con
+   viewport-fit=cover se ancla a los cuatro bordes del viewport visual —incluida
+   la franja del home indicator y el notch—, así el gradiente cálido llega hasta
+   el borde físico inferior y desaparece la banda negra. Es un elemento REAL
+   pintado (no depende de la propagación de background-image al canvas, que iOS
+   no hace). z-index:-1 la deja detrás de todo el shell (transparente encima). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg-app);
+  pointer-events: none;
+}
+
+/* (Sin puente body::after. La v22 pintaba aquí una rampa de 40px hacia
+   --bg-root para disimular la costura, pero una rampa seguida de meseta es
+   justo la firma con la que el ojo LOCALIZA un borde: en vez de esconder el
+   corte lo señalaba, y 40pt antes del corte real, agrandando la zona que se lee
+   como muerta. Lo sustituye el piso sólido de .nav-blur, que termina en el
+   mismo --bg-root y empalma sin rampa.) */
+
+/* toda cifra usa tabular-nums */
+.num,
+input[inputmode="decimal"],
+input[inputmode="numeric"] {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* mata el zoom por doble-tap de iOS/WebKit (conserva pinch-zoom).
+     Crítico en el teclado numérico: toques rápidos se leían como doble-tap. */
+  touch-action: manipulation;
+}
+
+/* Misma red anti-doble-tap-zoom para controles no-button y a nivel raíz */
+html,
+a,
+label,
+input,
+select,
+textarea,
+[role="switch"],
+[role="button"],
+[tabindex] {
+  touch-action: manipulation;
+}
+
+a { color: var(--text-2); text-decoration: none; }
+
+svg { display: block; }
+
+img { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--text-1);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+  box-shadow: 0 0 0 3px var(--glass-3);
+}
+
+/* ============================================================
+   Shell mobile
+   ============================================================ */
+.app-shell {
+  position: fixed;
+  inset: 0;
+  /* SIN height: 'inset:0' ya lo estira a los cuatro bordes del viewport visual.
+     Añadir 'height:100dvh' lo SOBRE-RESTRINGÍA: con top:0 + height explícito el
+     bottom:0 se ignora, y en la PWA instalada 100dvh resuelve 62pt más corto que
+     la pantalla (medido en dispositivo: 894 vs 956). El shell se cortaba solo
+     antes del borde y la barra, anclada a él, quedaba flotando lejos. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  background: transparent; /* el ambiente lo pinta <html> para cubrir las safe-areas */
+}
+
+/* ---- Header (respeta el notch / Dynamic Island) ----
+   Overlay transparente SOBRE el escenario de vistas: el contenido fluye por
+   debajo (llega hasta el borde superior) y, al hacer scroll, el header se
+   "condensa" a vidrio esmerilado + título compacto centrado (patrón nav
+   grande → nav inline de iOS). */
+.app-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* +15px para que la campana quede a la MISMA altura que la del hero de Hoy
+     (evita el salto al cambiar de vista). */
+  height: calc(var(--header-h) + env(safe-area-inset-top) + 15px);
+  padding-top: calc(env(safe-area-inset-top) + 15px);
+  padding-left: max(var(--sp-5), env(safe-area-inset-left));
+  padding-right: max(var(--sp-5), env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  z-index: 30;
+  background: transparent;
+  /* deja pasar scroll/tap al contenido; solo la campana captura */
+  pointer-events: none;
+}
+.app-header .icon-btn { pointer-events: auto; }
+
+/* Capa esmerilada que APARECE de forma GRADUAL con el scroll: su opacidad va
+   ligada a --header-p (0 en el tope → 1 al bajar, lo fija app.js siguiendo el
+   dedo). Así el frost + hairline entran suave, sin el salto binario anterior. */
+.app-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--glass-header);
+  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.2);
+  backdrop-filter: blur(var(--blur-strong)) saturate(1.2);
+  border-bottom: 1px solid var(--line-2);
+  opacity: var(--header-p, 0);
+  transition: opacity var(--dur-fast) linear; /* suaviza entre muestras de scroll */
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Título compacto centrado: entra junto con el frost (misma progresión). */
+.app-header__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(env(safe-area-inset-top) + 15px);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+  opacity: var(--header-p, 0);
+  transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
+  pointer-events: none;
+  transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-header__title { transform: none; }
+}
+
+/* ---- Zona de vistas (scroll) ---- */
+.view-stage {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  /* top: deja espacio para el header overlay (status + nav) — el contenido
+     arranca bajo la campana y puede subir por detrás al hacer scroll.
+     bottom +sp-4: la barra flota (16px sobre el borde inferior). */
+  padding: calc(env(safe-area-inset-top) + var(--header-h) + var(--sp-3))
+           max(var(--sp-5), env(safe-area-inset-left))
+           var(--view-b)
+           max(var(--sp-5), env(safe-area-inset-right));
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  transition: opacity var(--dur) var(--ease),
+              transform var(--dur) var(--ease),
+              visibility 0s linear var(--dur);
+}
+
+.view > .view-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* vista activa */
+.view.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur) var(--ease),
+              transform var(--dur) var(--ease),
+              visibility 0s;
+  z-index: 2;
+}
+
+/* transición: entrante desde abajo, saliente hacia arriba (solo transform/opacity) */
+.view.is-entering { transform: translateY(14px); opacity: 0; }
+.view.is-leaving  { transform: translateY(-10px); opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .view,
+  .view.is-active,
+  .view.is-entering,
+  .view.is-leaving {
+    transition: opacity var(--dur-fast) linear;
+    transform: none;
+  }
+}
+
+/* util */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}

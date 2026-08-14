@@ -1,0 +1,1427 @@
+/* ============================================================
+   Bolsillo · Registrar (bottom-sheet del FAB)
+   Piloto: Teclado numérico propio + Texto libre. Foto/PDF ocultos
+   hasta que estén listos (se re-muestran reañadiendo sus botones).
+   La fecha se elige con una hoja inferior (fecha-sheet), no con el
+   input de calendario nativo suelto.
+   Guarda con crearMovimiento/actualizar, valida, toast, borrador
+   autosave (localStorage, debounce) y modo edición.
+   Sin estilos inline (CSP style-src 'self').
+   ============================================================ */
+
+import { get, put, getConfig, saveConfig, getAll, query } from '../db.js';
+import {
+  crearMovimiento, actualizar, validarMovimiento, derivarEsHormiga, crearIngreso,
+} from '../model.js';
+import { formatCOP } from '../money.js';
+import { catalogoVisible, categoriaPorId } from '../categories.js';
+import { parseTextoLibre, adivinarCategoria } from '../categorize.js';
+import { parseSMS } from '../sms-banco.js';
+import { hoja } from '../overlay.js';
+import { analizarRecibo, MODELO_FOTO_DEFAULT } from '../foto-gasto.js';
+import { interpretarVoz, MODELO_VOZ_DEFAULT, UMBRAL_CONFIANZA } from '../voz-gasto.js';
+import { sugerirFijo } from '../reconciliacion.js';
+import { toast } from '../toast.js';
+import { hoyISO, etiquetaFecha, esISOValida } from '../fechas.js';
+import { abrirFecha } from './fecha-sheet.js';
+
+const DRAFT_KEY = 'bolsillo:draft:registrar';
+const MAX_DIGITOS = 12;
+
+/* ---- dictado por voz (SpeechRecognition) ----
+   En iPhone este motor resultó INESTABLE: por eso timeout + fallback son
+   obligatorios. Donde funciona = dictado de un toque; donde no, cae al
+   teclado sin trabarse jamás. */
+const VOZ_TIMEOUT_MS = 8000;   // sin cierre en 8s → forzamos el fin
+const VOZ_RED_MS = 1200;       // red de seguridad si stop() no dispara onend
+let recog = null;              // instancia activa de SpeechRecognition
+let recogTimer = null;         // timeout duro
+let recogHandled = false;      // single-flight: el resultado se procesa una sola vez
+
+/* ---- iconos ---- */
+const IC = {
+  sms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.9 9.9 0 0 1-2.8-.4L3 21l1.6-4.6A8.2 8.2 0 0 1 3.6 11.5 8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z"/><path d="M8.5 11.5h7M8.5 8.5h4"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18 9 12l6-6"/></svg>',
+  del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H8l-5 7 5 7h13a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1Z"/><path d="m13 9 4 6M17 9l-4 6"/></svg>',
+  keyboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>',
+  text: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14M5 10h14M5 15h9"/></svg>',
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h1.5l1-2h5l1 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>',
+  bang: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5"/><circle cx="12" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+};
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (m) => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]
+));
+
+/* ---- estado ---- */
+function fresh() {
+  return {
+    screen: 'metodos', modo: 'teclado', tipo: 'gasto', editId: null,
+    montoStr: '', categoriaId: '', ingresoId: '', cuenta: '', fecha: hoyISO(),
+    cuotas: 1, // compra a cuotas (solo gasto en tarjeta de crédito)
+    comercio: '', esFijo: false, notas: '', fuente: 'manual',
+    detalles: false, keypad: true, agregandoCuenta: false, agregandoFuente: false,
+    metodoElegido: false, // ¿ya pasó la selección Teclado/Texto/Foto/Voz? (solo gasto)
+    vozTexto: '', vozConfianzaBaja: false, // captura por voz (se resalta si la IA dudó)
+    vozEscuchando: false, // dictado por micrófono en curso (SpeechRecognition)
+    dedupKey: null,           // huella del SMS del banco (evita registrarlo dos veces)
+    recurrenteSugerido: null, // fijo que la app reconoció (para vincular al guardar)
+    fijoTocadoManual: false,  // el usuario movió el switch a mano → no lo autoseteamos
+  };
+}
+let STATE = fresh();
+let cfg = null;
+let draftPend = null;
+let fuentes = []; // fuentes de ingreso de negocio (para el modo Ingreso)
+let recurrentesCache = []; // gastos fijos (para reconocer y prellenar el switch)
+let movimientosCache = []; // movimientos (para saber qué fijo sigue pendiente este mes)
+
+let sheetRef = null, openRef = null, closeRef = null, onSavedRef = null;
+
+const montoActual = () => (parseInt(STATE.montoStr || '0', 10) || 0);
+const cuentas = () => (cfg && Array.isArray(cfg.cuentas) ? cfg.cuentas : []);
+/** Cuenta por defecto al registrar (config.cuentaDefault, o la primera). */
+const cuentaDefault = () => {
+  const d = cfg && cfg.cuentaDefault;
+  // Fallback = primera cuenta. Antes decía `cuentaDefault()` (recursión a sí
+  // misma): stack overflow si no había default. Nunca se disparaba porque una
+  // semilla de cuenta siempre fijaba uno; al quitar esa semilla (para no dejar
+  // datos personales) este camino sí se ejerce.
+  return (d && cuentas().includes(d)) ? d : (cuentas()[0] || '');
+};
+/** ¿La cuenta es tarjeta de crédito? (cfg.cuentasMeta[nombre].tipo === 'credito') */
+const esCredito = (nombre) => {
+  const m = cfg && cfg.cuentasMeta ? cfg.cuentasMeta[nombre] : null;
+  return !!(m && m.tipo === 'credito');
+};
+const esIngreso = () => STATE.tipo === 'ingreso';
+
+/** Carga las fuentes de negocio (para elegir a cuál se abona un ingreso). */
+async function cargarFuentes() {
+  try {
+    const todos = await getAll('ingresos');
+    fuentes = todos.filter((i) => i && i.fuente !== 'empleo');
+  } catch { fuentes = []; }
+  try {
+    [recurrentesCache, movimientosCache] = await Promise.all([getAll('recurrentes'), getAll('movimientos')]);
+  } catch { recurrentesCache = []; movimientosCache = []; }
+}
+
+/* ¿El gasto que se está armando calza con un fijo pendiente? Si sí, reconoce el
+   fijo: enciende el switch "gasto fijo" y recuerda cuál, para vincularlo al
+   guardar. Respeta al usuario: si ya movió el switch a mano, no lo pisa. */
+function detectarFijo() {
+  if (STATE.tipo !== 'gasto' || STATE.fijoTocadoManual) return;
+  const gasto = {
+    tipo: 'gasto', comercio: STATE.comercio, categoria: STATE.categoriaId,
+    monto: montoActual(), recurrenteId: null,
+  };
+  const fijo = sugerirFijo({ gasto, recurrentes: recurrentesCache, movimientos: movimientosCache, hoy: new Date() });
+  if (fijo) {
+    STATE.recurrenteSugerido = fijo.id;
+    STATE.esFijo = true;
+    STATE.detalles = true; // revela la sección para que se VEA el switch encendido
+  }
+}
+const fuenteActual = () => fuentes.find((f) => f.id === STATE.ingresoId) || null;
+const nombreFuente = (f) => (f && f.nombre && f.nombre.trim() ? f.nombre.trim() : 'Negocio');
+
+/* ---- borrador ---- */
+function hasContent() {
+  return montoActual() > 0 || !!STATE.categoriaId || !!STATE.comercio.trim();
+}
+function saveDraft() {
+  if (STATE.editId || esIngreso()) return; // el borrador es solo para gastos
+  if (!hasContent()) { clearDraft(); return; }
+  const d = {
+    modo: STATE.modo, montoStr: STATE.montoStr, categoriaId: STATE.categoriaId,
+    cuenta: STATE.cuenta, fecha: STATE.fecha, comercio: STATE.comercio,
+    esFijo: STATE.esFijo, notas: STATE.notas, cuotas: STATE.cuotas,
+  };
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* cuota llena: ignorar */ }
+}
+let saveTimer = null;
+function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 500); }
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ } }
+function loadDraft() {
+  try { const r = localStorage.getItem(DRAFT_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+window.addEventListener('beforeunload', () => { if (!STATE.editId && hasContent()) saveDraft(); });
+
+/* ============================================================
+   Render de pantallas
+   ============================================================ */
+function cabecera(titulo, conBack) {
+  return `
+    <div class="sheet__grip" aria-hidden="true"></div>
+    ${conBack ? `<button class="icon-btn sheet__back" data-act="back" type="button" aria-label="Volver">${IC.back}</button>` : ''}
+    <button class="icon-btn sheet__close" data-act="close" type="button" aria-label="Cerrar">${IC.close}</button>
+    <h2 class="sheet__title${conBack ? ' sheet__title--back' : ''}">${esc(titulo)}</h2>`;
+}
+
+/* Segmented Gasto/Ingreso: elección clara arriba del sheet. */
+function segmentedHTML() {
+  const on = (t) => (STATE.tipo === t ? ' is-on' : '');
+  return `
+    <div class="seg" role="tablist" aria-label="Tipo de movimiento">
+      <span class="seg__thumb" aria-hidden="true"></span>
+      <button type="button" class="seg__opt${on('gasto')}" role="tab" aria-selected="${STATE.tipo === 'gasto'}" data-tipo="gasto">Gasto</button>
+      <button type="button" class="seg__opt seg__opt--in${on('ingreso')}" role="tab" aria-selected="${STATE.tipo === 'ingreso'}" data-tipo="ingreso">Ingreso</button>
+    </div>`;
+}
+
+function renderMetodos() {
+  const draftBar = draftPend ? `
+    <div class="draft-bar" role="status">
+      <span class="draft-bar__ic">${IC.bang}</span>
+      <div class="draft-bar__body">
+        <p class="draft-bar__title">Tienes un registro sin terminar</p>
+        <p class="draft-bar__text">${draftPend.montoStr ? formatCOP(parseInt(draftPend.montoStr, 10) || 0) : 'Borrador'}${draftPend.categoriaId ? ' · ' + esc(categoriaPorId(draftPend.categoriaId).label) : ''}</p>
+      </div>
+      <div class="draft-bar__actions">
+        <button type="button" class="btn btn--primary btn--sm" data-act="draft-resume">Retomar</button>
+        <button type="button" class="btn btn--ghost btn--sm" data-act="draft-discard">Descartar</button>
+      </div>
+    </div>` : '';
+
+  return `
+    ${cabecera('Registrar', false)}
+    <p class="sheet__sub">¿Cómo quieres capturar tu gasto?</p>
+    ${draftBar}
+    <div class="capture-grid">
+      <button class="capture-opt" type="button" data-metodo="teclado">
+        <span class="capture-opt__icon">${IC.keyboard}</span>
+        <span class="capture-opt__name">Teclado</span>
+        <span class="capture-opt__desc">Escribe el monto a mano</span>
+      </button>
+      <button class="capture-opt" type="button" data-metodo="texto">
+        <span class="capture-opt__icon">${IC.text}</span>
+        <span class="capture-opt__name">Texto libre</span>
+        <span class="capture-opt__desc">"Pagué 50k de mercado"</span>
+      </button>
+      <button class="capture-opt capture-opt--wide" type="button" data-metodo="sms">
+        <span class="capture-opt__icon">${IC.sms}</span>
+        <span class="capture-opt__body">
+          <span class="capture-opt__name">SMS del banco</span>
+          <span class="capture-opt__desc">Copia la notificación de Occidente y la leo exacta</span>
+        </span>
+        <span class="capture-opt__go" aria-hidden="true">${IC.chev}</span>
+      </button>
+      <button class="capture-opt capture-opt--wide" type="button" data-metodo="voz">
+        <span class="capture-opt__icon">${IC.mic}</span>
+        <span class="capture-opt__body">
+          <span class="capture-opt__name">Decir el gasto</span>
+          <span class="capture-opt__desc">Dilo tal como lo dirías y la IA lo interpreta</span>
+        </span>
+        <span class="capture-opt__go" aria-hidden="true">${IC.chev}</span>
+      </button>
+      <button class="capture-opt capture-opt--wide" type="button" data-metodo="foto">
+        <span class="capture-opt__icon">${IC.photo}</span>
+        <span class="capture-opt__body">
+          <span class="capture-opt__name">Foto del recibo</span>
+          <span class="capture-opt__desc">Tómalo o súbelo y la IA lee el monto por ti</span>
+        </span>
+        <span class="capture-opt__go" aria-hidden="true">${IC.chev}</span>
+      </button>
+      <!-- PDF oculto en el piloto (placeholder). Para re-mostrar: reañade su
+           botón .capture-opt.is-soon con IC.pdf. -->
+    </div>`;
+}
+
+/* Pantalla mientras la IA lee la foto del recibo. */
+function renderCargando() {
+  return `
+    ${cabecera('Leyendo tu recibo', false)}
+    <div class="foto-loading" role="status" aria-live="polite">
+      <span class="foto-loading__spin" aria-hidden="true"></span>
+      <p class="foto-loading__txt">Leyendo tu recibo con IA…</p>
+      <p class="foto-loading__sub">Extraigo el monto, el comercio y la categoría.</p>
+    </div>`;
+}
+
+/* Hoja de dictado. Dos estados:
+   · ESCUCHANDO: micrófono en vivo (SpeechRecognition) con salida SIEMPRE
+     visible (Terminar / Cancelar) para que nunca quede pegado.
+   · IDLE: CTA "Tomar dictado" (si el navegador lo soporta) + fallback de
+     teclado (el textarea + "Interpretar con IA"). En iOS el teclado no abre
+     con focus programático, por eso el campo es un objetivo de toque claro. */
+function renderVoz() {
+  if (STATE.vozEscuchando) {
+    return `
+      ${cabecera('Decir el gasto', true)}
+      <div class="voz-listen" role="status" aria-live="polite">
+        <span class="voz-listen__wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+        <p class="voz-listen__title">Escuchando…</p>
+        <p class="voz-listen__sub">Di el gasto: "cincuenta mil en el mercado, varios".</p>
+      </div>
+      <button type="button" class="btn btn--primary btn--block" data-act="voz-terminar">Terminar y leer</button>
+      <button type="button" class="btn btn--ghost btn--block voz-listen__cancel" data-act="voz-cancelar">Cancelar</button>`;
+  }
+
+  const tieneTexto = !!(STATE.vozTexto && STATE.vozTexto.trim());
+  const cta = soportaVoz() ? `
+    <button type="button" class="voz-cta" data-act="voz-dictar">
+      <span class="voz-cta__ic">${IC.mic}</span>
+      <span class="voz-cta__body">
+        <span class="voz-cta__name">Tomar dictado</span>
+        <span class="voz-cta__desc">Habla y la IA lo registra sola</span>
+      </span>
+    </button>` : '';
+  const hint = soportaVoz()
+    ? '¿Prefieres escribir? Hazlo aquí (o toca el 🎤 del teclado de tu celular).'
+    : 'Toca el campo y luego el 🎤 del teclado de tu celular para dictar (o escribe).';
+
+  return `
+    ${cabecera('Decir el gasto', true)}
+    <p class="sheet__sub">Dícalo tal como lo dirías; la IA saca el monto, la categoría y el detalle.</p>
+    ${cta}
+    <label class="voz-field">
+      <textarea class="field__input voz-field__input" id="reg-voz" rows="3"
+        placeholder="Ej.: cincuenta mil en el mercado, varios"
+        autocomplete="off" autocapitalize="sentences" inputmode="text">${esc(STATE.vozTexto)}</textarea>
+    </label>
+    <p class="voz-hint">${hint}</p>
+    <button type="button" class="btn btn--primary btn--block voz-go" data-act="voz-interpretar" ${tieneTexto ? '' : 'disabled'}>
+      Interpretar con IA
+    </button>`;
+}
+
+/* Pantalla mientras la IA interpreta la frase dictada. Reusa .foto-loading. */
+function renderVozCargando() {
+  return `
+    ${cabecera('Interpretando', false)}
+    <div class="foto-loading" role="status" aria-live="polite">
+      <span class="foto-loading__spin" aria-hidden="true"></span>
+      <p class="foto-loading__txt">Interpretando lo que dijiste…</p>
+      <p class="foto-loading__sub">Saco el monto, la categoría y el detalle.</p>
+    </div>`;
+}
+
+function keypadHTML() {
+  const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '000', '0', 'del'];
+  return `<div class="keypad">${teclas.map((t) => {
+    if (t === 'del') return `<button type="button" class="keypad__key keypad__key--del" data-key="del" aria-label="Borrar">${IC.del}</button>`;
+    return `<button type="button" class="keypad__key" data-key="${t}">${t}</button>`;
+  }).join('')}</div>`;
+}
+
+function chipsCategoria() {
+  return `<div class="cat-grid" role="listbox" aria-label="Categoría">${
+    catalogoVisible().map((c) => `
+      <button type="button" class="cat-chip ${c.cls}${STATE.categoriaId === c.id ? ' is-sel' : ''}"
+        role="option" aria-selected="${STATE.categoriaId === c.id}" data-cat="${c.id}">
+        <span class="cat-chip__ic">${c.icon}</span>
+        <span class="cat-chip__label">${esc(c.label)}</span>
+      </button>`).join('')
+  }</div>`;
+}
+
+function cuentaSelector() {
+  const opts = cuentas().map((c) => `
+    <button type="button" class="acct-chip${STATE.cuenta === c ? ' is-sel' : ''}" data-cuenta="${esc(c)}">${esc(c)}</button>`).join('');
+  const nueva = STATE.agregandoCuenta
+    ? `<div class="acct-new">
+         <input type="text" class="field__input" id="reg-nueva-cuenta" placeholder="Nombre de la cuenta" autocomplete="off" />
+         <button type="button" class="btn btn--primary btn--sm" data-act="cuenta-add">Agregar</button>
+       </div>`
+    : `<button type="button" class="acct-chip acct-chip--add" data-act="cuenta-new">${IC.plus}<span>Nueva</span></button>`;
+  const cuotasBloque = (!esIngreso() && esCredito(STATE.cuenta)) ? cuotasSelector() : '';
+  return `<div class="acct-row">${opts}${nueva}</div>${cuotasBloque}`;
+}
+
+/* Selector de cuotas: solo gasto en tarjeta de crédito. 1 = de contado. */
+function cuotasSelector() {
+  const opciones = [1, 3, 6, 12, 24, 36];
+  const chips = opciones.map((n) => `
+    <button type="button" class="acct-chip${STATE.cuotas === n ? ' is-sel' : ''}" data-cuotas="${n}">${n === 1 ? 'De contado' : n}</button>`).join('');
+  const monto = montoActual();
+  const hint = STATE.cuotas > 1 && monto > 0
+    ? `<p class="cuotas-hint">≈ ${esc(formatCOP(Math.round(monto / STATE.cuotas)))}/mes durante ${STATE.cuotas} meses</p>`
+    : '';
+  return `
+    <div class="cuotas-field">
+      <span class="field__label">¿A cuántas cuotas?</span>
+      <div class="acct-row cuotas-chips">${chips}</div>
+      ${hint}
+    </div>`;
+}
+
+/* Selector de fuente de negocio (modo Ingreso) con opción "+ Nueva" (punteada,
+   inline) para crear un negocio sin salir a Ajustes. */
+function fuenteSelector() {
+  const opts = fuentes.map((f) => `
+    <button type="button" class="acct-chip${STATE.ingresoId === f.id ? ' is-sel' : ''}" data-fuente="${esc(f.id)}">${esc(nombreFuente(f))}</button>`).join('');
+  const nueva = STATE.agregandoFuente
+    ? `<div class="acct-new">
+         <input type="text" class="field__input" id="reg-nueva-fuente" placeholder="Nombre del negocio" autocomplete="off" />
+         <button type="button" class="btn btn--primary btn--sm" data-act="fuente-add">Agregar</button>
+       </div>`
+    : `<button type="button" class="acct-chip acct-chip--add" data-act="fuente-new">${IC.plus}<span>Nueva</span></button>`;
+  const hint = (!fuentes.length && !STATE.agregandoFuente)
+    ? '<p class="acct-empty__txt">Aún no tienes negocios. Crea uno con <strong>+ Nueva</strong> (o en Ajustes → Ingresos).</p>'
+    : '';
+  return `<div class="acct-row">${opts}${nueva}</div>${hint}`;
+}
+
+/* Campo "Detalle" prominente (el sub libre de el usuario: uniformes, gasolina,
+   dieta huevos…). Persiste en el campo `comercio` del movimiento por
+   retrocompat; solo cambia la etiqueta de cara al usuario. Solo en gastos. */
+function detalleHTML() {
+  if (esIngreso()) return '';
+  return `
+    <label class="field reg-detalle">
+      <span class="field__label field__label--section">Detalle · ¿en qué?</span>
+      <input type="text" class="field__input" id="reg-detalle" value="${esc(STATE.comercio)}"
+        placeholder="uniformes, gasolina, dieta…" autocomplete="off" inputmode="text" />
+      <span class="reg-detalle__hint">Opcional. Ayuda a recordar en qué se fue.</span>
+    </label>`;
+}
+
+function detallesHTML() {
+  const ingreso = esIngreso();
+  const resumen = ' · cuenta, fecha…';
+  return `
+    <button type="button" class="detalles-toggle${STATE.detalles ? ' is-open' : ''}" data-act="detalles">
+      <span>Detalles${!STATE.detalles ? resumen : ''}</span>
+      <span class="detalles-toggle__chev">${IC.chev}</span>
+    </button>
+    ${STATE.detalles ? `
+    <div class="detalles">
+      <div class="field">
+        <span class="field__label">Cuenta${ingreso ? ' donde entró' : ''}</span>
+        ${cuentaSelector()}
+      </div>
+      <div class="field">
+        <span class="field__label">Fecha</span>
+        <button type="button" class="date-trigger" data-act="fecha" aria-label="Elegir fecha del movimiento">
+          <span class="date-trigger__val" id="reg-fecha-val">${esc(etiquetaFecha(STATE.fecha))}</span>
+          <span class="date-trigger__ic">${IC.cal}</span>
+        </button>
+      </div>
+      ${ingreso ? '' : `
+      <label class="field toggle-row">
+        <span class="field__label">Gasto fijo (no cuenta como hormiga)</span>
+        <span class="switch${STATE.esFijo ? ' is-on' : ''}" role="switch" aria-checked="${STATE.esFijo}" tabindex="0" data-act="fijo"><span class="switch__dot"></span></span>
+      </label>`}
+      <label class="field">
+        <span class="field__label">Notas</span>
+        <textarea class="field__input field__textarea" id="reg-notas" rows="2" placeholder="Opcional">${esc(STATE.notas)}</textarea>
+      </label>
+    </div>` : ''}`;
+}
+
+function renderForm() {
+  const monto = montoActual();
+  const ingreso = esIngreso();
+  const puedeGuardar = monto > 0 && (ingreso ? !!STATE.ingresoId : !!STATE.categoriaId);
+
+  // Sin segmented: el tipo (gasto/ingreso) ya lo eligen las burbujas del FAB
+  // (o queda fijo al editar). Se conserva el hueco por compatibilidad de layout.
+  const seg = '';
+
+  const textInput = (!ingreso && STATE.modo === 'texto') ? `
+    <div class="free-text">
+      <input type="text" class="field__input free-text__input" id="reg-texto"
+        placeholder="Pagué 15.000 en taxi" autocomplete="off" inputmode="text" />
+      <p class="free-text__hint">Escribe en lenguaje natural y lo interpretamos.</p>
+    </div>` : '';
+
+  const titulo = STATE.editId
+    ? (ingreso ? 'Editar ingreso' : 'Editar movimiento')
+    : (ingreso ? 'Nuevo ingreso' : 'Nuevo gasto');
+
+  const seccion = ingreso
+    ? `<p class="field__label field__label--section">¿De qué negocio?</p>${fuenteSelector()}`
+    : `<p class="field__label field__label--section">Categoría</p>${chipsCategoria()}`;
+
+  const guardarTxt = STATE.editId ? 'Guardar cambios' : (ingreso ? 'Guardar ingreso' : 'Guardar gasto');
+
+  // Aviso cuando la IA de voz no quedó segura: se resalta para que el usuario
+  // revise antes de guardar (nunca se guarda a ciegas).
+  const vozWarn = STATE.vozConfianzaBaja ? `
+    <div class="voz-warn" role="status">
+      <span class="voz-warn__ic">${IC.bang}</span>
+      <span class="voz-warn__txt">Revisa los datos: no quedé del todo seguro de lo que dictaste.</span>
+    </div>` : '';
+
+  return `
+    ${cabecera(titulo, true)}
+    ${seg}
+    ${vozWarn}
+    ${textInput}
+    <button type="button" class="amt amt--${ingreso ? 'in' : 'out'}${STATE.keypad ? ' is-active' : ''}" data-act="amt-toggle" aria-label="Monto">
+      <span class="amt__cur">${ingreso ? '+$' : '$'}</span>
+      <span class="amt__value num" id="reg-amt">${monto ? formatCOP(monto).replace('$', '') : '0'}</span>
+    </button>
+    ${STATE.keypad ? keypadHTML() : ''}
+    ${seccion}
+    ${detalleHTML()}
+    ${detallesHTML()}
+    <button type="button" class="btn btn--primary btn--block btn--save" data-act="guardar" ${puedeGuardar ? '' : 'disabled'}>
+      ${guardarTxt}
+    </button>`;
+}
+
+/* ============================================================
+   Paint + binds
+   ============================================================ */
+let lastPaintedScreen = null;
+let lastPaintedTipo = null;
+let segThumbPrevTipo = null;
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Coloca (y desliza) el pill del segmented Gasto/Ingreso bajo la opción activa.
+   Mide posiciones reales (FLIP) porque el sheet se repinta entero en cada paint. */
+function colocarThumb() {
+  if (!sheetRef) return;
+  const seg = sheetRef.querySelector('.seg');
+  if (!seg) { segThumbPrevTipo = null; return; }
+  const thumb = seg.querySelector('.seg__thumb');
+  const optOn = seg.querySelector('.seg__opt.is-on');
+  if (!thumb || !optOn) return;
+  const pos = (o) => ({ w: o.offsetWidth, x: o.offsetLeft });
+  const dest = pos(optOn);
+  const animar = !prefersReduced && segThumbPrevTipo != null && segThumbPrevTipo !== STATE.tipo && dest.w > 0;
+  if (animar) {
+    const optPrev = seg.querySelector(`.seg__opt[data-tipo="${segThumbPrevTipo}"]`);
+    const from = optPrev ? pos(optPrev) : dest;
+    // parte en la posición y COLOR del tipo previo, sin transición
+    seg.classList.toggle('seg--ingreso', segThumbPrevTipo === 'ingreso');
+    thumb.style.transition = 'none';
+    thumb.style.width = dest.w + 'px';
+    thumb.style.transform = `translateX(${from.x}px)`;
+    void thumb.offsetWidth; // reflow
+    // destino: color + posición del tipo actual → deslizan y hacen crossfade
+    thumb.style.transition = '';
+    seg.classList.toggle('seg--ingreso', STATE.tipo === 'ingreso');
+    thumb.style.transform = `translateX(${dest.x}px)`;
+  } else {
+    seg.classList.toggle('seg--ingreso', STATE.tipo === 'ingreso');
+    thumb.style.transition = 'none';
+    thumb.style.width = dest.w + 'px';
+    thumb.style.transform = `translateX(${dest.x}px)`;
+    void thumb.offsetWidth;
+    thumb.style.transition = '';
+  }
+  segThumbPrevTipo = STATE.tipo;
+}
+
+/* Anima suavemente el alto del sheet de h0 → h1 (al cambiar de tipo/pantalla). */
+function animarAlto(h0, h1) {
+  const el = sheetRef;
+  el.style.overflow = 'hidden';
+  el.style.transition = 'none';
+  el.style.height = h0 + 'px';
+  void el.offsetHeight; // reflow
+  el.style.transition = 'height 240ms cubic-bezier(0.16, 1, 0.3, 1)';
+  el.style.height = h1 + 'px';
+  const done = () => {
+    el.style.height = '';
+    el.style.transition = '';
+    el.style.overflow = '';
+    el.removeEventListener('transitionend', done);
+  };
+  el.addEventListener('transitionend', done, { once: true });
+  setTimeout(done, 500);
+}
+
+/* Reinicia el estado de animación (al abrir/cerrar el sheet: no anima de más). */
+function resetPaintAnim() { lastPaintedScreen = null; lastPaintedTipo = null; segThumbPrevTipo = null; }
+
+function paint() {
+  if (!sheetRef) return;
+  // Preserva el scroll en repintados de la MISMA pantalla (p. ej. tocar el
+  // switch o un chip abajo no debe saltar arriba). Solo reinicia al cambiar.
+  const mismaPantalla = STATE.screen === lastPaintedScreen;
+  const cambio = !mismaPantalla || STATE.tipo !== lastPaintedTipo;
+  const animAlto = !prefersReduced && lastPaintedScreen !== null && cambio;
+  const prevScroll = sheetRef.scrollTop;
+  const h0 = animAlto ? sheetRef.offsetHeight : 0;
+  sheetRef.innerHTML = STATE.screen === 'form' ? renderForm()
+    : STATE.screen === 'foto-cargando' ? renderCargando()
+      : STATE.screen === 'voz' ? renderVoz()
+        : STATE.screen === 'voz-cargando' ? renderVozCargando()
+          : renderMetodos();
+  bind();
+  sheetRef.scrollTop = mismaPantalla ? prevScroll : 0;
+  lastPaintedScreen = STATE.screen;
+  lastPaintedTipo = STATE.tipo;
+  colocarThumb();
+  if (animAlto && h0 > 0) {
+    const h1 = sheetRef.offsetHeight;
+    if (Math.abs(h1 - h0) > 6) animarAlto(h0, h1);
+  }
+  if (STATE.screen === 'form' && STATE.modo === 'texto') {
+    const ti = sheetRef.querySelector('#reg-texto');
+    if (ti) setTimeout(() => ti.focus(), 60);
+  }
+  if (STATE.screen === 'voz' && !STATE.vozEscuchando && !soportaVoz()) {
+    // Solo cuando NO hay dictado por voz: enfoca el campo para abrir el teclado
+    // (y su 🎤). Si el navegador soporta voz, dejamos ver primero el CTA.
+    const va = sheetRef.querySelector('#reg-voz');
+    if (va) setTimeout(() => { va.focus(); const n = va.value.length; try { va.setSelectionRange(n, n); } catch { /* noop */ } }, 60);
+  }
+}
+
+/* actualizaciones puntuales sin repintar (preservan foco/caret) */
+function puedeGuardarAhora() {
+  return montoActual() > 0 && (esIngreso() ? !!STATE.ingresoId : !!STATE.categoriaId);
+}
+function syncMonto() {
+  const amt = sheetRef.querySelector('#reg-amt');
+  if (amt) { const m = montoActual(); amt.textContent = m ? formatCOP(m).replace('$', '') : '0'; }
+  const save = sheetRef.querySelector('[data-act="guardar"]');
+  if (save) save.disabled = !puedeGuardarAhora();
+}
+function syncCategoria() {
+  sheetRef.querySelectorAll('.cat-chip').forEach((ch) => {
+    const sel = ch.dataset.cat === STATE.categoriaId;
+    ch.classList.toggle('is-sel', sel);
+    ch.setAttribute('aria-selected', String(sel));
+  });
+  syncMonto();
+}
+/* Cambia de tipo (gasto/ingreso). Conserva el monto tecleado. */
+function cambiarTipo(t) {
+  if (t === STATE.tipo && STATE.screen === 'form') return;
+  STATE.tipo = t;
+  if (t === 'ingreso') {
+    // Ingreso no tiene selección de método de captura → directo al formulario.
+    STATE.screen = 'form';
+    STATE.keypad = true;
+    if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+    if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+  } else {
+    // Gasto: si ya eligió método (teclado/texto/foto) vuelve al formulario; si no,
+    // regresa a la selección de método (no debe saltársela al alternar el segmented).
+    STATE.screen = STATE.metodoElegido ? 'form' : 'metodos';
+    STATE.keypad = STATE.metodoElegido && STATE.modo === 'teclado';
+  }
+  paint();
+}
+/* Actualiza solo la etiqueta del disparador de fecha (sin repintar:
+   conserva scroll y foco tras cerrar la hoja). */
+function syncFecha() {
+  const val = sheetRef.querySelector('#reg-fecha-val');
+  if (val) val.textContent = etiquetaFecha(STATE.fecha);
+}
+
+function bind() {
+  sheetRef.querySelectorAll('[data-act]').forEach((el) => {
+    const act = el.dataset.act;
+    if (act === 'close') el.addEventListener('click', cerrar);
+    else if (act === 'back') el.addEventListener('click', () => { detenerReconocimiento(); STATE.vozEscuchando = false; STATE.screen = 'metodos'; STATE.tipo = 'gasto'; STATE.metodoElegido = false; STATE.vozConfianzaBaja = false; draftPend = null; paint(); });
+    else if (act === 'voz-interpretar') el.addEventListener('click', interpretarVozDictada);
+    else if (act === 'voz-dictar') el.addEventListener('click', iniciarDictado);
+    else if (act === 'voz-terminar') el.addEventListener('click', terminarDictado);
+    else if (act === 'voz-cancelar') el.addEventListener('click', cancelarDictado);
+    else if (act === 'draft-resume') el.addEventListener('click', retomarDraft);
+    else if (act === 'draft-discard') el.addEventListener('click', () => { clearDraft(); draftPend = null; paint(); });
+    else if (act === 'amt-toggle') el.addEventListener('click', () => { STATE.keypad = !STATE.keypad; paint(); });
+    else if (act === 'detalles') el.addEventListener('click', () => { STATE.detalles = !STATE.detalles; paint(); });
+    else if (act === 'guardar') el.addEventListener('click', guardar);
+    else if (act === 'fecha') el.addEventListener('click', elegirFecha);
+    else if (act === 'cuenta-new') el.addEventListener('click', () => { STATE.agregandoCuenta = true; STATE.detalles = true; paint(); const i = sheetRef.querySelector('#reg-nueva-cuenta'); if (i) i.focus(); });
+    else if (act === 'cuenta-add') el.addEventListener('click', agregarCuenta);
+    else if (act === 'fuente-new') el.addEventListener('click', () => { STATE.agregandoFuente = true; paint(); const i = sheetRef.querySelector('#reg-nueva-fuente'); if (i) i.focus(); });
+    else if (act === 'fuente-add') el.addEventListener('click', agregarFuente);
+    else if (act === 'fijo') {
+      const toggle = () => {
+        STATE.esFijo = !STATE.esFijo;
+        STATE.fijoTocadoManual = true;            // el usuario decide: no lo autoseteamos más
+        if (!STATE.esFijo) STATE.recurrenteSugerido = null; // lo apagó → no vincular
+        scheduleSave();
+        paint();
+      };
+      el.addEventListener('click', toggle);
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    }
+  });
+
+  // segmented Gasto/Ingreso
+  sheetRef.querySelectorAll('[data-tipo]').forEach((b) => {
+    b.addEventListener('click', () => cambiarTipo(b.dataset.tipo));
+  });
+
+  // métodos
+  sheetRef.querySelectorAll('[data-metodo]').forEach((b) => {
+    b.addEventListener('click', () => {
+      const metodo = b.dataset.metodo;
+      recordarMetodo(metodo); // agilidad: la próxima vez abre directo en este método
+      if (metodo === 'foto') { abrirCamara(); return; }
+      if (metodo === 'sms') { abrirSMS(); return; }
+      if (metodo === 'voz') { abrirVoz(); return; }
+      STATE.modo = metodo;
+      STATE.tipo = 'gasto';
+      STATE.fuente = 'manual';
+      STATE.metodoElegido = true;
+      STATE.screen = 'form';
+      STATE.keypad = metodo === 'teclado';
+      if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+      paint();
+    });
+  });
+
+  // fuente de ingreso (modo Ingreso)
+  sheetRef.querySelectorAll('[data-fuente]').forEach((b) => {
+    b.addEventListener('click', () => {
+      STATE.ingresoId = STATE.ingresoId === b.dataset.fuente ? '' : b.dataset.fuente;
+      sheetRef.querySelectorAll('[data-fuente]').forEach((x) => {
+        x.classList.toggle('is-sel', x.dataset.fuente === STATE.ingresoId);
+      });
+      syncMonto();
+    });
+  });
+
+  // teclado numérico
+  sheetRef.querySelectorAll('[data-key]').forEach((k) => {
+    k.addEventListener('click', () => {
+      const key = k.dataset.key;
+      if (key === 'del') STATE.montoStr = STATE.montoStr.slice(0, -1);
+      else if (STATE.montoStr.length < MAX_DIGITOS) {
+        const next = (STATE.montoStr + key).replace(/^0+(?=\d)/, '');
+        STATE.montoStr = next.slice(0, MAX_DIGITOS);
+      }
+      syncMonto();
+      scheduleSave();
+    });
+  });
+
+  // categorías
+  sheetRef.querySelectorAll('.cat-chip').forEach((ch) => {
+    ch.addEventListener('click', () => {
+      STATE.categoriaId = STATE.categoriaId === ch.dataset.cat ? '' : ch.dataset.cat;
+      syncCategoria();
+      scheduleSave();
+    });
+  });
+
+  // cuentas
+  sheetRef.querySelectorAll('[data-cuenta]').forEach((b) => {
+    b.addEventListener('click', () => { STATE.cuenta = b.dataset.cuenta; paint(); });
+  });
+
+  sheetRef.querySelectorAll('[data-cuotas]').forEach((b) => {
+    b.addEventListener('click', () => { STATE.cuotas = Number(b.dataset.cuotas) || 1; paint(); });
+  });
+
+  // inputs de texto (sin repintar)
+  const texto = sheetRef.querySelector('#reg-texto');
+  if (texto) texto.addEventListener('input', () => interpretarTexto(texto.value));
+
+  // campo de dictado por voz: guarda el texto y habilita/deshabilita Interpretar
+  const voz = sheetRef.querySelector('#reg-voz');
+  if (voz) voz.addEventListener('input', () => { STATE.vozTexto = voz.value; syncVozBtn(); });
+
+  const detalle = sheetRef.querySelector('#reg-detalle');
+  if (detalle) detalle.addEventListener('input', () => { STATE.comercio = detalle.value; scheduleSave(); });
+
+  const notas = sheetRef.querySelector('#reg-notas');
+  if (notas) notas.addEventListener('input', () => { STATE.notas = notas.value; scheduleSave(); });
+
+  const nuevaCuenta = sheetRef.querySelector('#reg-nueva-cuenta');
+  if (nuevaCuenta) nuevaCuenta.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agregarCuenta(); } });
+}
+
+/* interpreta el texto libre y sincroniza el formulario en vivo */
+function interpretarTexto(valor) {
+  const { monto, categoriaId, comercio } = parseTextoLibre(valor, cfg || {});
+  STATE.montoStr = monto ? String(monto) : '';
+  if (categoriaId) STATE.categoriaId = categoriaId;
+  STATE.comercio = comercio || '';
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
+  syncCategoria();
+  const ci = sheetRef.querySelector('#reg-detalle');
+  if (ci) ci.value = STATE.comercio;
+  scheduleSave();
+}
+
+/* ============================================================
+   SMS del banco → parser exacto → prellenar el formulario
+   iOS no deja que NINGUNA web lea Mensajes (no existe API), así que el
+   usuario trae el texto: del portapapeles con un toque, o pegándolo. El
+   parser es determinista (sms-banco.js): ni gasta clave ni puede alucinar
+   un monto. Mismo camino que usa el Atajo de iOS por #/registrar?sms=…
+   ============================================================ */
+
+/** Busca una cuenta cuyo nombre contenga los 4 dígitos de la tarjeta. PURA-ish. */
+function cuentaPorTarjeta(tarjeta) {
+  if (!tarjeta || !cfg || !Array.isArray(cfg.cuentas)) return '';
+  return cfg.cuentas.find((c) => typeof c === 'string' && c.includes(tarjeta)) || '';
+}
+
+/** ¿Ya se registró este SMS? Consulta el índice dedupKey. */
+async function yaRegistrado(dedupKey) {
+  if (!dedupKey) return false;
+  try {
+    const previos = await query('movimientos', 'dedupKey', IDBKeyRange.only(dedupKey));
+    return Array.isArray(previos) && previos.length > 0;
+  } catch { return false; }   // sin índice disponible, mejor dejar seguir
+}
+
+/** Vuelca un SMS ya parseado en el formulario, listo para confirmar. */
+function aplicarSMS(r) {
+  STATE.modo = 'texto';
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'manual';        // 'manual' es la única fuente válida del modelo
+  STATE.metodoElegido = true;
+  STATE.screen = 'form';
+  STATE.keypad = false;
+  STATE.montoStr = String(r.monto);
+  STATE.comercio = r.comercio;
+  if (r.fecha) STATE.fecha = r.fecha;
+  STATE.dedupKey = r.dedupKey;
+  const cta = cuentaPorTarjeta(r.tarjeta);
+  if (cta) STATE.cuenta = cta;
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  // Categoría: se reusa el mismo adivinador del texto libre, que ya aprende
+  // de lo que el usuario corrige. Si no acierta, el formulario la pide.
+  const cat = adivinarCategoria(r.comercio, cfg || {});
+  if (cat) STATE.categoriaId = cat;
+  detectarFijo();
+  syncCategoria();
+  paint();
+}
+
+/** Hoja de respaldo: pegar el SMS a mano (si el portapapeles no da permiso). */
+function pedirSMS() {
+  const html = `
+    <div class="ov-grip" aria-hidden="true"></div>
+    <h3 class="ov-title">Pega el SMS del banco</h3>
+    <p class="ov-text">Mantén pulsada la notificación en Mensajes, cópiala y pégala aquí.</p>
+    <label class="field">
+      <span class="field__label">Texto del mensaje</span>
+      <textarea class="field__input" id="sms-txt" rows="4"
+        placeholder="Banco Occidente informa que realizo Compra por…"></textarea>
+    </label>
+    <div class="ov-actions">
+      <button type="button" class="btn btn--ghost btn--block" data-ov="cancel">Cancelar</button>
+      <button type="button" class="btn btn--primary btn--block" data-ov="ok">Leer</button>
+    </div>`;
+  return hoja(html, (panel, cerrar) => {
+    const ta = panel.querySelector('#sms-txt');
+    requestAnimationFrame(() => ta && ta.focus());
+    panel.querySelector('[data-ov="ok"]').addEventListener('click', () => cerrar((ta.value || '').trim()));
+    panel.querySelector('[data-ov="cancel"]').addEventListener('click', () => cerrar(null));
+  });
+}
+
+/**
+ * Entrada del método "SMS del banco". Intenta el portapapeles (un toque) y,
+ * si iOS lo niega o no hay nada legible, cae a la hoja de pegar.
+ */
+async function abrirSMS() {
+  let texto = '';
+  try {
+    if (navigator.clipboard && navigator.clipboard.readText) texto = await navigator.clipboard.readText();
+  } catch { texto = ''; }        // permiso denegado: no es un error, es el otro camino
+
+  let r = texto ? parseSMS(texto) : null;
+  if (!r) {
+    const pegado = await pedirSMS();
+    if (pegado == null) return;                       // canceló
+    r = parseSMS(pegado);
+    if (!r) { toast('No reconocí ese mensaje como una compra', { icono: false, ms: 3200 }); return; }
+  }
+
+  if (await yaRegistrado(r.dedupKey)) {
+    toast('Esa compra ya está registrada', { icono: false, ms: 3000 });
+    return;
+  }
+  aplicarSMS(r);
+}
+
+/**
+ * Abre Registrar con un SMS ya traído de fuera (Atajo de iOS →
+ * #/registrar?sms=…). Público: lo llama app.js al arrancar.
+ * @param {string} texto  el SMS crudo
+ */
+async function abrirDesdeSMS(texto) {
+  const r = parseSMS(texto);
+  if (!r) { toast('No reconocí ese mensaje como una compra', { icono: false, ms: 3200 }); return; }
+  if (await yaRegistrado(r.dedupKey)) { toast('Esa compra ya está registrada', { icono: false, ms: 3000 }); return; }
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  draftPend = null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  aplicarSMS(r);
+}
+
+/* ============================================================
+   Foto del recibo → IA (visión) → prellenar el formulario
+   ============================================================ */
+const MAX_LADO_FOTO = 1568; // px, lado más largo (recomendado para visión)
+let fileInput = null;
+
+/** Input de archivo/cámara reutilizable (se crea una sola vez). */
+function ensureFileInput() {
+  if (fileInput) return fileInput;
+  fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  /* SIN capture. En iOS el atributo capture NO "sugiere" la cámara: la FUERZA, y
+     elimina del picker la opción de Fototeca — el usuario no podía subir una foto
+     ya tomada. Con solo accept='image/*', iOS muestra la hoja nativa completa
+     (Fototeca · Tomar foto · Elegir archivo), que es justo lo que promete la
+     opción "Tómalo o súbelo". */
+  fileInput.hidden = true;
+  fileInput.addEventListener('change', onFotoElegida);
+  document.body.appendChild(fileInput);
+  return fileInput;
+}
+
+/** Redimensiona a <=MAX_LADO_FOTO y recodifica JPEG. Devuelve {base64, mediaType}. */
+function leerImagenRedimensionada(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const escala = Math.min(1, MAX_LADO_FOTO / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * escala));
+      const h = Math.max(1, Math.round(img.height * escala));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('canvas')); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      let dataUrl;
+      try { dataUrl = canvas.toDataURL('image/jpeg', 0.82); }
+      catch (err) { reject(err); return; }
+      const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl);
+      if (!m) { reject(new Error('encode')); return; }
+      resolve({ mediaType: m[1], base64: m[2] });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load')); };
+    img.src = url;
+  });
+}
+
+/** Abre la cámara/galería si hay clave; si no, guía a configurarla. */
+function abrirCamara() {
+  if (!cfg || typeof cfg.apiKey !== 'string' || cfg.apiKey.trim() === '') {
+    toast('Para leer fotos, configura tu clave en Ajustes → Conexión con IA', { icono: false, ms: 4000 });
+    return;
+  }
+  const inp = ensureFileInput();
+  inp.value = ''; // permite volver a elegir el mismo archivo
+  inp.click();
+}
+
+async function onFotoElegida(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  let img;
+  try { img = await leerImagenRedimensionada(file); }
+  catch { toast('No se pudo leer la imagen', { icono: false }); return; }
+
+  // pantalla de carga
+  STATE.modo = 'foto';
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'foto';
+  STATE.screen = 'foto-cargando';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  paint();
+
+  const categorias = catalogoVisible().map((c) => ({ id: c.id, label: c.label }));
+  const modelo = (cfg && cfg.modelos && (cfg.modelos.foto || cfg.modelos.texto)) || MODELO_FOTO_DEFAULT;
+  const r = await analizarRecibo({
+    base64: img.base64, mediaType: img.mediaType,
+    apiKey: cfg.apiKey, modelo, categorias,
+  });
+
+  if (STATE.screen !== 'foto-cargando') return; // el usuario cerró/navegó
+
+  if (r.estado !== 'ok') {
+    toast(r.mensaje || 'No se pudo leer el recibo', { icono: false, ms: 4000 });
+    STATE.screen = 'form';
+    STATE.keypad = true;
+    STATE.fuente = 'manual';
+    STATE.metodoElegido = true;
+    paint();
+    return;
+  }
+
+  if (r.monto) STATE.montoStr = String(r.monto);
+  if (r.categoriaId) STATE.categoriaId = r.categoriaId;
+  STATE.comercio = r.comercio || '';
+  STATE.metodoElegido = true;
+  STATE.screen = 'form';
+  STATE.keypad = !r.monto; // si no leyó monto, abre el teclado para escribirlo
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
+  scheduleSave();
+  paint();
+  toast(r.monto ? 'Recibo leído · revisa y guarda' : 'No leí el monto: escríbelo', { icono: !!r.monto, ms: 3400 });
+}
+
+/* ============================================================
+   Voz del gasto → IA (tool-use) → prellenar el formulario
+   Reusa la MISMA tarjeta de revisión del flujo de foto: solo cambia la
+   entrada (texto dictado en vez de imagen). Guarda con fuente:'voz'.
+   ============================================================ */
+
+/** ¿El navegador ofrece dictado por voz? PURA (lee solo capacidades). */
+function soportaVoz() {
+  return typeof window !== 'undefined'
+    && typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
+}
+
+/** ¿Hay clave de Anthropic configurada? */
+function tieneClave() {
+  return !!(cfg && typeof cfg.apiKey === 'string' && cfg.apiKey.trim() !== '');
+}
+
+/** Detiene y limpia cualquier reconocimiento en curso (sin repintar). Blinda
+ *  contra callbacks tardíos marcando el resultado como ya manejado. */
+function detenerReconocimiento() {
+  recogHandled = true;
+  clearTimeout(recogTimer); recogTimer = null;
+  if (recog) { try { recog.abort(); } catch { /* noop */ } recog = null; }
+}
+
+/** Cae al teclado sin trabarse: sale del estado escuchando, repinta la hoja de
+ *  dictado (con el texto que hubiera) y enfoca el campo. Mensaje opcional. */
+function fallbackTeclado(mensaje) {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
+  paint();
+  const ta = sheetRef && sheetRef.querySelector('#reg-voz');
+  if (ta) setTimeout(() => { try { ta.focus(); } catch { /* noop */ } }, 60);
+  if (mensaje) toast(mensaje, { icono: false, ms: 3200 });
+}
+
+/** Procesa el fin del dictado UNA sola vez (single-flight). Con texto →
+ *  auto-interpreta y auto-avanza; vacío → cae al teclado. */
+function manejarFin(texto, msgSiVacio) {
+  if (recogHandled) return;
+  recogHandled = true;
+  clearTimeout(recogTimer); recogTimer = null;
+  recog = null;
+  const limpio = (texto || '').trim();
+  STATE.vozEscuchando = false;
+
+  if (!limpio) { fallbackTeclado(msgSiVacio || 'No te escuché. Escríbelo aquí o vuelve a intentar.'); return; }
+
+  STATE.vozTexto = limpio;
+  if (!tieneClave()) {
+    // Sin clave: guía a Ajustes (como hoy) y deja el texto listo en el campo.
+    paint();
+    toast('Para interpretar por voz, configura tu clave en Ajustes → Conexión con IA', { icono: false, ms: 4200 });
+    return;
+  }
+  // Un toque: interpreta y salta a la tarjeta de revisión sin pasos extra.
+  interpretarVozDictada();
+}
+
+/** Arranca el dictado por micrófono. Cualquier fallo cae al teclado. */
+function iniciarDictado() {
+  const Ctor = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
+  if (!Ctor) { fallbackTeclado('Tu navegador no permite dictado por voz. Escríbelo aquí.'); return; }
+
+  detenerReconocimiento();
+  recogHandled = false;
+
+  let r;
+  try { r = new Ctor(); } catch { fallbackTeclado('No se pudo iniciar el dictado. Escríbelo aquí.'); return; }
+  recog = r;
+  r.lang = 'es-CO';
+  r.continuous = false;
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+
+  let capturado = '';
+  r.onresult = (e) => {
+    try {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) capturado += e.results[i][0].transcript;
+      }
+    } catch { /* noop */ }
+  };
+  r.onnomatch = () => manejarFin(capturado, 'No te entendí. Escríbelo aquí o intenta de nuevo.');
+  r.onerror = (e) => {
+    const err = e && e.error;
+    if (err === 'aborted') { manejarFin(capturado, null); return; } // cancelar/timeout
+    const msg = (err === 'not-allowed' || err === 'service-not-allowed')
+      ? 'Sin permiso de micrófono. Escríbelo aquí o actívalo en el navegador.'
+      : (err === 'no-speech')
+        ? 'No te escuché. Escríbelo aquí o vuelve a intentar.'
+        : 'El dictado falló. Escríbelo aquí.';
+    manejarFin(capturado, msg);
+  };
+  r.onend = () => manejarFin(capturado, null);
+
+  try { r.start(); } catch { fallbackTeclado('No se pudo iniciar el dictado. Escríbelo aquí.'); return; }
+
+  STATE.vozEscuchando = true;
+  paint();
+
+  // Timeout DURO: sin cierre en 8s, forzamos stop; si stop() tampoco dispara
+  // onend (bug de iOS), la red de seguridad cierra a mano. Nunca queda pegado.
+  recogTimer = setTimeout(() => {
+    if (recogHandled) return;
+    try { if (recog) recog.stop(); } catch { /* noop */ }
+    setTimeout(() => {
+      if (recogHandled) return;
+      manejarFin(capturado, capturado.trim() ? null : 'No te escuché a tiempo. Escríbelo aquí.');
+    }, VOZ_RED_MS);
+  }, VOZ_TIMEOUT_MS);
+}
+
+/** Botón "Terminar y leer": finaliza y usa lo que se haya escuchado. */
+function terminarDictado() {
+  clearTimeout(recogTimer); recogTimer = null;
+  if (recog) {
+    try { recog.stop(); } catch { manejarFin('', null); }
+    // Si stop() no dispara onend, cerramos igual tras un momento.
+    setTimeout(() => { if (!recogHandled) manejarFin('', 'No te escuché. Escríbelo aquí.'); }, VOZ_RED_MS);
+  } else { manejarFin('', null); }
+}
+
+/** Botón "Cancelar": aborta sin toast y vuelve al estado idle de la hoja. */
+function cancelarDictado() {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
+  paint();
+}
+
+/** Abre la hoja de dictado (campo de texto). La clave se valida al interpretar. */
+function abrirVoz() {
+  detenerReconocimiento();
+  STATE.modo = 'voz';
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'voz';
+  STATE.metodoElegido = true;
+  STATE.screen = 'voz';
+  STATE.keypad = false;
+  STATE.vozConfianzaBaja = false;
+  STATE.vozEscuchando = false;
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  // Agilidad: si el navegador soporta dictado y hay clave, ARRANCA a escuchar
+  // de una (se salta el paso "Tomar dictado"). start() va dentro del gesto del
+  // toque, así iOS lo permite. Sin soporte o sin clave → hoja idle (teclado).
+  if (soportaVoz() && tieneClave()) {
+    iniciarDictado(); // hace su propio paint (estado "Escuchando…")
+  } else {
+    paint();
+  }
+}
+
+/** Habilita/deshabilita "Interpretar" según haya texto (sin repintar). */
+function syncVozBtn() {
+  const btn = sheetRef.querySelector('[data-act="voz-interpretar"]');
+  if (btn) btn.disabled = !(STATE.vozTexto && STATE.vozTexto.trim());
+}
+
+/** Vuelca el resultado de la IA en el formulario (misma tarjeta de revisión). */
+function aplicarResultadoVoz(r) {
+  // Ingreso solo si la IA lo detectó Y hay negocios a los cuales abonar; si no,
+  // cae con gracia a gasto (registrar un ingreso exige una fuente de negocio).
+  if (r.tipo === 'ingreso' && fuentes.length) {
+    STATE.tipo = 'ingreso';
+    if (fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+    STATE.detalles = true;
+  } else {
+    STATE.tipo = 'gasto';
+    if (r.categoriaId) STATE.categoriaId = r.categoriaId;
+    STATE.comercio = r.comercio || '';
+  }
+  if (r.monto) STATE.montoStr = String(r.monto);
+  if (r.cuenta) STATE.cuenta = r.cuenta;
+  if (r.nota) STATE.notas = r.nota;
+  STATE.fuente = 'voz';
+  STATE.vozConfianzaBaja = r.confianza < UMBRAL_CONFIANZA;
+  detectarFijo(); // ¿es el pago de un fijo? → enciende el switch y lo recuerda
+}
+
+/** Manda el texto dictado a Claude y prellena la tarjeta de revisión. */
+async function interpretarVozDictada() {
+  const ta = sheetRef.querySelector('#reg-voz');
+  const texto = (ta ? ta.value : STATE.vozTexto || '').trim();
+  if (!texto) { toast('Escribe o dicta el gasto primero', { icono: false }); return; }
+
+  if (!cfg || typeof cfg.apiKey !== 'string' || cfg.apiKey.trim() === '') {
+    toast('Para interpretar por voz, configura tu clave en Ajustes → Conexión con IA', { icono: false, ms: 4000 });
+    return;
+  }
+
+  STATE.vozTexto = texto;
+  STATE.tipo = 'gasto';
+  STATE.fuente = 'voz';
+  STATE.screen = 'voz-cargando';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  paint();
+
+  const categorias = catalogoVisible().map((c) => ({ id: c.id, label: c.label }));
+  const modelo = (cfg && cfg.modelos && cfg.modelos.voz) || MODELO_VOZ_DEFAULT;
+  const r = await interpretarVoz({
+    texto, apiKey: cfg.apiKey, modelo, categorias, cuentas: cuentas(),
+  });
+
+  if (STATE.screen !== 'voz-cargando') return; // el usuario cerró/navegó
+
+  if (r.estado !== 'ok') {
+    toast(r.mensaje || 'No se pudo interpretar', { icono: false, ms: 4000 });
+    STATE.screen = 'voz'; // vuelve a la hoja de dictado con el texto intacto
+    paint();
+    return;
+  }
+
+  aplicarResultadoVoz(r);
+  STATE.metodoElegido = true;
+  STATE.screen = 'form';
+  STATE.keypad = !r.monto; // sin monto → abre el teclado para escribirlo
+  scheduleSave();
+  paint();
+
+  const baja = r.confianza < UMBRAL_CONFIANZA;
+  toast(
+    baja ? 'Revisa: no quedé del todo seguro' : (r.monto ? 'Listo · revisa y guarda' : 'No leí el monto: escríbelo'),
+    { icono: !baja && !!r.monto, ms: 3600 },
+  );
+}
+
+/* Abre la hoja inferior de fecha (Hoy/Ayer/Antier + nativo). Guarda la
+   fecha REAL elegida; si se cierra sin elegir, no toca nada. */
+async function elegirFecha() {
+  const iso = await abrirFecha({ fecha: STATE.fecha });
+  if (!esISOValida(iso)) return; // cerró sin elegir
+  STATE.fecha = iso;
+  syncFecha();
+  scheduleSave();
+}
+
+function retomarDraft() {
+  if (!draftPend) return;
+  STATE = { ...fresh(), ...draftPend, screen: 'form', editId: null, metodoElegido: true };
+  STATE.keypad = STATE.modo !== 'texto';
+  if (!STATE.cuenta) STATE.cuenta = cuentaDefault();
+  draftPend = null;
+  paint();
+}
+
+async function agregarCuenta() {
+  const input = sheetRef.querySelector('#reg-nueva-cuenta');
+  const nombre = input ? input.value.trim() : '';
+  if (!nombre) { STATE.agregandoCuenta = false; paint(); return; }
+  if (cuentas().includes(nombre)) { STATE.cuenta = nombre; STATE.agregandoCuenta = false; paint(); return; }
+  try {
+    cfg = await saveConfig({ cuentas: [...cuentas(), nombre] });
+    STATE.cuenta = nombre;
+    STATE.agregandoCuenta = false;
+    paint();
+    toast('Cuenta agregada');
+  } catch (err) {
+    toast('No se pudo agregar la cuenta: ' + err.message, { icono: false });
+  }
+}
+
+async function agregarFuente() {
+  const input = sheetRef.querySelector('#reg-nueva-fuente');
+  const nombre = input ? input.value.trim() : '';
+  if (!nombre) { STATE.agregandoFuente = false; paint(); return; }
+  try {
+    // Negocio mínimo (día de referencia 1; se afina en Ajustes → Ingresos).
+    const nuevo = crearIngreso({ fuente: 'negocio', nombre, diaDelMes: 1 });
+    await put('ingresos', nuevo);
+    await cargarFuentes();
+    STATE.ingresoId = nuevo.id;
+    STATE.agregandoFuente = false;
+    paint();
+    toast('Negocio agregado');
+  } catch (err) {
+    toast('No se pudo agregar el negocio: ' + err.message, { icono: false });
+  }
+}
+
+async function guardar() {
+  const monto = montoActual();
+  if (monto <= 0) return;
+  const ingreso = esIngreso();
+  if (ingreso && !STATE.ingresoId) { toast('Elige de qué negocio entró', { icono: false }); return; }
+  if (!ingreso && !STATE.categoriaId) return;
+  const cuenta = STATE.cuenta || cuentaDefault();
+  if (!cuenta) { toast('Agrega una cuenta primero', { icono: false }); return; }
+  // cuotas: solo para gasto en tarjeta de crédito; en cualquier otro caso = 1.
+  const cuotas = (!ingreso && esCredito(cuenta) && Number.isInteger(STATE.cuotas) && STATE.cuotas > 1) ? STATE.cuotas : 1;
+
+  let guardado = null; // el movimiento nuevo (para el susurro); null en edición
+  try {
+    if (STATE.editId) {
+      const orig = await get('movimientos', STATE.editId);
+      if (!orig) throw new Error('no se encontró el movimiento');
+      const cambios = ingreso
+        ? {
+          monto, cuenta, fecha: STATE.fecha, notas: STATE.notas.trim(),
+          ingresoId: STATE.ingresoId, comercio: nombreFuente(fuenteActual()),
+          esHormiga: false,
+        }
+        : (() => {
+          const c = {
+            monto, categoria: STATE.categoriaId, cuenta,
+            fecha: STATE.fecha, comercio: STATE.comercio.trim(),
+            esFijo: STATE.esFijo, notas: STATE.notas.trim(), cuotas,
+          };
+          return { ...c, esHormiga: derivarEsHormiga({ ...orig, ...c }, cfg || undefined) };
+        })();
+      const actualizado = actualizar(orig, cambios);
+      const v = validarMovimiento(actualizado);
+      if (!v.ok) throw new Error(v.errores.join(' '));
+      await put('movimientos', actualizado);
+      toast('Cambios guardados');
+    } else if (ingreso) {
+      const mov = crearMovimiento({
+        monto, tipo: 'ingreso', cuenta, fecha: STATE.fecha,
+        fuente: STATE.fuente === 'voz' ? 'voz' : 'manual',
+        ingresoId: STATE.ingresoId, comercio: nombreFuente(fuenteActual()),
+        notas: STATE.notas.trim(),
+      }, { config: cfg || undefined });
+      await put('movimientos', mov);
+      toast('Ingreso registrado');
+    } else {
+      // Si la app reconoció el fijo y el switch quedó encendido, lo VINCULAMOS al
+      // guardar (recurrenteId): así no se cuenta doble y el recordatorio se apaga,
+      // sin necesitar el chip posterior. El switch visible es la confirmación.
+      const recurrenteId = (STATE.esFijo && STATE.recurrenteSugerido) ? STATE.recurrenteSugerido : null;
+      const mov = crearMovimiento({
+        monto, tipo: 'gasto', categoria: STATE.categoriaId, comercio: STATE.comercio.trim(),
+        cuenta, fecha: STATE.fecha, fuente: STATE.fuente, esFijo: STATE.esFijo, notas: STATE.notas.trim(),
+        cuotas, recurrenteId, dedupKey: STATE.dedupKey,
+      }, { config: cfg || undefined });
+      await put('movimientos', mov);
+      guardado = mov;
+      toast('Guardado');
+    }
+    clearDraft();
+    STATE = fresh();
+    if (closeRef) closeRef();
+    if (typeof onSavedRef === 'function') onSavedRef(guardado);
+  } catch (err) {
+    toast('No se pudo guardar: ' + err.message, { icono: false, ms: 3200 });
+  }
+}
+
+/* ============================================================
+   API pública
+   ============================================================ */
+async function abrir(mov = null, tipoInicial = 'gasto') {
+  try { cfg = await getConfig(); } catch { cfg = null; }
+  await cargarFuentes();
+  if (mov) {
+    const esIn = mov.tipo === 'ingreso';
+    STATE = {
+      ...fresh(), screen: 'form', modo: 'teclado', tipo: esIn ? 'ingreso' : 'gasto', editId: mov.id,
+      montoStr: mov.monto ? String(mov.monto) : '',
+      categoriaId: mov.categoria || '', ingresoId: mov.ingresoId || '',
+      cuenta: mov.cuenta || (cuentaDefault()),
+      fecha: (mov.fecha || hoyISO()).slice(0, 10), comercio: mov.comercio || '',
+      esFijo: !!mov.esFijo, notas: mov.notas || '', fuente: mov.fuente || 'manual',
+      cuotas: Number.isInteger(mov.cuotas) && mov.cuotas > 1 ? mov.cuotas : 1,
+      detalles: true, keypad: true, agregandoCuenta: false, metodoElegido: true,
+    };
+    draftPend = null;
+  } else {
+    STATE = fresh();
+    STATE.cuenta = cuentaDefault();
+    if (tipoInicial === 'ingreso') {
+      // La burbuja verde abre directo en modo Ingreso (sin método de captura).
+      STATE.tipo = 'ingreso';
+      STATE.screen = 'form';
+      STATE.metodoElegido = true;
+      if (!STATE.ingresoId && fuentes.length === 1) STATE.ingresoId = fuentes[0].id;
+      draftPend = null; // el borrador es solo para gastos
+    } else {
+      draftPend = loadDraft();
+    }
+  }
+  resetPaintAnim(); // apertura fresca: no animar alto/thumb desde estado viejo
+  if (openRef) openRef();
+  paint();
+}
+
+/** Recuerda el ÚLTIMO método de captura de gasto (persistido) para que la
+ *  próxima vez la app abra directo ahí. Silencioso si no cambia. */
+function recordarMetodo(metodo) {
+  const validos = ['teclado', 'texto', 'voz', 'foto'];
+  if (!validos.includes(metodo)) return;
+  if (cfg && cfg.metodoGasto === metodo) return;
+  if (cfg) cfg = { ...cfg, metodoGasto: metodo };
+  saveConfig({ metodoGasto: metodo }).catch(() => { /* noop */ });
+}
+
+/** Refresca cfg/fuentes/recurrentes en segundo plano (sin bloquear el gesto del
+ *  toque). El open síncrono usa lo ya cargado en el mount; esto deja todo fresco
+ *  para la próxima. */
+function refrescarEnFondo() {
+  getConfig().then((c) => { if (c) cfg = c; }).catch(() => { /* noop */ });
+  cargarFuentes();
+}
+
+/** Apertura SÍNCRONA de un gasto nuevo en el ÚLTIMO método usado (agilidad).
+ *  Síncrona a propósito: preserva el gesto del toque para que voz/foto puedan
+ *  pedir micrófono/cámara en iOS. Sin preferencia → pantalla de métodos. */
+function abrirGasto() {
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  const pref = (cfg && cfg.metodoGasto) || null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  if (pref === 'voz') { draftPend = null; abrirVoz(); return; }
+  if (pref === 'foto') { draftPend = null; abrirCamara(); return; }
+  if (pref === 'teclado' || pref === 'texto') {
+    draftPend = loadDraft();
+    STATE.modo = pref; STATE.fuente = 'manual'; STATE.metodoElegido = true;
+    STATE.screen = 'form'; STATE.keypad = (pref === 'teclado');
+    paint();
+    return;
+  }
+  draftPend = loadDraft();
+  paint(); // sin preferencia → pantalla de métodos (screen='metodos' de fresh())
+}
+
+/** Atajo de VOZ directa (long-press del +): abre y arranca el dictado en el
+ *  mismo gesto, sin pasar por la selección de método. */
+function dictarRapido() {
+  refrescarEnFondo();
+  STATE = fresh();
+  STATE.cuenta = cuentaDefault();
+  draftPend = null;
+  resetPaintAnim();
+  if (openRef) openRef();
+  abrirVoz(); // arranca el micrófono dentro del gesto
+}
+
+function cerrar() {
+  detenerReconocimiento();
+  STATE.vozEscuchando = false;
+  if (!STATE.editId && hasContent()) saveDraft();
+  if (closeRef) closeRef();
+}
+
+export default {
+  label: 'Registrar',
+  render() { return renderMetodos(); },
+  mount(sheet, { open, close, onSaved } = {}) {
+    sheetRef = sheet;
+    openRef = open;
+    closeRef = close;
+    onSavedRef = onSaved;
+    getConfig().then((c) => { cfg = c; }).catch(() => { cfg = null; });
+    cargarFuentes();
+    bind();
+  },
+  abrir,
+  abrirGasto,   // apertura síncrona en el último método (burbuja de gasto)
+  abrirDesdeSMS, // deep link del Atajo de iOS: #/registrar?sms=…
+  dictarRapido, // atajo de voz directa (long-press del +)
+  cerrar,
+};

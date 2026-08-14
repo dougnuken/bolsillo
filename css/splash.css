@@ -1,0 +1,77 @@
+/* ============================================================
+   olbo · Splash de bienvenida (cold start)
+   Overlay que dibuja el logo y se funde hacia la app. CSS-ONLY
+   (la CSP es style-src/script-src 'self' → sin inline ni JS).
+   Se muestra en cada carga completa (reabrir tras cerrar el proceso);
+   si la app queda en segundo plano y vuelve, no recarga → no aparece.
+   Respeta prefers-reduced-motion. Depende de tokens.css (cargar después).
+   ============================================================ */
+
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-5);
+  background: var(--bg-app); /* fondo Ontop idéntico al de la app → funde sin costura */
+  /* se funde solo hacia la app; forwards deja el estado final (invisible/no-click) */
+  animation: splashOut 0.6s var(--ease) 1.75s forwards;
+}
+@keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+/* Ícono "anillo O" (eco del ícono de app): entra girando + escala, con overshoot */
+.splash__icon {
+  width: 118px;
+  height: 118px;
+  transform-origin: center;
+  animation: splashIcon 0.95s var(--ease-fan) both;
+}
+@keyframes splashIcon {
+  0%   { opacity: 0; transform: scale(0.8) rotate(-26deg); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+/* el aro se DIBUJA (traza) alrededor */
+.splash__trace {
+  stroke-dasharray: 251;
+  stroke-dashoffset: 251;
+  animation: splashDraw 1s var(--ease) 0.15s both;
+}
+@keyframes splashDraw { to { stroke-dashoffset: 0; } }
+/* el "+" enciende un instante después */
+.splash__plus { opacity: 0; animation: splashFade 0.5s var(--ease) 0.78s both; }
+@keyframes splashFade { to { opacity: 1; } }
+
+.splash__word {
+  font-family: var(--font-display);
+  font-size: 2.7rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  background: linear-gradient(100deg, #F3EFFF, #A98CFF 45%, #7C5CFC);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0;
+  animation: splashRise 0.6s var(--ease) 0.52s both;
+}
+@keyframes splashRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.splash__tag {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  opacity: 0;
+  animation: splashFade 0.6s var(--ease) 0.82s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash__icon, .splash__trace, .splash__plus, .splash__word, .splash__tag {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+    transform: none;
+  }
+  .splash__trace { stroke-dashoffset: 0; }
+}

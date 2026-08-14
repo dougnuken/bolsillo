@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+
+.claude/
+
+# Backup local del tema coral (rollback); no se publica. Baseline en commit c7ccefd.
+backup-tema-coral/

@@ -1,0 +1,395 @@
+/* ============================================================
+   Bolsillo · Design tokens
+   Dirección: DARK fintech premium, identidad morada "olbo".
+   Canvas casi negro, containers bento translúcidos (glassmorphism),
+   un acento MORADO (acciones/estado activo). El gradiente firma
+   multicolor (--grad-cta, naranja→blanco→azul-violeta) SE MANTIENE.
+   El color de semáforo SOLO significa estado financiero (verde=suma,
+   rojo=resta). Todo el color/espaciado/motion vive aquí. Cero hex
+   fuera de este archivo (los .svg de assets son la única excepción).
+   ============================================================ */
+
+:root {
+  /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
+  --bg-0: #0A0519;              /* canvas base (Ontop: casi-negro violeta) */
+  /* CLAVE iOS: el safe-area del home-indicator lo pinta el background-COLOR
+     sólido de <html> (la capa fija con gradiente NO llega ahí).
+     IGUAL a --bg-0, a propósito. De la v20 a la v25 este token fue #41241A: el
+     valor exacto de wash-bottom(0.22) compuesto sobre el canvas, para que la
+     banda "igualara" el ambiente. La costura sí cerraba, pero el color con que
+     cerraba era café claro sobre una app casi negra: se leía como una losa
+     marrón grande, que es peor que la costura que evitaba.
+     Ahora el borde inferior de la app se resuelve a casi-negro (ver
+     --wash-bottom) y la banda usa ese mismo casi-negro. Dos valores oscuros que
+     difieran un poco son indistinguibles —la discriminación de contraste se
+     desploma en sombra profunda—, así que el empalme no depende de acertarle al
+     píxel, y sobre todo NO hay marrón que mirar. */
+  --bg-root: #0A0519;
+  --bg-1: #0A0519;              /* fondo de página */
+  --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
+  --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
+  --scrim: rgba(0, 0, 0, 0.62); /* overlay de sheets/modales (negro sobre negro pide más) */
+
+  /* ---- Washes de ambiente (Liquid Glass oscuro) ----
+     Tinte MUY sutil sobre el canvas para que el vidrio flotante
+     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi negro. */
+  --wash-coral: rgba(124, 92, 252, 0.10);    /* glow morado superior (bajo la isla dinámica) */
+  --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
+  --wash-top:   rgba(124, 92, 252, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
+  --wash-bottom: rgba(124, 92, 252, 0.14);   /* glow morado inferior: HALO detrás del dock, no lavado que sangra por el borde (ver --bg-app) */
+  --bg-app:
+    /* Fondo base estilo Ontop: radial índigo/morado desde ARRIBA-CENTRO (pico
+       #2B2169) que se funde a casi-negro violeta #0A0519. Colores muestreados
+       exactos de la referencia; body::before lo pinta fijo cubriendo safe-areas. */
+    radial-gradient(135% 95% at 50% 6%,
+      #2B2169 0%, #23195D 10%, #1B1150 19%, #151043 28%,
+      #140A36 36%, #120C2B 45%, #0D0921 55%, #0A0519 70%),
+    var(--bg-0);
+
+  /* ---- Glass → rellenos translúcidos claros sobre oscuro (compat: mismos nombres) ----
+     glass-1 = superficie base de campos/tarjetas
+     glass-2 = hover sutil
+     glass-3 = pressed / pista más marcada */
+  --glass-1: rgba(255, 255, 255, 0.05);
+  --glass-2: rgba(255, 255, 255, 0.08);
+  --glass-3: rgba(255, 255, 255, 0.12);
+  --glass-tag: rgba(255, 255, 255, 0.06);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
+  --glass-nav: rgba(19, 19, 22, 0.72);       /* barra inferior: vidrio flotante oscuro */
+  --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
+  --glass-header: rgba(11, 11, 13, 0.78);
+  --glass-gloss: rgba(255, 255, 255, 0.08);  /* brillo especular sutil (sustituye los inset blancos .55/.7 del light) */
+  --switch-knob: #EDEDF0;       /* perilla del toggle: near-white opaca (visible sobre track oscuro) */
+  --blur: 16px;                 /* backdrop-filter discreto */
+  --blur-strong: 22px;
+  --blur-nav: 28px;             /* esmerilado de la barra flotante */
+
+  /* ---- Bordes hairline (blanco-alpha: definen la forma en dark) ---- */
+  --line-1: rgba(255, 255, 255, 0.06);       /* soft line */
+  --line-2: rgba(255, 255, 255, 0.09);       /* hairline */
+  --line-3: rgba(255, 255, 255, 0.14);       /* borde fuerte / grip */
+  --line-accent: rgba(139, 108, 255, 0.55);   /* foco/seleccionado = morado */
+
+  /* ---- Texto ---- */
+  --text-1: #F5F5F7;            /* ink principal */
+  --text-2: rgba(235, 235, 245, 0.64);       /* muted secundario (AA sobre canvas) */
+  --text-3: rgba(235, 235, 245, 0.44);       /* terciario / hints */
+  --text-inverse: #17140F;      /* AHORA OSCURO: va sobre gradiente firma, pills claras y thumbs de color */
+
+  /* ---- Acento de marca: MORADO (solo acciones / estado activo) ---- */
+  --accent: #8B6CFF;            /* lifted para AA sobre casi negro */
+  --accent-strong: #7C5CFC;
+  --accent-deep: #5B3FE0;       /* press */
+  --accent-light: #A98CFF;      /* brillo del FAB (highlight superior) */
+  --accent-soft: rgba(139, 108, 255, 0.14);
+  --accent-glow: rgba(124, 92, 252, 0.40);
+
+  /* ---- Gradiente firma IA: MESH orgánico naranja cálido → morado → azul ----
+     No es un linear plano: 4 blobs radiales apilados sobre un colchón cálido→claro→azul.
+     Extremos saturados (naranja cálido a la izq, azul frío a la der), con un toque
+     morado en la transición baja y un naranja claro. Se lee orgánico (no franja diagonal).
+     ESCASO por regla: solo CTA primario, FAB, CTA onboarding y orbe del asesor.
+     Texto encima = --text-inverse (oscuro). */
+  --grad-cta:
+    radial-gradient(120% 130% at 0% 55%, #FF7A38 0%, rgba(255, 122, 56, 0) 42%),    /* naranja fuerte · extremo cálido */
+    radial-gradient(90% 120% at 22% 115%, #C060D8 0%, rgba(192, 96, 216, 0) 46%),   /* toque morado · transición baja */
+    radial-gradient(120% 130% at 100% 48%, #4F7BFF 0%, rgba(79, 123, 255, 0) 44%),  /* azul fuerte · extremo frío */
+    radial-gradient(85% 120% at 82% -12%, #8A7CF0 0%, rgba(138, 124, 240, 0) 50%),  /* azul-violeta · brillo superior */
+    linear-gradient(98deg, #FFCBA0 0%, #FCEFE4 36%, #ECF0FF 62%, #BFCEFF 100%);      /* colchón cálido→claro→azul */
+  --grad-cta-border: linear-gradient(140deg, #FF9A6B, #6E7BF2); /* borde/glow de tarjeta destacada (asesor) */
+  --sh-ia: 0 12px 30px -10px rgba(110, 123, 242, 0.45), 0 8px 24px -12px rgba(255, 122, 82, 0.35);
+
+  /* El orbe del asesor toma el gradiente firma (momento IA) */
+  --accent-grad: var(--grad-cta);
+
+  /* FAB / micro-controles seleccionados: vidrio morado glossy (chips, switch on,
+     seg thumb, avatar de perfil). Deriva del acento — no es el gradiente firma. */
+  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
+  /* Material glossy compartido FAB ↔ micro-controles (misma identidad) */
+  --fab-rim: rgba(165, 140, 255, 0.45);                /* borde morado que atrapa la luz */
+  --fab-hi: var(--glass-gloss);                        /* brillo especular superior (sutil en dark) */
+
+  /* Verde glossy: MISMO material que el coral pero en verde (semántica SUMA)
+     — para el segment Ingreso (gradiente + rim + brillo, como Gasto). */
+  --verde-light: #4ADE80;
+  --verde-deep: #16A34A;
+  --verde-grad: linear-gradient(150deg, var(--verde-light), var(--verde-deep));
+  --verde-rim: rgba(134, 239, 172, 0.45);
+  --verde-glow: rgba(74, 222, 128, 0.35);
+  --sh-chip-sel-verde: 0 5px 12px -5px var(--verde-glow), var(--fab-hi);
+
+  /* Rojo glossy: MISMO material que el verde pero en rojo (semántica RESTA)
+     — para la burbuja Gasto del FAB (gradiente + rim + glow, como Ingreso). */
+  --rojo-light: #F87171;
+  --rojo-deep: #DC2626;
+  --rojo-grad: linear-gradient(150deg, var(--rojo-light), var(--rojo-deep));
+  --rojo-rim: rgba(252, 165, 165, 0.45);
+  --rojo-glow: rgba(248, 113, 113, 0.35);
+
+  /* ---- Semáforo financiero (dark, AA sobre --bg-2) ----
+     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra/dot.
+     El -text es el color legible sobre el tint translúcido (para pills). */
+  --semaforo-verde: #4ADE80;
+  --semaforo-verde-text: #86EFAC;
+  --semaforo-verde-bg: rgba(74, 222, 128, 0.13);
+  --semaforo-verde-line: rgba(74, 222, 128, 0.35);
+
+  --semaforo-ambar: #FBBF24;
+  --semaforo-ambar-text: #FCD34D;
+  --semaforo-ambar-bg: rgba(251, 191, 36, 0.13);
+  --semaforo-ambar-line: rgba(251, 191, 36, 0.35);
+
+  --semaforo-rojo: #F87171;
+  --semaforo-rojo-text: #FCA5A5;
+  --semaforo-rojo-bg: rgba(248, 113, 113, 0.13);
+  --semaforo-rojo-line: rgba(248, 113, 113, 0.35);
+
+  /* ---- Barras neutras (categoría / cobertura) — NUNCA semáforo ---- */
+  --track: rgba(255, 255, 255, 0.08);                    /* pista */
+  --bar-ink: #F5F5F7;                                     /* relleno neutro claro */
+  --bar-coral: color-mix(in srgb, var(--accent) 55%, #241a3a); /* relleno morado-tint sobre oscuro */
+  --grad-gauge: linear-gradient(90deg, #7C5CFC, #A98CFF);      /* gauge morado (solo barras neutras, opcional) */
+
+  /* ---- Mesh del hero (Hoy / onboarding), tokenizado ----
+     Canvas oscuro con glow coral arriba + eco violeta abajo. */
+  --hero-mesh:
+    radial-gradient(135% 100% at 50% 4%, #2B2169 0%, #1B1150 30%, #120B30 52%, #0A0519 78%),
+    #0A0519;
+
+  /* ---- Destello global de la app (Ontop) ----
+     Radial índigo/morado que emana de ARRIBA-CENTRO (pico #2B2169) y se funde a
+     transparente. Se pinta TRAS el contenido de CADA vista sobre --bg-app (mismo
+     radial), reforzando el mismo fondo Ontop de forma consistente en toda la app. */
+  --hoy-glow:
+    radial-gradient(135% 100% at 50% 0%, rgba(43, 33, 105, 0.92), rgba(43, 33, 105, 0) 58%),
+    radial-gradient(95% 58% at 50% 4%, rgba(60, 46, 138, 0.45), transparent 56%);
+
+  /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
+  --cat-persona1: #F0808A;
+  --cat-persona2: #6FA3E8;
+  --cat-persona3: #A87EEA;
+  --cat-yo: #4FC4A8;
+  --cat-vivienda: #7B97F0;
+  --cat-servicios: #4FBBD6;
+  --cat-mercado: #7FC55E;
+  --cat-transporte: #E8A03C;
+  --cat-colegio: #A87EEA;
+  --cat-seguros: #4FC4A8;
+  --cat-salud: #EE7AA8;
+  --cat-creditos: #7B92DE;
+  --cat-comisiones: #9AA2B4;
+  --cat-ocio: #A97CEA;
+  --cat-restaurantes: #E29A62;
+  --cat-hormiga: #D9AE2E;
+  --cat-negocios: #4FB8D6;
+  --cat-otros: #9AA2B4;
+
+  /* ---- Tipografía ---- */
+  /* Fuente general = Plus Jakarta Sans (geométrica moderna, look fintech de las
+     referencias), self-hosted, en TODO el UI. Inter de respaldo. */
+  --font-ui: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-num: 'Plus Jakarta Sans', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* escala de texto: display fluido, UI fija (inputs >=16px anti-zoom iOS) */
+  --fs-display: clamp(2.6rem, 1.6rem + 5vw, 3.4rem);
+  --fs-h1: 1.5rem;      /* 24 */
+  --fs-h2: 1.1875rem;   /* 19 */
+  --fs-h3: 1.0625rem;   /* 17 */
+  --fs-body: 1rem;      /* 16 */
+  --fs-sm: 0.875rem;    /* 14 */
+  --fs-xs: 0.75rem;     /* 12 */
+  --fs-input: 1rem;     /* 16 - evita zoom de iOS */
+
+  /* ---- Espaciado ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+  --sp-10: 64px;
+
+  /* ---- Radios (bump bento: losas muy redondeadas) ---- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 28px;
+  --r-2xl: 34px;
+  --r-full: 999px;
+
+  /* ---- Sombras / elevación (dark) ----
+     En dark la elevación la dan borde blanco-alpha + glow; la sombra solo ancla. */
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --sh-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --sh-sheet: 0 -12px 48px -12px rgba(0, 0, 0, 0.60);
+  --sh-fab: 0 8px 24px -4px rgba(91, 63, 224, 0.55), var(--fab-hi);
+  --sh-cta: 0 10px 26px -8px var(--accent-glow), 0 2px 6px -2px rgba(0, 0, 0, 0.50), var(--fab-hi); /* CTA ancho: glow morado + brillo especular + ancla */
+  --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
+  --sh-md: 0 8px 30px -8px rgba(0, 0, 0, 0.50);
+  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 16px -10px rgba(0, 0, 0, 0.32); /* barra flotante: sombra suave; la grande y oscura ensombrecía el safe-area del home-indicator */
+
+  /* ---- Layout ---- */
+  --nav-h: 52px;                /* alto de la tab bar (sin safe-area). 62px llevaba
+                                   26px de aire interno alrededor de 34px de tinta
+                                   (icono 22 + gap 2 + label 10); la tab bar nativa
+                                   de iOS mide 49pt. A 52px la caja de contacto = 50px
+                                   (>44pt HIG) y el aire baja a 8/8. A ≤52px el radio
+                                   --r-xl 28px > h/2, así que la píldora pasa a cápsula
+                                   pura (dock nativo), en vez de rectángulo redondeado. */
+  --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
+  --header-h: 56px;
+  --page-max: 560px;            /* ancho máx. de contenido */
+  /* Reserva inferior del contenido: el inset real, sin trucos. Comportamiento
+     estándar y correcto en los dos modos.
+
+     De la v23 a la v26 esto llevaba un override a 0px bajo
+     @media (display-mode: standalone), justificado con dos mediciones que
+     resultaron estar CONTAMINADAS por haberse tomado en Safari y no en la app
+     instalada (confirmado: el sello v26 reportó a796/s956 y el usuario estaba en
+     Safari). Las dos cuadran al pt con el chrome del navegador:
+       · "elemento fixed con bottom:82 aterrizó a 144 del borde" → 144-82 = 62pt
+         = la toolbar inferior de Safari, no un recorte del viewport de iOS.
+       · "la barra quedó a 105pt del borde" → 8 (sp-2) + 34 (env) + 62 (toolbar)
+         = 104. En Safari env(safe-area-inset-bottom) además ALTERNA entre 0 y
+         ~34 según la toolbar esté desplegada o minimizada, así que lecturas
+         tomadas en distinto estado de scroll daban cifras distintas: otra razón
+         por la que doce versiones nunca convergieron.
+     En la PWA instalada de verdad el viewport SÍ llega al borde físico y el
+     inset SÍ vale ~34pt; forzarlo a 0 dejaba el dock encima del home indicator.
+     Ese bug nunca se vio porque nadie probó la app instalada. */
+  --safe-b: env(safe-area-inset-bottom);
+
+  /* Cuánto le falta al viewport de la página para llegar al borde FÍSICO de la
+     pantalla. Lo mide viewport.js en tiempo real (0 si el viewport sí llega).
+     Ver la cabecera de ese archivo: en la PWA instalada de iPhone 16 Pro Max
+     valía 62pt —exactamente env(safe-area-inset-top)— y ese hueco NO es
+     direccionable desde CSS, por eso hacía falta medirlo. */
+  --vp-deficit: 0px;
+  /* Cuánto de esa franja SÍ se recupera estirando el shell a 100lvh (viewport
+     grande). Los elementos fixed anclados abajo —toast, chip— restan este
+     valor para no quedarse flotando donde estaba el borde viejo. */
+  --vp-piso: 0px;
+
+  /* Anclaje inferior del CHROME FLOTANTE (dock, FAB, toast).
+     Un dock que FLOTA no necesita despejar el home indicator entero: es una
+     píldora separada de los bordes, y el indicador se dibuja en el aire de
+     debajo (así se comportan las barras flotantes del propio iOS). Reservarle
+     los 34pt del inset la subía media pulgada de más. 16pt deja el indicador
+     (5pt de alto, a ~8pt del borde) con holgura y la píldora se lee apoyada.
+     OJO: esto es solo para lo que FLOTA. El padding de CONTENIDO se calcula
+     aparte en --view-b. */
+  --dock-gap: var(--sp-4);
+  /* v71 — max(), no suma. Ahora que el viewport SÍ llega al borde físico (v70),
+     la zona del home indicator vuelve a estar DENTRO de la página y hay que
+     respetarla: con --dock-b = --dock-gap a secas la píldora aterrizaba encima.
+     Sumar los dos (16+34 = 50) la subía media pulgada de más —es justo el error
+     que documenta la nota de --safe-b—, así que se toma el mayor: se apoya por
+     encima del indicador y sigue leyéndose flotante. */
+  --dock-b: max(var(--dock-gap), var(--safe-b));
+  /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
+     estaba escrito dentro del max() de .tabbar) para que la variante
+     edge-to-edge de viewport corto se active desde la cascada de <html>, sin
+     pelear especificidad contra `body.nav-min .tabbar--4`. --dock-x-min es el
+     mismo margen cuando el nav está colapsado por scroll, que se angosta más. */
+  --dock-x: max(var(--sp-4), env(safe-area-inset-left));
+  --dock-x-min: max(10%, env(safe-area-inset-left));
+
+  /* Reserva inferior del CONTENIDO (padding-bottom de .view). FUENTE ÚNICA:
+     antes se declaraba a mano en base.css Y en views.css con la fórmula
+     nav-h + safe-b + sp-4 + sp-8, y encima estaba DUPLICADA (arreglar una no
+     tocaba la otra). Sobre todo, ese +sp-8 (40px) dejaba ~48px de hueco vacío
+     por encima del dock: el contenido terminaba muy arriba y quedaba una banda
+     muerta —lo que se leía como "espacio perdido abajo".
+     Ahora = geometría del dock (dock-b + nav-h) + UN aire de sp-5 (20px). El
+     contenido despeja el dock exacto y deja 20px de respiro, no 48. Usa --dock-b
+     (no --safe-b) para que la reserva siga siempre a la geometría del dock.
+     El max(...,0px) es por el modo "pegar al borde": ahí --dock-b es NEGATIVO
+     (el dock sale del viewport hacia la banda muerta) y sin ese piso la reserva
+     se volvería absurda. */
+  --view-b: calc(max(var(--dock-b), 0px) + var(--nav-h) + var(--sp-5));
+
+  /* ---- Motion ---- */
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-fan: cubic-bezier(0.28, 1.08, 0.4, 1); /* leve pop al abrir el abanico del onboarding */
+
+  /* ---- Z-index ---- */
+  --z-nav: 40;
+  --z-fab: 50;
+  --z-scrim: 60;
+  --z-sheet: 70;
+  --z-toast: 90;
+
+  color-scheme: dark;
+}
+
+/* ============================================================
+   Corrección de viewport en la PWA instalada de iOS
+   Las banderas las pone viewport.js DESPUÉS de medir; el CSS solo reacciona.
+   Ver la cabecera de js/viewport.js para la medición que las motiva.
+   ============================================================ */
+
+/* v60 — LA BANDA DE 62pt NO ES RECUPERABLE DESDE CSS. Se retiraron aquí los
+   dos mecanismos que intentaron recuperarla, porque ambos ROMPÍAN la app:
+
+   · v58 `html[data-vp-borde="1"]` → --dock-b: calc(--dock-gap - --vp-deficit),
+     o sea un bottom NEGATIVO para "pintar fuera del viewport". No se puede
+     pintar fuera del viewport: lo que queda debajo simplemente no se compone.
+   · v59 `html[data-vp-lvh="1"]` → .app-shell/body::before/.ov-scrim a 100lvh.
+     Estirar el shell NO añade área pintable: solo baja 62pt todo lo que va
+     anclado a su fondo. Medido en dispositivo: la tabbar quedaba con 2px de 52
+     visibles (desaparece), el FAB partido a la mitad, y —lo que el video no
+     mostraba— los .ov-panel de TODOS los overlays con los botones cortados,
+     el .sheet comiéndose contenido real y la .chat-bar del asesor entera fuera.
+
+   La cabecera de js/viewport.js ya lo había concluido en su día y luego se
+   ignoró: "62 de esos 96 pt viven FUERA de lo que el CSS puede direccionar".
+   Ese sigue siendo el hecho. El objetivo NO es recuperar la banda —no se
+   puede— sino que la app no se rompa por intentarlo: el chrome inferior se
+   ancla al viewport REAL con position:fixed (ver components.css) y así queda
+   dentro de cuadro mida lo que mida el shell. Correcto por construcción: no
+   depende de medir nada en runtime, que es justo lo que falló 3 veces. */
+
+/* Hay banda muerta: el viewport de la página termina ANTES del borde físico.
+   Entonces env(safe-area-inset-bottom) ya no describe una zona de home
+   indicator DENTRO de nuestra página —esa zona quedó fuera del viewport— y
+   sumársela al dock es contarla dos veces. Ese doble conteo eran 34 de los
+   96 pt muertos.
+
+   v62 — y el gap va a CERO, no a sp-3. Un dock flotante normalmente quiere
+   aire contra el borde de la pantalla; aquí ese aire ya lo pone iOS de sobra
+   (la franja que no nos da), así que sumarle 12pt propios era pagar dos veces
+   por el mismo margen. Medido en dispositivo: el dock terminaba a ~888 de un
+   viewport de 894 y aun así quedaban ~72pt hasta el borde físico. Con 0, el
+   dock se apoya en el borde de lo pintable y recupera esos 12.
+   No queda "cortado": debajo sigue el canvas del MISMO color (--bg-root ==
+   --bg-0 == #0B0B0D), así que la píldora se lee apoyada, no truncada.
+   Todo lo demás se reacomoda solo, porque deriva de --dock-b: el FAB baja a
+   22, --view-b pasa de 84 a 72 y .nav-blur encoge con él. */
+/* v71 — RETIRADO el override que ponía --dock-gap en 0 con viewport corto.
+   Existía para arañar 12pt cuando la franja inferior era inalcanzable; desde la
+   v70 el viewport llega al borde y ese apaño solo servía para pegar la píldora
+   al canto. La bandera data-vp-corto se sigue publicando —vale como
+   diagnóstico— pero ya no toca la geometría del dock. */
+
+/* (Sin override de --safe-b para display-mode:standalone. La v23 lo puso en 0px
+   creyendo que iOS dejaba el home indicator fuera del viewport en la PWA
+   instalada; esa creencia venía de mediciones hechas en Safari —ver la nota
+   larga junto a --safe-b—. El sello v27 la desmintió: a796·i796·v796 en Safari,
+   o sea el shell llena su viewport EXACTO, sin recorte ni zona muerta. Los 160pt
+   que faltaban hasta s956 son el chrome de Safari, que no es parte de la página.
+   Forzar el token a 0 solo servía para meter el dock bajo el home indicator en
+   la app instalada.) */
+

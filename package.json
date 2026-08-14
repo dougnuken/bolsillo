@@ -1,0 +1,10 @@
+{
+  "name": "olbo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "olbo — finanzas personales local-first (PWA vanilla).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
