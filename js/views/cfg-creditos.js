@@ -83,7 +83,12 @@ function tienePendientes(c) {
  * Abre la hoja de créditos.
  * @param {{onSaved?: () => void}} [opts]
  */
-export async function abrirCreditos({ onSaved } = {}) {
+/**
+ * @param {{onSaved?: () => void, creditoId?: string}} [opts]
+ *   creditoId: abre DIRECTO el formulario de ese crédito (entrada desde la
+ *   cartera, donde el usuario ya eligió el producto). Sin él, abre la lista.
+ */
+export async function abrirCreditos({ onSaved, creditoId } = {}) {
   let creditos = [];
   // Clave + modelo en memoria: el picker de PDF debe abrir SÍNCRONO en el tap
   // (iOS Safari), sin await previo.
@@ -462,6 +467,10 @@ export async function abrirCreditos({ onSaved } = {}) {
       });
     }
 
-    pantallaLista();
+    // Con creditoId (viene de la cartera) se entra directo a editar ese
+    // producto; si no existe, cae a la lista en vez de quedar en blanco.
+    const directo = creditoId ? creditos.find((c) => c.id === creditoId) : null;
+    if (directo) pantallaForm(directo);
+    else pantallaLista();
   });
 }

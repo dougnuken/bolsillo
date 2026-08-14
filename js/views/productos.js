@@ -366,11 +366,14 @@ async function montar(root) {
     // Editar el producto sin salir de la cartera (misma hoja que vive en Perfil).
     const editar = wallet.querySelector('[data-editar]');
     if (editar) editar.addEventListener('click', () => {
-      abrirCreditos({ onSaved: async () => {
-        await cargar();
-        const fresco = creditos.find((x) => x.id === cred.id);
-        if (fresco) pintarDetalle(fresco, moneda); else pintarLista();
-      } });
+      abrirCreditos({
+        creditoId: cred.id,   // entra DIRECTO al formulario de este producto
+        onSaved: async () => {
+          await cargar();
+          const fresco = creditos.find((x) => x.id === cred.id);
+          if (fresco) pintarDetalle(fresco, moneda); else pintarLista();
+        },
+      });
     });
     wallet.querySelectorAll('[data-moneda]').forEach((b) => {
       b.addEventListener('click', () => pintarDetalle(cred, b.dataset.moneda));
