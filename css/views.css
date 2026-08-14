@@ -2299,6 +2299,9 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .prestamos-link__val { font-size: var(--fs-h2); font-weight: var(--fw-bold); font-family: var(--font-num); margin-top: 2px; }
 .prestamos-link__go { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--accent-light); flex: 0 0 auto; }
 
+/* La cabecera de la cartera va pegada al back (el saludo trae su propio aire). */
+.view-greet--wallet { padding-top: 0; }
+
 /* --- tabs de la cartera --- */
 .wallet-tabs { display: flex; gap: 6px; margin: 0 -2px var(--sp-4); overflow-x: auto; scrollbar-width: none; }
 .wallet-tabs::-webkit-scrollbar { display: none; }

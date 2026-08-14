@@ -144,7 +144,8 @@ function tabsHTML() {
 
 function listaHTML(creditos, cortes, prestamos) {
   const head = `
-    <header class="view-greet">
+    <button class="wallet-back" type="button" data-inicio>${ICON_BACK}<span>Inicio</span></button>
+    <header class="view-greet view-greet--wallet">
       <p class="view-greet__eyebrow">Mi cartera</p>
       <h1 class="view-greet__title">${esc((TABS.find((t) => t[0] === tabActivo) || TABS[0])[1])}</h1>
     </header>
@@ -322,6 +323,11 @@ async function montar(root) {
   function pintarLista() {
     wallet.innerHTML = listaHTML(creditos, cortes, prestamos);
     const recargar = async () => { await cargar(); pintarLista(); };
+
+    // Volver a Hoy: la cartera es full-screen (sin tab propio), así que necesita
+    // su propia salida.
+    const inicio = wallet.querySelector('[data-inicio]');
+    if (inicio) inicio.addEventListener('click', () => { location.hash = '#/hoy'; });
 
     // tabs
     wallet.querySelectorAll('[data-tab]').forEach((b) => {
