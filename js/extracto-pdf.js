@@ -104,6 +104,22 @@ export const TOOL_EXTRACTO = Object.freeze({
           required: ['descripcion'],
         },
       },
+      movimientos: {
+        type: 'array',
+        description:
+          'CONSUMOS del ciclo: cada compra/cargo del periodo, incluidas las de UNA sola cuota (contado) que NO entran en "diferidos". '
+          + 'NO incluyas pagos ni abonos ("GRACIAS POR SU PAGO", "PAGO PSE", "ABONO"): esos bajan la deuda, no son gasto. '
+          + 'Sirven solo para ver en qué se fue la plata de esta tarjeta; no se registran como movimientos de la app.',
+        items: {
+          type: 'object',
+          properties: {
+            descripcion: { type: 'string', description: 'Nombre del comercio tal cual aparece.' },
+            fecha: { type: ['string', 'null'], description: 'Fecha de la transacción YYYY-MM-DD (usa el año del corte). null si no se ve.' },
+            monto: { type: ['number', 'null'], description: 'Valor del consumo, entero COP y positivo.' },
+          },
+          required: ['descripcion'],
+        },
+      },
       encontrado: {
         type: 'boolean',
         description: 'true si el documento es un extracto de crédito (tarjeta o préstamo) y pudiste leer al menos el saldo, la cuota o una fecha.',
@@ -128,7 +144,8 @@ export const SISTEMA_EXTRACTO = [
   'FECHAS COMPLETAS: además del día, devuelve "corteISO" y "limiteISO" como fechas YYYY-MM-DD completas.',
   'PAGOS: "pagoAPlazos" = pago a plazos / pago mínimo para estar al día. "pagoMinimo" = pago mínimo alterno si el extracto lo trae aparte. "intereses" = intereses corrientes del ciclo.',
   'DIFERIDOS: lista en "diferidos" cada compra financiada A CUOTAS que siga con saldo pendiente (filas con SALDO DIFERIDO > 0 o PLAZO mayor a 1). Por cada una: descripcion, compte, fecha (YYYY-MM-DD con el año del corte), plazo, cuotasPendientes, saldoCapital (el SALDO DIFERIDO de esa fila) y tasa si aparece. NO incluyas pagos, abonos, "GRACIAS POR SU PAGO" ni compras de una sola cuota.',
-  'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco"); "diferidos" vacío [] si no hay.',
+  'MOVIMIENTOS: lista en "movimientos" TODOS los consumos del ciclo, incluidos los de una sola cuota que no van en "diferidos". Por cada uno: descripcion, fecha y monto. Una compra diferida puede aparecer en las dos listas: en "diferidos" con su saldo pendiente y aquí con lo que se consumió. NO incluyas pagos ni abonos: reducen la deuda, no son gasto.',
+  'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "banco"); "diferidos" y "movimientos" vacíos [] si no hay.',
   'Pon encontrado=true si es un estado de cuenta de un crédito (tarjeta o préstamo) y pudiste leer al menos el saldo, la cuota, o una fecha. Solo encontrado=false si NO es un extracto de crédito.',
 ].join('\n');
 
@@ -240,10 +257,31 @@ export function normalizarExtracto(input) {
     .filter((d) => d && typeof d === 'object' && typeof d.descripcion === 'string' && d.descripcion.trim() !== '')
     .map(normalizarDiferido);
 
+  // CONSUMOS del ciclo. Se llaman así —y no "movimientos"— a propósito: los
+  // movimientos de la app entran al cálculo del mes y al semáforo, y estos NO.
+  // Son solo lectura, para saber en qué se fue la plata de esa tarjeta. El
+  // nombre distinto hace difícil meterlos por error en el store equivocado.
+  const consumos = (Array.isArray(obj.movimientos) ? obj.movimientos : [])
+    .map(normalizarConsumo)
+    .filter(Boolean);
+
   return {
     corte, limite, tasa, tasaAnual, total, saldo, banco, encontrado,
-    corteISO, limiteISO, pagoAPlazos, pagoMinimo, intereses, diferidos,
+    corteISO, limiteISO, pagoAPlazos, pagoMinimo, intereses, diferidos, consumos,
   };
+}
+
+/** Un consumo del ciclo, saneado. PURA. Devuelve null si no es utilizable. */
+function normalizarConsumo(m) {
+  if (!m || typeof m !== 'object') return null;
+  const descripcion = typeof m.descripcion === 'string' ? m.descripcion.trim().slice(0, 80) : '';
+  if (!descripcion) return null;
+  const monto = enteroCOP(m.monto);
+  return Object.freeze({
+    descripcion,
+    fecha: fechaISOValida(m.fecha),
+    monto,   // null si el extracto no lo trae legible
+  });
 }
 
 /**

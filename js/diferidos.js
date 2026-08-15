@@ -130,6 +130,36 @@ export function simularAbono(diferidos = [], monto = 0) {
   return Object.freeze({ aplicaciones: Object.freeze(aplicaciones), sobrante: resto > 0 ? resto : 0 });
 }
 
+/**
+ * Consumos del ciclo, saneados. PURA.
+ * Se descarta lo que no tenga descripción y se topa la lista: un extracto con
+ * cientos de líneas no debe inflar el corte ni el contexto que se le manda a la
+ * conciencia.
+ */
+export const MAX_CONSUMOS = 120;
+function consumosDelCorte(lista) {
+  return (Array.isArray(lista) ? lista : [])
+    .filter((m) => m && typeof m === 'object' && esTextoNoVacio(m.descripcion))
+    .slice(0, MAX_CONSUMOS)
+    .map((m) => Object.freeze({
+      descripcion: txt(m.descripcion).slice(0, 80),
+      fecha: esFechaISO(m.fecha) ? m.fecha.slice(0, 10) : '',
+      monto: Number.isFinite(Number(m.monto)) && Number(m.monto) > 0 ? Math.round(Number(m.monto)) : null,
+    }));
+}
+
+/**
+ * Resumen de en qué se fue la plata del ciclo. PURA.
+ * Total y los consumos más grandes, que es lo que hace falta para responder
+ * "¿en qué se me fue en esta tarjeta?" sin volcar la lista entera.
+ */
+export function resumenConsumos(consumos = [], top = 5) {
+  const lista = (Array.isArray(consumos) ? consumos : []).filter((m) => m && Number.isFinite(m.monto) && m.monto > 0);
+  const total = lista.reduce((a, m) => a + m.monto, 0);
+  const mayores = lista.slice().sort((a, b) => b.monto - a.monto).slice(0, Math.max(0, top));
+  return Object.freeze({ cuantos: lista.length, total, mayores: Object.freeze(mayores) });
+}
+
 /** Interés aproximado de UN mes de un diferido: saldo × tasa mensual. PURA. */
 export function interesMensual(saldoCapital, tasaEA) {
   const s = num(saldoCapital, 0);
@@ -286,6 +316,10 @@ export function crearCorte(datos = {}, { now = new Date() } = {}) {
     resumen: normalizarResumen(datos.resumen),
     diferidos,
     totalDiferido: Number.isFinite(datos.totalDiferido) ? datos.totalDiferido : totalDiferido(diferidos),
+    // CONSUMOS del ciclo: solo lectura. Viven dentro del corte y NO en el store
+    // `movimientos`, porque un crédito ya pesa en el mes por su cuota: contarlos
+    // otra vez como gasto duplicaría la plata y rompería el semáforo.
+    consumos: consumosDelCorte(datos.consumos),
     notas: Array.isArray(datos.notas) ? datos.notas.filter((s) => typeof s === 'string') : [],
   };
 
@@ -298,6 +332,7 @@ export function crearCorte(datos = {}, { now = new Date() } = {}) {
     id,
     ...base,
     diferidos: Object.freeze(diferidos),
+    consumos: Object.freeze(base.consumos),
     notas: Object.freeze(base.notas),
     creadoEn: datos.creadoEn || ts,
     actualizadoEn: ts,
@@ -428,5 +463,21 @@ export function briefProducto(ultimo, anterior) {
     const cmp = compararCortes(anterior, ultimo);
     if (cmp.resumenTexto) L.push(`CAMBIOS vs el corte anterior (${anterior.corte} → ${ultimo.corte}): ${cmp.resumenTexto}`);
   }
+
+  // En qué se fue la plata del ciclo. La advertencia va DENTRO del brief, no
+  // solo en el código: sin ella la conciencia sumaría estos consumos al gasto
+  // del mes y contaría dos veces lo que la cuota del crédito ya cuenta.
+  const moneda = ultimo.moneda || 'COP';
+  const rc = resumenConsumos(ultimo.consumos);
+  if (rc.cuantos) {
+    L.push(`EN QUÉ SE FUE ESTE CICLO — ${rc.cuantos} consumos por ${fmtMonto(rc.total, moneda)}.`);
+    L.push('OJO: es solo lectura del extracto para poder comentarlos. NO son movimientos registrados y NO se suman al gasto del mes: ese crédito ya pesa por su cuota.');
+    for (const m of rc.mayores) {
+      L.push(`  · ${m.descripcion}${m.fecha ? ` (${m.fecha})` : ''}: ${fmtMonto(m.monto, moneda)}`);
+    }
+    const resto = rc.cuantos - rc.mayores.length;
+    if (resto > 0) L.push(`  · …y ${resto} consumo${resto === 1 ? '' : 's'} más, ${resto === 1 ? 'menor' : 'menores'}.`);
+  }
+
   return L.filter(Boolean).join('\n');
 }

@@ -55,7 +55,7 @@ test('acepta corte/límite válidos (1..31) y descarta inválidos', () => {
     normalizarExtracto({ corte: 5, limite: 25, encontrado: true }),
     {
       corte: 5, limite: 25, tasa: null, tasaAnual: null, total: null, saldo: null, banco: '', encontrado: true,
-      corteISO: null, limiteISO: null, pagoAPlazos: null, pagoMinimo: null, intereses: null, diferidos: [],
+      corteISO: null, limiteISO: null, pagoAPlazos: null, pagoMinimo: null, intereses: null, diferidos: [], consumos: [],
     },
   );
   const r = normalizarExtracto({ corte: 0, limite: 40, encontrado: true });
@@ -91,7 +91,7 @@ test('tolerante: input basura no lanza y devuelve vacíos', () => {
   const r = normalizarExtracto(null);
   assert.deepEqual(r, {
     corte: null, limite: null, tasa: null, tasaAnual: null, total: null, saldo: null, banco: '', encontrado: false,
-    corteISO: null, limiteISO: null, pagoAPlazos: null, pagoMinimo: null, intereses: null, diferidos: [],
+    corteISO: null, limiteISO: null, pagoAPlazos: null, pagoMinimo: null, intereses: null, diferidos: [], consumos: [],
   });
 });
 
