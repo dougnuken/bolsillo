@@ -33,6 +33,22 @@ export function tasaMensualDecimal(tasaEA) {
 }
 
 /**
+ * FACTOR de cuota: cuota = capital × factor. PURA.
+ *
+ * Existe para que la conciencia pueda simular cualquier monto sin ejecutar
+ * código: se le entregan los factores ya calculados de su tasa real y solo
+ * tiene que multiplicar. Un modelo de lenguaje multiplica bien; elevar
+ * (1+i) a la −24 de cabeza, no. Así las cifras que dice son exactas.
+ */
+export function factorCuota(tasaEA, cuotas) {
+  const n = entero(cuotas);
+  if (n < 1) return 0;
+  const i = tasaMensualDecimal(tasaEA);
+  if (i <= 0) return 1 / n;
+  return i / (1 - Math.pow(1 + i, -n));
+}
+
+/**
  * Cuota fija del sistema francés, en pesos enteros. PURA.
  * Con tasa 0 es un simple reparto del capital.
  * @param {number} capital
@@ -44,10 +60,28 @@ export function cuotaFija(capital, tasaEA, cuotas) {
   const k = num(capital, 0);
   const n = entero(cuotas);
   if (k <= 0 || n < 1) return 0;
-  const i = tasaMensualDecimal(tasaEA);
-  if (i <= 0) return Math.round(k / n);
-  const factor = Math.pow(1 + i, -n);
-  return Math.round((k * i) / (1 - factor));
+  return Math.round(k * factorCuota(tasaEA, n));
+}
+
+/**
+ * Tabla de factores para los plazos típicos, lista para meter en el brief. PURA.
+ * @returns {Array<{cuotas:number, factor:number, porCadaMillon:number}>}
+ */
+export function tablaFactores(tasaEA, plazos = PLAZOS_SUGERIDOS) {
+  const lista = Array.isArray(plazos) && plazos.length ? plazos : PLAZOS_SUGERIDOS;
+  return Object.freeze(lista
+    .map((n) => entero(n))
+    .filter((n) => n >= 1 && n <= MAX_CUOTAS)
+    .sort((a, b) => a - b)
+    .map((n) => {
+      const factor = factorCuota(tasaEA, n);
+      return Object.freeze({
+        cuotas: n,
+        factor,
+        // Ancla legible: lo que se paga al mes por cada millón financiado.
+        porCadaMillon: Math.round(1000000 * factor),
+      });
+    }));
 }
 
 /**

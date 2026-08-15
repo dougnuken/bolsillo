@@ -10,7 +10,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   cuotaFija, simularCompra, compararPlazos, costoDeEstirar,
-  tasaMensualDecimal, PLAZOS_SUGERIDOS, MAX_CUOTAS,
+  tasaMensualDecimal, factorCuota, tablaFactores,
+  PLAZOS_SUGERIDOS, MAX_CUOTAS,
 } from '../js/simulador.js';
 
 /* Caso guía: el ejemplo que originó el módulo. */
@@ -164,6 +165,39 @@ test('costoDeEstirar cuantifica el alivio y lo que cuesta', () => {
 test('costoDeEstirar devuelve null si algún plazo no es simulable', () => {
   assert.equal(costoDeEstirar({ capital: 0, tasaEA: 28, de: 12, a: 24 }), null);
   assert.equal(costoDeEstirar({ capital: 4000000, tasaEA: 28, de: 12, a: 0 }), null);
+});
+
+test('multiplicar por el factor da la misma cuota que simular', () => {
+  // Es la garantía de que las cifras que diga la conciencia multiplicando el
+  // factor coinciden con las del simulador. Si esto se rompe, empieza a mentir.
+  for (const capital of [500000, 1500000, 4000000, 12345678]) {
+    for (const cuotas of [3, 12, 24, 36]) {
+      assert.equal(
+        Math.round(capital * factorCuota(28, cuotas)),
+        simularCompra({ capital, tasaEA: 28, cuotas }).cuotaMensual,
+        `descuadre en ${capital} a ${cuotas} cuotas`,
+      );
+    }
+  }
+});
+
+test('sin tasa, el factor es simplemente repartir entre las cuotas', () => {
+  assert.equal(factorCuota(0, 10), 1 / 10);
+  assert.equal(factorCuota(0, 0), 0);
+});
+
+test('tablaFactores trae los plazos ordenados y el ancla por millón', () => {
+  const t = tablaFactores(28);
+
+  assert.deepEqual(t.map((f) => f.cuotas), [...PLAZOS_SUGERIDOS]);
+  for (const f of t) {
+    assert.equal(f.porCadaMillon, Math.round(1000000 * f.factor));
+    assert.ok(f.porCadaMillon > 0);
+  }
+  // A más plazo, menos se paga al mes por millón.
+  for (let i = 1; i < t.length; i += 1) {
+    assert.ok(t[i].porCadaMillon < t[i - 1].porCadaMillon);
+  }
 });
 
 test('el resultado es inmutable: nadie puede alterar una simulación ya entregada', () => {
