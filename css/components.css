@@ -1654,6 +1654,17 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
   backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
   box-shadow: var(--sh-nav);
 }
+/* Sobre el vidrio oscuro la pastilla NO va blanca sólida: gritaba y rompía la
+   calma del resto del chrome. Aquí es translúcida —como el segmentado de iOS
+   en oscuro— y el peso lo carga el texto, que pasa a blanco en vez de al
+   inverso oscuro. El hairline la recorta contra el track, que si no se
+   confunden. */
+.seg--dock .seg__thumb {
+  background: var(--glass-3);
+  border-color: var(--line-3);
+  box-shadow: var(--sh-sm);
+}
+.seg--dock .seg__opt.is-on { color: var(--text-1); }
 /* Etiquetas largas en 3 columnas estrechas (la cartera): baja un punto y
    aprieta el tracking antes que partir la palabra. */
 .seg--3 .seg__opt {
