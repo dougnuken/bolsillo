@@ -266,9 +266,11 @@ function initHeader() {
       const pendientes = badge && !badge.hidden ? ` (${badge.textContent})` : '';
       const elegido = await menu({
         title: 'Más acciones',
+        // Los mismos iconos que llevaban los botones antes de plegarse aquí:
+        // es lo que deja reconocer que son ellos y no dos opciones nuevas.
         items: [
-          { value: 'buscar', label: 'Buscar movimientos' },
-          { value: 'notif', label: `Notificaciones${pendientes}` },
+          { value: 'buscar', label: 'Buscar movimientos', icon: ICON_LUPA },
+          { value: 'notif', label: `Notificaciones${pendientes}`, icon: ICON_CAMPANA },
         ],
       });
       if (elegido === 'buscar') location.hash = '#/movimientos';
@@ -486,6 +488,14 @@ const CANCELAR = Symbol('cancelar');
 
 const ICON_X =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+
+/* Los del menú de "más acciones" son COPIA EXACTA de los botones que se pliegan
+   ahí —la lupa del hero de Hoy y la campana del header—: si el icono no es el
+   mismo, la opción no se lee como el botón que desapareció sino como otra cosa. */
+const ICON_LUPA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+const ICON_CAMPANA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>';
 
 /** Alertas de gasto por persona/categoría (ámbar o rojo) del mes actual. */
 async function recolectarAlertas() {

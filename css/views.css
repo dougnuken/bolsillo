@@ -2510,11 +2510,20 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
   -webkit-backdrop-filter: none;
           backdrop-filter: none;
 }
-.wallet-back-row { display: flex; align-items: center; gap: var(--sp-3); }
+.wallet-back-row { position: relative; display: flex; align-items: center; gap: var(--sp-3); min-height: 44px; }
 /* El título solo aparece cuando el contenido ya subió: en reposo el segmento
    de justo abajo ya dice en qué sección estás. Reusa --header-p, que app.js
    mueve siguiendo el dedo. */
 .wallet-sticky__title {
+  /* Centrado en la PANTALLA, no en el hueco que deja el back. En flujo quedaba
+     corrido a la derecha justo el ancho del botón; absoluto de lado a lado cae
+     donde el ojo lo busca, igual que el título del header global. Sin toque
+     para no taparle el área al back, que sigue debajo. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
   font-family: var(--font-display);
   font-size: var(--fs-h3); font-weight: var(--fw-bold); letter-spacing: -.01em;
   color: var(--text-1);
