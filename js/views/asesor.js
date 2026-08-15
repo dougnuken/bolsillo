@@ -21,7 +21,7 @@ import { renderRespuesta } from '../formato-chat.js';
 import { armarContexto } from '../agente-datos.js';
 import { elegirArchivoPDF, abrirConClave, CANCELADO } from '../pdf-picker.js';
 import { paginasAImagenes } from '../pdf-render.js';
-import { analizarExtractoImagenes } from '../extracto-pdf.js';
+import { analizarExtractoImagenes, cuotaDesdeExtracto } from '../extracto-pdf.js';
 import { corteDesdeExtracto } from '../ingesta-corte.js';
 import { put } from '../db.js';
 import { actualizar, tasaEAaMV } from '../model.js';
@@ -264,6 +264,14 @@ export default {
       if (r.limite != null && r.limite !== credito.diaPago) {
         campos.diaPago = r.limite;
         cambios.push(`Día de pago: ${credito.diaPago != null ? credito.diaPago : '—'} → ${r.limite}`);
+      }
+      // La CUOTA es justamente lo que se viene a corregir subiendo el extracto:
+      // el valor de la ficha suele estar escrito a mano y quedarse viejo, y
+      // pesa en los fijos del mes y en el semáforo.
+      const cuotaExtracto = cuotaDesdeExtracto(r);
+      if (cuotaExtracto != null && cuotaExtracto !== credito.cuotaMensual) {
+        campos.cuotaMensual = cuotaExtracto;
+        cambios.push(`Cuota del mes: ${credito.cuotaMensual ? formatCOP(credito.cuotaMensual) : '—'} → ${formatCOP(cuotaExtracto)}`);
       }
       if (!cambios.length) { toast('El extracto no cambia nada de ese crédito'); return; }
 

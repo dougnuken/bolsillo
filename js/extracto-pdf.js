@@ -247,6 +247,26 @@ export function normalizarExtracto(input) {
 }
 
 /**
+ * Cuota del mes según el extracto. PURA.
+ *
+ * Es lo que hay que pagar para estar al día, y por tanto lo que debe quedar en
+ * `cuotaMensual` de la ficha: ese campo pesa en los fijos del mes y en el
+ * semáforo, así que una cuota escrita a mano y desactualizada distorsiona toda
+ * la app hasta que llega el extracto a corregirla.
+ *
+ * Prioriza `pagoAPlazos` —el "pago a plazos" del banco, lo mínimo para no
+ * entrar en mora— y cae en `pagoMinimo` si el extracto solo trae ese.
+ * @returns {number|null} entero COP, o null si el extracto no lo trae
+ */
+export function cuotaDesdeExtracto(extracto = {}) {
+  const o = extracto && typeof extracto === 'object' ? extracto : {};
+  for (const v of [o.pagoAPlazos, o.pagoMinimo]) {
+    if (Number.isInteger(v) && v > 0) return v;
+  }
+  return null;
+}
+
+/**
  * Envía un cuerpo ya armado a /v1/messages y normaliza la respuesta a los
  * estados públicos. IMPURA (red). PRIVADA: la comparten los caminos documento
  * e imágenes. La clave viaja SOLO en x-api-key.
