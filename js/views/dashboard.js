@@ -586,7 +586,9 @@ function productosCardHTML() {
   return `
     <button class="hoy-productos" id="hoy-productos" type="button" aria-label="Ver mis productos">
       <span class="hoy-productos__content">
-        <span class="hoy-productos__title">Mis productos</span>
+        <!-- "Mi cartera", no "Mis productos": la card lleva al conjunto, y ahí
+             dentro "Mis productos" es solo uno de los tres segmentos. -->
+        <span class="hoy-productos__title">Mi cartera</span>
         <span class="hoy-productos__go">Ver mis tarjetas
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         </span>

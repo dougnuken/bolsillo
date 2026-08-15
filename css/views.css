@@ -2313,6 +2313,49 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 /* --- segmentos de la cartera --- */
 /* Control segmentado canónico .seg (components.css) + js/segmented.js */
 
+/* --- Forma de ver la cartera: tarjetas ↔ agenda --- */
+.wallet-layout { display: flex; gap: 4px; justify-content: flex-end; margin: 0 0 var(--sp-3); }
+.wallet-layout__b {
+  display: grid; place-items: center; width: 34px; height: 34px;
+  border-radius: var(--r-md); border: 1px solid transparent;
+  background: transparent; color: var(--text-3); cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.wallet-layout__b svg { width: 18px; height: 18px; }
+.wallet-layout__b.is-on { color: var(--text-1); background: var(--glass-2); border-color: var(--line-2); }
+
+/* --- AGENDA DE PAGOS: filas densas, lo que vence primero arriba --- */
+.agenda { display: flex; flex-direction: column; gap: 2px; }
+.agenda__fila {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 13px var(--sp-4);
+  background: var(--glass-1); border: 1px solid var(--line-1);
+  /* Bloque continuo: solo se redondean las puntas del grupo. */
+  border-radius: 4px;
+}
+.agenda__fila:first-child { border-radius: var(--r-md) var(--r-md) 4px 4px; }
+.agenda__fila:last-child { border-radius: 4px 4px var(--r-md) var(--r-md); }
+.agenda__fila:only-child { border-radius: var(--r-md); }
+.agenda__fila:active { background: var(--glass-2); }
+.agenda__id { display: flex; flex-direction: column; min-width: 0; }
+.agenda__ent { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-1); }
+.agenda__prod { font-size: var(--fs-xs); color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agenda__pago { display: flex; flex-direction: column; align-items: flex-end; flex: 0 0 auto; }
+.agenda__monto { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-1); font-variant-numeric: tabular-nums; }
+/* El CUÁNDO es el dato que ordena la vista, así que es el que lleva el color. */
+.agenda__cuando { font-size: var(--fs-xs); color: var(--text-3); }
+.agenda__fila--ambar .agenda__cuando { color: var(--semaforo-ambar); }
+.agenda__fila--rojo .agenda__cuando { color: var(--semaforo-rojo); font-weight: var(--fw-bold); }
+.agenda__fila--rojo { border-color: var(--semaforo-rojo-line); }
+
+.agenda__total {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin: var(--sp-4) 0 var(--sp-2); padding: 0 var(--sp-1);
+  font-size: var(--fs-sm); color: var(--text-2);
+}
+.agenda__total strong { font-size: var(--fs-h3); color: var(--text-1); font-variant-numeric: tabular-nums; }
+
 /* --- total de préstamos --- */
 .wallet-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
 .wallet-total__lbl { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }

@@ -19,6 +19,22 @@ import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCo
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
 import { segHTML, colocarThumb } from '../segmented.js';
+import { emparejarProductos } from '../diferidos.js';
+import { agendaDePagos, totalAgenda } from '../agenda-pagos.js';
+import { hoyISO } from '../fechas.js';
+
+const ICON_TARJETAS =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="3"/><path d="M2.5 10.5h19"/></svg>';
+const ICON_AGENDA =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>';
+
+/* Forma de ver la cartera. Vive en localStorage y no en la config porque es una
+   preferencia de ESTA pantalla, no un dato del usuario que deba respaldarse. */
+const CLAVE_LAYOUT = 'olbo:cartera-layout';
+let layout = (() => {
+  try { return localStorage.getItem(CLAVE_LAYOUT) === 'agenda' ? 'agenda' : 'tarjetas'; }
+  catch { return 'tarjetas'; }
+})();
 
 const ICON_BACK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
@@ -161,6 +177,29 @@ function tabsHTML() {
   });
 }
 
+/* ---- AGENDA: la misma cartera, pero respondiendo "¿qué pago y cuándo?" ---- */
+function agendaHTML(creditos, cortes) {
+  const filas = agendaDePagos({ productos: emparejarProductos(creditos, cortes), hoy: hoyISO() });
+  const total = totalAgenda(filas);
+  const fila = (f) => `
+    <button class="agenda__fila agenda__fila--${esc(f.nivel)}" type="button" data-cred="${esc(f.id)}">
+      <span class="agenda__id">
+        <span class="agenda__ent">${esc(f.titulo)}</span>
+        <span class="agenda__prod">${esc(f.subtitulo)}</span>
+      </span>
+      <span class="agenda__pago">
+        <span class="agenda__monto num">${f.monto != null ? esc(formatCOP(f.monto)) : '—'}</span>
+        <span class="agenda__cuando">${esc(f.cuando)}</span>
+      </span>
+    </button>`;
+  return `
+    <div class="agenda">${filas.map(fila).join('')}</div>
+    <div class="agenda__total">
+      <span>Este mes</span>
+      <strong class="num">${esc(formatCOP(total))}</strong>
+    </div>`;
+}
+
 function listaHTML(creditos, cortes, prestamos) {
   const head = `
     <div class="wallet-back-row">
@@ -177,9 +216,23 @@ function listaHTML(creditos, cortes, prestamos) {
           <button class="btn btn--primary" id="wallet-add" type="button">+ Agregar producto</button>
         </div>`;
     }
+    const esAgenda = layout === 'agenda';
+    // El toggle solo aparece en "Mis productos": las otras dos pestañas no
+    // tienen dos formas de verse.
+    const toggle = `
+      <div class="wallet-layout" role="group" aria-label="Forma de ver la cartera">
+        <button type="button" class="wallet-layout__b${esAgenda ? '' : ' is-on'}" data-layout="tarjetas"
+          aria-pressed="${!esAgenda}" aria-label="Ver como tarjetas">${ICON_TARJETAS}</button>
+        <button type="button" class="wallet-layout__b${esAgenda ? ' is-on' : ''}" data-layout="agenda"
+          aria-pressed="${esAgenda}" aria-label="Ver la agenda de pagos">${ICON_AGENDA}</button>
+      </div>`;
+    const cuerpo = esAgenda
+      ? agendaHTML(creditos, cortes)
+      : `<p class="wallet-sub">Toca una tarjeta para ver el detalle.</p>
+         <div class="wallet-cards">${creditos.map((c) => tarjetaHTML(c, cortes)).join('')}</div>`;
     return `${head}
-      <p class="wallet-sub">Toca una tarjeta para ver el detalle.</p>
-      <div class="wallet-cards">${creditos.map((c) => tarjetaHTML(c, cortes)).join('')}</div>
+      ${toggle}
+      ${cuerpo}
       <button class="btn btn--ghost btn--block wallet-add-btn" id="wallet-add" type="button">+ Agregar producto</button>`;
   }
 
@@ -347,6 +400,16 @@ async function montar(root) {
     // su propia salida.
     const inicio = wallet.querySelector('[data-inicio]');
     if (inicio) inicio.addEventListener('click', () => { location.hash = '#/hoy'; });
+
+    // Forma de ver: tarjetas ↔ agenda de pagos. Se recuerda entre sesiones.
+    wallet.querySelectorAll('[data-layout]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if (b.dataset.layout === layout) return;
+        layout = b.dataset.layout;
+        try { localStorage.setItem(CLAVE_LAYOUT, layout); } catch { /* sin persistencia, pero funciona */ }
+        pintarLista();
+      });
+    });
 
     // tabs
     wallet.querySelectorAll('[data-tab]').forEach((b) => {
