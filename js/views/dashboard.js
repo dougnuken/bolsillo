@@ -51,7 +51,18 @@ function conDivisa(str) {
 }
 
 /* ---- Saludo + card de balance + tabs ---- */
-const TABS = [['dashboard', 'Dashboard'], ['analytics', 'Analytics']];
+/* Iconos de las pestañas. Misma receta que el resto de la app: 24x24, trazo de
+   1.6 y currentColor, para que se enciendan con el texto de su opción.
+   Dashboard = las losas del panel; Analytics = las barras de la comparativa. */
+const ICON_TAB_PANEL =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
+const ICON_TAB_BARRAS =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20.5h17"/><path d="M7 20.5v-5.5"/><path d="M12 20.5V9"/><path d="M17 20.5v-8"/></svg>';
+
+const TABS = [
+  ['dashboard', 'Dashboard', ICON_TAB_PANEL],
+  ['analytics', 'Analytics', ICON_TAB_BARRAS],
+];
 
 const ICON_TREND_UP =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9.5 10.5l4 4L21 7"/><path d="M15 7h6v6"/></svg>';

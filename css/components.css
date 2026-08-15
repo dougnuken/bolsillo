@@ -1680,6 +1680,11 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
   position: relative;
   z-index: 1;
   min-height: 40px;
+  /* flex para poder anteponer un icono; sin él centra igual que antes */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border-radius: var(--r-full);
   border: none;
   background: transparent;
@@ -1688,6 +1693,9 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
   font-weight: var(--fw-semibold);
   transition: color var(--dur-fast) var(--ease);
 }
+/* El icono hereda el color del texto, así que se enciende con la opción. */
+.seg__ico { display: grid; place-items: center; flex: none; }
+.seg__ico svg { width: 16px; height: 16px; display: block; }
 .seg__opt:active { transform: scale(0.98); }
 /* seleccionado: texto blanco sobre el pill glossy (coral o verde) */
 .seg__opt.is-on { color: var(--text-inverse); }

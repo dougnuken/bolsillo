@@ -12,13 +12,19 @@ const SEL_SEG = '.seg';
 const SEL_OPT = '.seg__opt';
 const SEL_THUMB = '.seg__thumb';
 
-/* opciones = [[id, etiqueta], ...] · activo = id de la encendida.
-   attr = atributo de datos con el que la vista engancha sus clics. */
+/* opciones = [[id, etiqueta], ...] o [[id, etiqueta, icono], ...] · activo = id
+   de la encendida. attr = atributo de datos con el que la vista engancha sus
+   clics.
+
+   El icono es markup SVG y va SIN escapar, a diferencia del texto: siempre sale
+   de constantes del propio código (los ICON_* de cada vista), nunca de datos del
+   usuario. Si algún día viniera de fuera, habría que sanearlo aquí. */
 export function segHTML(opciones, activo, { attr = 'data-seg', label = '', clase = '' } = {}) {
-  const botones = opciones.map(([id, texto]) => {
+  const botones = opciones.map(([id, texto, icono]) => {
     const on = id === activo;
+    const ico = icono ? `<span class="seg__ico" aria-hidden="true">${icono}</span>` : '';
     return `<button type="button" class="seg__opt${on ? ' is-on' : ''}" role="tab"`
-      + ` aria-selected="${on}" ${attr}="${esc(id)}">${esc(texto)}</button>`;
+      + ` aria-selected="${on}" ${attr}="${esc(id)}">${ico}${esc(texto)}</button>`;
   }).join('');
   const aria = label ? ` aria-label="${esc(label)}"` : '';
   const cols = opciones.length === 3 ? ' seg--3' : '';
