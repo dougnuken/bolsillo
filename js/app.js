@@ -24,6 +24,9 @@ import { migrarIngresos, ingresoNecesitaMigracion, crearMovimiento, actualizar }
 import { aplicarPersonalizacion, categoriaPorId } from './categories.js';
 import { calcularEstado, resumenPersonas, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAULT } from './budget.js';
 import { parseCOP, formatCOP } from './money.js';
+import { alertasDePago, textoAlerta } from './alertas-pago.js';
+import { emparejarProductos } from './diferidos.js';
+import { hoyISO, fechaCorta } from './fechas.js';
 import { bindMontosVivos } from './money-input.js';
 import { hoja } from './overlay.js';
 import { iniciarViewport } from './viewport.js';
@@ -419,12 +422,31 @@ async function recolectarAlertas() {
   }
 }
 
-/** Actualiza el badge de la campana: pendientes fijos + alertas de personas. */
+/**
+ * Pagos que vencen dentro de la ventana de aviso (o ya vencidos).
+ * Blindado igual que las otras alertas: si falla la lectura, el resto del
+ * centro de notificaciones sigue funcionando.
+ */
+async function recolectarPagos() {
+  try {
+    const [creditos, cortes] = await Promise.all([
+      getAll('creditos'),
+      getAll('cortes').catch(() => []),
+    ]);
+    const activos = (creditos || []).filter((c) => c && c.activo !== false);
+    return alertasDePago({ productos: emparejarProductos(activos, cortes), hoy: hoyISO() });
+  } catch (err) {
+    console.warn('[olbo] no se pudieron leer los pagos próximos:', err);
+    return [];
+  }
+}
+
+/** Actualiza el badge: pendientes fijos + alertas de personas + pagos. */
 async function refrescarBadge() {
   const badges = document.querySelectorAll('.notif-badge');
   if (!badges.length) return;
-  const alertas = await recolectarAlertas();
-  const total = pendientesFijos.length + alertas.length;
+  const [alertas, pagos] = await Promise.all([recolectarAlertas(), recolectarPagos()]);
+  const total = pendientesFijos.length + alertas.length + pagos.length;
   badges.forEach((badge) => {
     if (total > 0) { badge.textContent = String(total); badge.hidden = false; }
     else { badge.hidden = true; }
@@ -433,9 +455,23 @@ async function refrescarBadge() {
 
 /** Centro de notificaciones (hoja): pendientes por registrar + alertas. */
 async function abrirNotificaciones() {
-  const alertas = await recolectarAlertas();
+  const [alertas, pagos] = await Promise.all([recolectarAlertas(), recolectarPagos()]);
   const pend = pendientesFijos;
-  const vacio = pend.length === 0 && alertas.length === 0;
+  const vacio = pend.length === 0 && alertas.length === 0 && pagos.length === 0;
+
+  /* Los pagos van PRIMERO: son los únicos con fecha de vencimiento, y llegar
+     tarde cuesta mora sobre todo el saldo. */
+  const pagoItem = (p) => {
+    const cuando = textoAlerta(p);
+    const monto = p.monto != null ? ` · mínimo <strong>${esc(formatCOP(p.monto))}</strong>` : '';
+    return `<div class="notif-item notif-item--${p.nivel}"><span class="notif-item__dot"></span>`
+      + `<p><strong>${esc(p.titulo)}</strong>: ${esc(cuando)} (${esc(fechaCorta(p.fecha))})${monto}</p></div>`;
+  };
+  const pagoBloque = pagos.length ? `
+    <div class="notif-group">
+      <p class="notif-group__label">Pagos próximos</p>
+      ${pagos.map(pagoItem).join('')}
+    </div>` : '';
 
   const alertaItem = (a) => {
     const cls = a.color === 'rojo' ? 'rojo' : 'ambar';
@@ -466,6 +502,7 @@ async function abrirNotificaciones() {
     <button type="button" class="icon-btn ov-close" data-n="close" aria-label="Cerrar">${ICON_X}</button>
     <h3 class="ov-title ov-title--menu">Notificaciones</h3>
     ${vacio ? '<p class="ov-text">Todo al día. Sin pendientes ni alertas por ahora.</p>' : ''}
+    ${pagoBloque}
     ${pendBloque}
     ${alertaBloque}`;
 
