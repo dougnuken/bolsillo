@@ -174,6 +174,13 @@ function setHeaderProgress(top) {
   if (q === headerP) return;
   headerP = q;
   document.body.style.setProperty('--header-p', String(q));
+  // Bandera binaria además del progreso: la opacidad se puede interpolar, pero
+  // `pointer-events` no. Sin esto, los botones del header colapsado siguen
+  // capturando toques mientras están invisibles, encima de los del hero.
+  // Umbral en la mitad de la rampa: por encima el header ya se lee como puesto.
+  // Más alto arriesga dejar botones visibles pero inertes si el scroll se queda
+  // corto; más bajo los activa cuando todavía se ven fantasma sobre el hero.
+  document.body.classList.toggle('header-fijo', q >= 0.5);
 }
 function onStageScroll(e) {
   const el = e.target;

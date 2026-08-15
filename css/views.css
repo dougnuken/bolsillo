@@ -35,8 +35,21 @@
    la vista, y buscar + notificaciones caen en el botón de más, que hereda el
    badge para no perder el aviso al esconder la campana. */
 .hdr-hoy { display: none; }
-body[data-route="hoy"] .hdr-hoy { display: grid; }
 body[data-route="hoy"] #open-notif { display: none; }
+/* Los botones del header colapsado siguen la MISMA progresión que su frost y su
+   título. Sin esto quedaban visibles en reposo, pisando los del hero, que está
+   justo debajo con sus propias acciones: el estado colapsado y el abierto se
+   veían superpuestos.
+   pointer-events aparte porque no se interpola: hasta que el header no está
+   realmente puesto (body.header-fijo) no deben capturar el toque, o se roban
+   los taps de los botones del hero. */
+body[data-route="hoy"] .hdr-hoy {
+  display: grid;
+  opacity: var(--header-p, 0);
+  pointer-events: none;
+  transition: opacity var(--dur-fast) linear;
+}
+body[data-route="hoy"].header-fijo .hdr-hoy { pointer-events: auto; }
 /* Padding superior menor (el saludo arranca bajo el notch); scroll normal. */
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))
