@@ -2398,8 +2398,14 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
   margin: calc(-1 * (var(--header-h) + var(--sp-3)))
           calc(-1 * max(var(--sp-5), env(safe-area-inset-left)))
           var(--sp-2);
+  /* El aire de abajo es donde ocurre el desvanecido del vidrio. Vivía FUERA,
+     con el ::before sobresaliendo 24px, y como la barra entera va en z-index 20
+     ese sobrante se posaba encima del contenido: velaba el título de "te deben
+     en total" —se veía recortado— y dejaba su propio borde a la vista como una
+     línea vertical. Metiéndolo dentro, el fade sigue cayendo después del
+     segmento pero ya no invade nada. */
   padding: calc(var(--header-h) + var(--sp-3) + var(--sp-2))
-           max(var(--sp-5), env(safe-area-inset-left)) var(--sp-2);
+           max(var(--sp-5), env(safe-area-inset-left)) 22px;
 }
 /* El vidrio va en un pseudo-elemento, NO en la barra.
    Estaba en la barra, y con él el mask que lo desvanece hacia abajo. Un mask
@@ -2407,13 +2413,13 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
    segmento: en el dispositivo se veían las tarjetas A TRAVÉS del control,
    justo la zona donde el gradiente ya iba por debajo de la mitad. Aquí el
    mask solo toca al fondo; el segmento queda entero.
-   Se extiende 24px por debajo para que el desvanecido ocurra DESPUÉS del
-   segmento y no le asome contenido por los bordes — mismo recurso que
-   .app-header::before. */
+   No sobresale del padre: el desvanecido cabe en el padding de abajo. Sacarlo
+   fuera lo ponía encima del contenido que sigue —la barra va en z-index 20—, y
+   ahí velaba el título y dejaba su borde a la vista. */
 .wallet-sticky::before {
   content: '';
   position: absolute;
-  inset: 0 0 -24px 0;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   background: linear-gradient(to bottom,
