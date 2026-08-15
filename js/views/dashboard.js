@@ -15,7 +15,7 @@ import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
 import { agruparUltimosCortes, totalDiferido } from '../diferidos.js';
-import { vtabsHTML, colocarIndicador as colocarInd, marcarActiva } from '../vtabs.js';
+import { segHTML, colocarThumb, marcarActiva } from '../segmented.js';
 
 const R = 42;
 const CIRC = 2 * Math.PI * R; // circunferencia del aro
@@ -177,15 +177,22 @@ function balanceCardHTML(saldo) {
 }
 
 /* Tabs sutiles dentro del sheet, con indicador deslizante (se anima al cambiar).
-   El componente vive en js/vtabs.js y lo comparte con la cartera. */
+   El componente vive en js/segmented.js y lo comparte con la cartera.
+   Aquí el DOM del control SOBREVIVE al cambio de pestaña (mostrarPanel solo
+   repinta el cuerpo), así que la pastilla desliza sola: no hace falta el
+   parámetro `desde` que sí necesita la cartera, que re-renderiza entera. */
 const TAB_ATTR = 'data-hoy-tab';
 
 function tabsHTML() {
-  return vtabsHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de Hoy' });
+  return segHTML(TABS, tabActivo, {
+    attr: TAB_ATTR,
+    label: 'Secciones de Hoy',
+    clase: 'seg--dock',
+  });
 }
 
-function colocarIndicador(root, animar) {
-  colocarInd(root, { animar, attr: TAB_ATTR });
+function colocarPastilla(root, animar) {
+  colocarThumb(root, { animar, attr: TAB_ATTR });
 }
 
 /* Lista de gastos fijos (pestaña Recurrentes). */
@@ -547,7 +554,7 @@ function aplicarBarras(body) {
 function mostrarPanel(root, tab, datos, animar) {
   tabActivo = tab;
   marcarActiva(root, tab, TAB_ATTR);
-  colocarIndicador(root, animar);
+  colocarPastilla(root, animar);
   const body = root.querySelector('#hoy-body');
   if (!body) return;
   if (!datos.estado.configurado) {

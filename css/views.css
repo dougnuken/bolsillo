@@ -150,7 +150,8 @@ body[data-route="hoy"] .app-header { display: none; }
   letter-spacing: 0;
 }
 
-/* Las tabs Dashboard/Analytics son el componente canónico .vtabs (components.css) */
+/* Dashboard/Analytics usan el control segmentado .seg + .seg--dock, igual que
+   la cartera (components.css + js/segmented.js) */
 
 .hoy-empty { text-align: center; color: var(--text-2); font-size: var(--fs-sm); padding: var(--sp-8) var(--sp-4); line-height: 1.5; }
 
