@@ -18,7 +18,7 @@ import { SKINS_TARJETA } from '../model.js';
 import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
-import { vtabsHTML, colocarIndicador } from '../vtabs.js';
+import { segHTML, colocarThumb } from '../segmented.js';
 
 const ICON_BACK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
@@ -138,13 +138,12 @@ function prestamoHTML(p, debo) {
 const TABS = [['productos', 'Mis productos'], ['me-deben', 'Me deben'], ['debo', 'Debo']];
 const TAB_ATTR = 'data-tab';
 let tabActivo = 'productos';
-/* Cambiar de pestaña re-renderiza la lista entera (el título también cambia),
-   así que guardamos de dónde veníamos para que el subrayado se deslice en vez
-   de aparecer de golpe en la pestaña nueva. */
+/* Cambiar de segmento re-renderiza la lista entera, así que guardamos de dónde
+   veníamos para que la pastilla se deslice en vez de saltar al destino. */
 let tabPrevio = null;
 
 function tabsHTML() {
-  return vtabsHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de la cartera' });
+  return segHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de la cartera' });
 }
 
 function listaHTML(creditos, cortes, prestamos) {
@@ -152,10 +151,6 @@ function listaHTML(creditos, cortes, prestamos) {
     <div class="wallet-back-row">
       <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio>${ICON_BACK}<span>Hoy</span></button>
     </div>
-    <header class="view-greet view-greet--wallet">
-      <p class="view-greet__eyebrow">Mi cartera</p>
-      <h1 class="view-greet__title">${esc((TABS.find((t) => t[0] === tabActivo) || TABS[0])[1])}</h1>
-    </header>
     ${tabsHTML()}`;
 
   if (tabActivo === 'productos') {
@@ -329,7 +324,7 @@ async function montar(root) {
 
   function pintarLista() {
     wallet.innerHTML = listaHTML(creditos, cortes, prestamos);
-    colocarIndicador(wallet, { animar: false, desde: tabPrevio, attr: TAB_ATTR });
+    colocarThumb(wallet, { animar: false, desde: tabPrevio, attr: TAB_ATTR });
     tabPrevio = null;
     const recargar = async () => { await cargar(); pintarLista(); };
 

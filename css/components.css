@@ -1630,13 +1630,23 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
 .seg {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(var(--seg-cols, 2), 1fr);
   gap: 3px;
   padding: 3px;
   margin: var(--sp-2) 0 var(--sp-4);
   border-radius: var(--r-full);
   background: var(--glass-2);
   border: 1px solid transparent;
+}
+/* La cuenta de columnas va por clase y no por style inline: la CSP prohíbe
+   `style="..."` en el marcado. */
+.seg--3 { --seg-cols: 3; }
+/* Etiquetas largas en 3 columnas estrechas (la cartera): baja un punto y
+   aprieta el tracking antes que partir la palabra. */
+.seg--3 .seg__opt {
+  font-size: var(--fs-xs);
+  letter-spacing: -0.01em;
+  padding: 0 2px;
 }
 /* Pill deslizante (posición/ancho por JS: colocarThumb). Material glossy coral
    (Gasto) que se vuelve verde glossy (Ingreso) — mismo brillo/gradiente. */

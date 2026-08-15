@@ -2272,10 +2272,10 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .prestamos-link__go { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--accent-light); flex: 0 0 auto; }
 
 /* La cabecera de la cartera va pegada al back (el saludo trae su propio aire). */
-.view-greet--wallet { padding-top: 0; }
+/* (la cartera ya no lleva titular: el control segmentado carga la jerarquía) */
 
-/* --- tabs de la cartera --- */
-/* Las tabs de la cartera son el componente canónico .vtabs (components.css) */
+/* --- segmentos de la cartera --- */
+/* Control segmentado canónico .seg (components.css) + js/segmented.js */
 
 /* --- total de préstamos --- */
 .wallet-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }
