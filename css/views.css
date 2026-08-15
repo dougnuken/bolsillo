@@ -42,12 +42,16 @@ body[data-route="hoy"] .app-header { display: none; }
   margin-bottom: var(--sp-4);
 }
 .hoy-greet__txt { min-width: 0; }
-.hoy-greet__hi { font-size: 13px; color: var(--text-2); font-weight: var(--fw-medium); }
+/* El saludo manda y va primero; "¡Bienvenido!" queda debajo, en susurro. */
 .hoy-greet__name {
   font-family: var(--font-display);
   font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em;
-  color: var(--text-1); margin-top: 2px;
+  color: var(--text-1);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hoy-greet__hi {
+  font-size: 12px; color: var(--text-3); font-weight: var(--fw-medium);
+  margin-top: 2px;
 }
 .hoy-greet__actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }

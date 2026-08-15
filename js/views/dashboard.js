@@ -127,21 +127,23 @@ const ICON_BELL =
 const ICON_ORB =
   '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>';
 
-function saludoInfo() {
-  const h = new Date().getHours();
-  if (h < 12) return { txt: 'Buenos días,', emoji: '👋' };
-  if (h < 19) return { txt: 'Buenas tardes,', emoji: '👋' };
-  return { txt: 'Buenas noches,', emoji: '👋' };
+const EMOJI_SALUDO = '👋';
+
+/* "Hola, Ana 👋". Sin nombre configurado devuelve "Hola 👋", no "Hola, 👋":
+   una coma sin nada detrás se lee como un bug. Lo usan el render inicial y el
+   repintado en caliente cuando llega el nombre del onboarding, así que el
+   formato vive en un solo sitio. */
+function saludoTexto(nombre) {
+  const nom = String(nombre || '').trim();
+  return `${nom ? `Hola, ${nom}` : 'Hola'} ${EMOJI_SALUDO}`;
 }
 
 function greetHTML(nombre) {
-  const s = saludoInfo();
-  const nom = String(nombre || '').trim();
   return `
     <header class="hoy-greet">
       <div class="hoy-greet__txt">
-        <p class="hoy-greet__hi">${s.txt}</p>
-        <p class="hoy-greet__name" id="hoy-name">${nom ? esc(nom) + ' ' : ''}${s.emoji}</p>
+        <p class="hoy-greet__name" id="hoy-name">${esc(saludoTexto(nombre))}</p>
+        <p class="hoy-greet__hi">¡Bienvenido!</p>
       </div>
       <div class="hoy-greet__actions">
         <button type="button" class="icon-btn hoy-greet__orb" id="hoy-asesor" aria-label="Tu conciencia financiera">
@@ -659,9 +661,8 @@ async function pintar(root) {
   }
 
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
-  const nom = String(nombre || '').trim();
   const nameEl = root.querySelector('#hoy-name');
-  if (nameEl) nameEl.textContent = (nom ? nom + ' ' : '') + saludoInfo().emoji;
+  if (nameEl) nameEl.textContent = saludoTexto(nombre);
 
   const datos = { estado, negocios, historial, recs, catComp };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
