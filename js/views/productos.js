@@ -144,7 +144,9 @@ function tabsHTML() {
 
 function listaHTML(creditos, cortes, prestamos) {
   const head = `
-    <button class="wallet-back" type="button" data-inicio>${ICON_BACK}<span>Inicio</span></button>
+    <div class="wallet-back-row">
+      <button class="btn btn--ghost btn--sm btn--back" type="button" data-inicio>${ICON_BACK}<span>Inicio</span></button>
+    </div>
     <header class="view-greet view-greet--wallet">
       <p class="view-greet__eyebrow">Mi cartera</p>
       <h1 class="view-greet__title">${esc((TABS.find((t) => t[0] === tabActivo) || TABS[0])[1])}</h1>
@@ -252,8 +254,8 @@ function detalleHTML(cred, cortes, monedaSel) {
 
   const back = `
     <div class="wallet-detalle-top">
-      <button class="wallet-back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
-      <button class="wallet-edit" type="button" data-editar>Editar</button>
+      <button class="btn btn--ghost btn--sm btn--back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
+      <button class="btn btn--ghost btn--sm" type="button" data-editar>Editar</button>
     </div>`;
 
   if (!g || !g.ultimo) {

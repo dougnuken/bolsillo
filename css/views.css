@@ -785,15 +785,7 @@ body[data-route="asesor"] .nav-blur {
   display: flex; align-items: center; gap: var(--sp-2);
   padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-4) var(--sp-2);
 }
-.asesor-back {
-  width: 40px; height: 40px; flex: none;
-  display: grid; place-items: center;
-  border-radius: var(--r-full);
-  color: var(--text-1); background: var(--glass-2);
-  transition: transform var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
-}
-.asesor-back:hover { background: var(--glass-3); }
-.asesor-back:active { transform: scale(0.92); }
+/* el back es el canónico de la app: .btn.btn--ghost.btn--sm.btn--back */
 .asesor-top__title {
   flex: 1 1 auto;
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
@@ -803,7 +795,9 @@ body[data-route="asesor"] .nav-blur {
 }
 .asesor-top__spark { display: inline-grid; place-items: center; color: var(--accent); }
 .asesor-top__spark svg { width: 18px; height: 18px; }
-.asesor-top__pad { width: 40px; flex: none; }  /* equilibra el back → título centrado */
+/* Clon invisible del back: ocupa exactamente su mismo ancho, así el título queda
+   centrado de verdad aunque el label del back cambie de largo. */
+.asesor-top__pad { flex: none; visibility: hidden; }
 
 /* zona de mensajes: ÚNICO scroller del cuarto (arregla el auto-scroll) */
 .chat-scroll {
@@ -2259,8 +2253,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 
 /* cabecera del detalle: volver + editar */
 .wallet-detalle-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
-.wallet-edit { background: var(--glass-2); border: 1px solid var(--line-2); color: var(--text-1); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); padding: 7px 14px; border-radius: var(--r-full); cursor: pointer; }
-.wallet-edit:active { background: var(--glass-3); }
+/* el "Editar" es el botón compacto del DS: .btn.btn--ghost.btn--sm */
 
 /* --- card "Mi cartera" en Hoy (glass + peek de tarjetas en abanico) --- */
 .hoy-productos {
@@ -2415,8 +2408,9 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .cc__mini-num { position: relative; z-index: 2; display: flex; align-items: center; min-height: 42px; padding: 0 16px; font-size: 12px; font-weight: var(--fw-semibold); letter-spacing: .05em; color: var(--skin-text-dim); }
 
 /* --- volver --- */
-.wallet-back { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--accent-light); font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); padding: var(--sp-2) 0; margin-bottom: var(--sp-2); cursor: pointer; }
-.wallet-back svg { width: 18px; height: 18px; }
+/* El back es el canónico (.btn.btn--ghost.btn--sm.btn--back); esta fila solo lo
+   separa del saludo cuando va suelto en la lista. */
+.wallet-back-row { display: flex; margin-bottom: var(--sp-3); }
 
 /* --- detalle: totales / segmento / chips --- */
 .dif-tot-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }
