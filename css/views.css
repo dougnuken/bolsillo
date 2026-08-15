@@ -2439,3 +2439,72 @@ select.field__input {
   background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;
 }
 select.field__input::-ms-expand { display: none; }
+
+/* ============================================================
+   BORDE VIVO — el hairline de todos los containers
+   ============================================================
+   El borde no es un color plano alrededor de la caja: es un foco (--grad-edge)
+   que enciende una esquina y se apaga a alpha 0, así que el trazo DESAPARECE en
+   el lado opuesto en vez de cerrar el contorno.
+
+   Va al final de views.css a propósito: components.css carga antes, y varios de
+   estos containers declaran su `border` aquí. Puesto arriba, el color plano
+   ganaría por cascada. Un solo bloque también hace trivial calibrarlo o
+   revertirlo — que es lo que uno quiere de un tratamiento transversal.
+
+   Se pinta con un ::before enmascarado (padding 1px + mask exclude) encima del
+   borde, que pasa a transparente. El box model NO cambia: el anillo cae justo
+   donde estaba el hairline sólido.
+
+   Dos grupos, por una razón mecánica: `overflow: hidden` recorta al padding box
+   y se comería un anillo desbordado, así que esos containers lo llevan por
+   dentro (inset 0) en vez de sobre el borde (inset -1px). */
+
+/* El borde plano se apaga en todos; el anillo lo reemplaza. */
+.card, .btn--ghost, .icon-btn, .mov-search,
+.tabbar, .composer, .chat-bar, .chat-msg--ia, .toast, .susurro,
+.persona-card, .prestamo-card, .bonus-card, .notif-item,
+.cfg-extracto, .cfg-note, .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
+.settings-list, .cfg-list, .bcard, .hoy-productos, .pcard, .vf-card,
+.cred-summary, .ob__resumen {
+  border-color: transparent;
+}
+
+/* Solo los que NO traen posición propia necesitan el contexto para el anillo.
+   .tabbar, .toast y .susurro quedan FUERA a propósito: son `fixed` (el dock es
+   una pill flotante anclada al viewport, ver la nota v60 en .tabbar) y
+   pisarles el position los devuelve al flujo. Ya están posicionados, así que
+   el ::before absoluto funciona igual. */
+.icon-btn, .mov-search, .composer, .chat-bar, .chat-msg--ia,
+.persona-card, .prestamo-card, .bonus-card, .notif-item,
+.cfg-extracto, .cfg-note, .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
+.settings-list, .cfg-list, .vf-card, .cred-summary, .ob__resumen {
+  position: relative;
+}
+
+.card::before, .btn--ghost::before, .icon-btn::before, .mov-search::before,
+.tabbar::before, .composer::before, .chat-bar::before, .chat-msg--ia::before,
+.toast::before, .susurro::before,
+.persona-card::before, .prestamo-card::before, .bonus-card::before, .notif-item::before,
+.cfg-extracto::before, .cfg-note::before, .hormiga-note::before,
+.cat-preview::before, .empty__art::before, .hoy-skeleton::before,
+.settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
+.pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-edge);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Los de overflow hidden: el anillo por dentro, si no se lo comen al recortar */
+.settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
+.pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
+  inset: 0;
+}

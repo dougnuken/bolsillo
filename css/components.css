@@ -107,34 +107,8 @@
   transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
 }
 
-/* ---- Borde vivo ----
-   El hairline se pinta con un gradiente en vez de un color plano: entra
-   encendido en morado por una esquina y se apaga hasta casi desaparecer en la
-   contraria, así el borde no se lee como una línea cerrada y da relieve sin
-   sumar sombra. Va en un ::before enmascarado (padding 1px + mask xor) que se
-   superpone al borde TRANSPARENTE del componente — por eso quien lo use declara
-   `border: 1px solid transparent` y el box model no cambia ni un píxel.
-   El gradiente vive en --grad-edge (tokens.css). */
-.btn--ghost,
-.icon-btn,
-.mov-search { position: relative; }
-
-.card::before,
-.btn--ghost::before,
-.icon-btn::before,
-.mov-search::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--grad-edge);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-}
+/* El borde vivo de .card/.btn--ghost/.icon-btn/.mov-search y del resto de
+   containers se define junto, al final de views.css (orden de cascada). */
 
 /* ---- Cards glass ---- */
 .card {

@@ -98,17 +98,21 @@
   --grad-cta-border: linear-gradient(140deg, #FF9A6B, #6E7BF2); /* borde/glow de tarjeta destacada (asesor) */
   --sh-ia: 0 12px 30px -10px rgba(110, 123, 242, 0.45), 0 8px 24px -12px rgba(255, 122, 82, 0.35);
 
-  /* ---- Borde vivo (hairline con un tramo encendido) ----
-     Un solo hairline de 1px cuyo recorrido NO es uniforme: entra encendido en
-     morado por la esquina superior izquierda y se apaga hasta casi desaparecer
-     en la inferior derecha. Da relieve sin sumar una línea dura ni una sombra.
-     Se pinta con un ::before enmascarado (ver .card/.btn--ghost/.mov-search). */
-  --grad-edge: linear-gradient(150deg,
-      rgba(169, 140, 255, 0.42) 0%,
-      rgba(169, 140, 255, 0.13) 16%,
-      rgba(255, 255, 255, 0.10) 34%,
-      rgba(255, 255, 255, 0.045) 62%,
-      rgba(255, 255, 255, 0.02) 100%);
+  /* ---- Borde vivo (hairline que nace en una esquina y se DESVANECE) ----
+     Foco radial anclado fuera de la esquina superior izquierda: ahí el hairline
+     entra encendido en morado, se degrada a un neutro y llega a alpha 0 — el
+     borde deja de existir, no se queda en un gris tenue. Por eso la línea no
+     cierra el contorno: el lado opuesto al foco simplemente no está.
+     El punto clave es el último stop en 0: con cualquier alpha residual el
+     stroke se lee completo alrededor de toda la caja.
+     Se pinta con un ::before enmascarado (ver el bloque "Borde vivo" al final
+     de views.css, que va ahí por orden de cascada). */
+  --grad-edge: radial-gradient(135% 115% at 4% -20%,
+      rgba(169, 140, 255, 0.55) 0%,
+      rgba(169, 140, 255, 0.20) 17%,
+      rgba(255, 255, 255, 0.085) 33%,
+      rgba(255, 255, 255, 0.025) 50%,
+      rgba(255, 255, 255, 0) 64%);
 
   /* El orbe del asesor toma el gradiente firma (momento IA) */
   --accent-grad: var(--grad-cta);
