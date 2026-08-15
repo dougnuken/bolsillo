@@ -2509,6 +2509,26 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .pcard__name { font-size: var(--fs-body); font-weight: var(--fw-bold); }
 .pcard__sub { font-size: var(--fs-xs); color: var(--text-2); margin-top: 2px; }
 .pcard__saldo { text-align: right; flex: 0 0 auto; }
+/* Acceso a editar/eliminar. Va callado —del color más apagado, sin fondo— para
+   no competir con el saldo, que es lo que se viene a leer; solo toma cuerpo al
+   tocarlo. El área táctil es de 32px aunque el icono mida 16: lo que se ve no
+   tiene por qué ser lo que se puede tocar. */
+.pcard__mas {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px -4px 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.pcard__mas svg { width: 16px; height: 16px; }
+.pcard__mas:active { color: var(--text-1); background: var(--glass-2); }
 .pcard__pend { font-size: var(--fs-h3); font-weight: var(--fw-bold); font-family: var(--font-num); }
 .pcard__lbl { font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px; }
 .pcard__track { height: 6px; border-radius: var(--r-full); background: var(--track); overflow: hidden; margin: var(--sp-3) 0 var(--sp-2); }

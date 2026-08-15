@@ -17,6 +17,7 @@ import { abrirCreditos } from './cfg-creditos.js';
 import { SKINS_TARJETA } from '../model.js';
 import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar, interesEstimado } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
+import { menu } from '../overlay.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
 import { segHTML, colocarThumb } from '../segmented.js';
 import { emparejarProductos } from '../diferidos.js';
@@ -147,6 +148,10 @@ function prestamoHTML(p, debo) {
           <p class="pcard__pend num">${esc(formatCOP(saldo))}</p>
           <p class="pcard__lbl">${liquidado ? (debo ? 'pagada' : 'saldado') : (debo ? 'le debes' : 'te debe')}</p>
         </div>
+        <button class="pcard__mas" type="button" data-pre-mas="${esc(p.id)}"
+          aria-label="Opciones de ${esc(p.persona)}">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg>
+        </button>
       </div>
       <div class="pcard__track"><span class="pcard__fill" data-fill="${pct}"></span></div>
       <div class="pcard__foot">
@@ -446,6 +451,30 @@ async function montar(root) {
       b.addEventListener('click', () => {
         const p = prestamos.find((x) => x.id === b.dataset.abono);
         if (p) abrirAbono(p, { onSaved: recargar });
+      });
+    });
+
+    /* Editar y eliminar viven en un menú y no como botones sueltos en la
+       tarjeta: son acciones de mantenimiento, y ponerlas al lado de "Registrar
+       abono" —que es la de todos los días— le daría a un borrado el mismo peso
+       que a la operación normal. */
+    wallet.querySelectorAll('[data-pre-mas]').forEach((b) => {
+      b.addEventListener('click', async () => {
+        const p = prestamos.find((x) => x.id === b.dataset.preMas);
+        if (!p) return;
+        const debo = p.direccion === 'debo';
+        const elegido = await menu({
+          title: p.persona,
+          items: [
+            { value: 'editar', label: debo ? 'Editar deuda' : 'Editar préstamo' },
+            { value: 'eliminar', label: 'Eliminar', danger: true },
+          ],
+        });
+        if (elegido === 'editar' || elegido === 'eliminar') {
+          // Las dos llevan al mismo sheet: eliminar está dentro, junto al
+          // contexto que hace falta para decidirlo (cuánto se abonó ya).
+          abrirNuevoPrestamo({ prestamo: p, onSaved: recargar });
+        }
       });
     });
 

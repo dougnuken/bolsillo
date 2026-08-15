@@ -9,10 +9,10 @@
    Reusa overlay.js (hoja) y las mismas clases de campo que el sueldo.
    ============================================================ */
 
-import { hoja } from '../overlay.js';
-import { put, getConfig } from '../db.js';
+import { hoja, confirmar } from '../overlay.js';
+import { put, del, getConfig } from '../db.js';
 import { crearMovimiento } from '../model.js';
-import { crearPrestamo, agregarAbono, saldoPendiente, interesEstimado } from '../prestamos.js';
+import { crearPrestamo, agregarAbono, saldoPendiente, totalAbonado, interesEstimado } from '../prestamos.js';
 import { parseCOP, formatCOP } from '../money.js';
 import { bindMontosVivos } from '../money-input.js';
 import { toast } from '../toast.js';
@@ -37,43 +37,53 @@ function nuevoHTML() {
 }
 
 /** Formulario según la dirección: 'me-deben' (presté) o 'debo' (me prestaron). */
-function nuevoHTMLDir(direccion) {
+function nuevoHTMLDir(direccion, previo) {
   const debo = direccion === 'debo';
+  const editando = !!previo;
+  const v = previo || {};
+  const abonado = editando ? totalAbonado(previo) : 0;
   return `
     <div class="ov-grip" aria-hidden="true"></div>
     <div class="sueldo-head">
       <span class="sueldo-head__ic">${ICON_HAND}</span>
       <div>
-        <h3 class="ov-title">${debo ? 'Nueva deuda' : 'Nuevo préstamo'}</h3>
-        <p class="sueldo-hint">${debo
-    ? 'Dinero que alguien te prestó y tienes que devolver. Aquí llevas el saldo y tus abonos.'
-    : 'Dinero que prestaste y te van a devolver. No descuenta tu dinero: el pago ya lo registras como gasto.'}</p>
+        <h3 class="ov-title">${editando ? (debo ? 'Editar deuda' : 'Editar préstamo') : (debo ? 'Nueva deuda' : 'Nuevo préstamo')}</h3>
+        <p class="sueldo-hint">${editando
+    ? (abonado > 0
+      // Se dice de entrada porque condiciona lo que se puede escribir abajo:
+      // el monto no puede bajar de lo que ya se abonó.
+      ? `Ya hay <strong class="num">${esc(formatCOP(abonado))}</strong> abonados. Los abonos no se tocan aquí: se editan desde Movimientos.`
+      : 'Corrige lo que quedó mal al registrarlo.')
+    : (debo
+      ? 'Dinero que alguien te prestó y tienes que devolver. Aquí llevas el saldo y tus abonos.'
+      : 'Dinero que prestaste y te van a devolver. No descuenta tu dinero: el pago ya lo registras como gasto.')}</p>
       </div>
     </div>
     <form class="sueldo-form" id="pre-form" novalidate>
       <label class="field">
         <span class="field__label">${debo ? '¿Quién te prestó?' : '¿A quién le prestaste?'}</span>
         <input class="field__input" id="pre-persona" type="text" autocomplete="off"
-          autocapitalize="words" maxlength="40" placeholder="Ej. un familiar" />
+          autocapitalize="words" maxlength="40" placeholder="Ej. un familiar" value="${esc(v.persona || '')}" />
       </label>
       <label class="field">
         <span class="field__label">¿Por qué? (opcional)</span>
         <input class="field__input" id="pre-concepto" type="text" autocomplete="off"
-          maxlength="80" placeholder="Ej. una emergencia" />
+          maxlength="80" placeholder="Ej. una emergencia" value="${esc(v.concepto || '')}" />
       </label>
       <label class="field">
         <span class="field__label">${debo ? 'Monto que te prestaron' : 'Monto prestado'}</span>
         <input class="field__input" id="pre-monto" type="text" data-monto inputmode="numeric"
-          autocomplete="off" placeholder="400.000" />
+          autocomplete="off" placeholder="400.000" value="${editando && v.monto != null ? esc(formatCOP(v.monto).replace('$', '')) : ''}" />
       </label>
       <label class="field">
         <span class="field__label">Interés % E.A. · opcional</span>
         <input class="field__input" id="pre-tasa" type="number" min="0" max="100" step="0.01"
-          inputmode="decimal" placeholder="Sin interés" />
+          inputmode="decimal" placeholder="Sin interés" value="${v.tasaEA != null ? esc(String(v.tasaEA)) : ''}" />
         <span class="sueldo-hint">Si se pactó un interés, escríbelo. Déjalo vacío si es un favor sin intereses.</span>
         <span class="sueldo-hint" id="pre-rinde" hidden></span>
       </label>
-      <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">${debo ? 'Guardar deuda' : 'Guardar préstamo'}</button>
+      <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">${editando ? 'Guardar cambios' : (debo ? 'Guardar deuda' : 'Guardar préstamo')}</button>
+      ${editando ? `<button type="button" class="btn btn--ghost btn--block btn--danger" id="pre-eliminar">${debo ? 'Eliminar esta deuda' : 'Eliminar este préstamo'}</button>` : ''}
     </form>`;
 }
 
@@ -81,9 +91,14 @@ function nuevoHTMLDir(direccion) {
  * Abre el sheet para crear un préstamo.
  * @param {{onSaved?: () => void}} [opts]
  */
-export function abrirNuevoPrestamo({ onSaved, direccion = 'me-deben' } = {}) {
+export function abrirNuevoPrestamo({ onSaved, direccion = 'me-deben', prestamo = null } = {}) {
+  // Editando manda la dirección del propio préstamo: la del segmento abierto
+  // podría ser otra y le cambiaría el sentido a la deuda sin avisar.
+  if (prestamo && prestamo.direccion) direccion = prestamo.direccion;
   const debo = direccion === 'debo';
-  return hoja(nuevoHTMLDir(direccion), (panel, cerrar) => {
+  const editando = !!prestamo;
+  const abonado = editando ? totalAbonado(prestamo) : 0;
+  return hoja(nuevoHTMLDir(direccion, prestamo), (panel, cerrar) => {
     const $ = (sel) => panel.querySelector(sel);
     bindMontosVivos(panel);
 
@@ -108,22 +123,64 @@ export function abrirNuevoPrestamo({ onSaved, direccion = 'me-deben' } = {}) {
       const monto = parseCOP($('#pre-monto').value);
       if (!persona) { toast(debo ? '¿Quién te prestó?' : '¿A quién le prestaste?'); $('#pre-persona').focus(); return; }
       if (!Number.isInteger(monto) || monto <= 0) { toast('Escribe un monto válido'); $('#pre-monto').focus(); return; }
+      // Bajar el monto por debajo de lo ya abonado dejaría un saldo negativo:
+      // la deuda diría que le deben a quien pagó de más. Se corta aquí, que es
+      // donde la persona todavía puede arreglarlo.
+      if (editando && monto < abonado) {
+        toast(`Ya hay ${formatCOP(abonado)} abonados: el monto no puede ser menor`);
+        $('#pre-monto').focus();
+        return;
+      }
       try {
         const tasaCruda = ($('#pre-tasa') && $('#pre-tasa').value || '').trim();
-        const prestamo = crearPrestamo({
+        const guardado = crearPrestamo({
+          // Al editar se conservan id, abonos y creadoEn: crearPrestamo los
+          // respeta si vienen, así que la edición no borra el historial.
+          ...(editando ? prestamo : {}),
           persona, concepto: ($('#pre-concepto').value || '').trim(), monto,
           direccion, tasaEA: tasaCruda === '' ? null : parseFloat(tasaCruda),
         });
-        await put('prestamos', prestamo);
+        await put('prestamos', guardado);
         cerrar(true);
-        toast(debo ? `Anotado: le debes ${formatCOP(monto)} a ${esc(persona)}` : `Anotado: ${esc(persona)} te debe ${formatCOP(monto)}`);
+        toast(editando
+          ? 'Cambios guardados'
+          : (debo ? `Anotado: le debes ${formatCOP(monto)} a ${esc(persona)}` : `Anotado: ${esc(persona)} te debe ${formatCOP(monto)}`));
         if (typeof onSaved === 'function') onSaved();
       } catch (err) {
         console.warn('[Bolsillo] guardar préstamo falló:', err);
         toast('No se pudo guardar el préstamo');
       }
     });
-    requestAnimationFrame(() => $('#pre-persona').focus());
+
+    const btnEliminar = $('#pre-eliminar');
+    if (btnEliminar) btnEliminar.addEventListener('click', async () => {
+      const ok = await confirmar({
+        title: debo ? '¿Eliminar esta deuda?' : '¿Eliminar este préstamo?',
+        // Los abonos ya entraron como ingresos y ese dinero SÍ se recibió:
+        // borrarlos cambiaría "Tu dinero" hacia atrás. Se dice en vez de
+        // hacerlo a escondidas.
+        text: abonado > 0
+          ? `Se borra el registro de ${esc(prestamo.persona)}. Los ${esc(formatCOP(abonado))} ya abonados siguen en Movimientos, porque ese dinero sí entró.`
+          : `Se borra el registro de ${esc(prestamo.persona)}. No se puede deshacer.`,
+        okText: 'Eliminar',
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await del('prestamos', prestamo.id);
+        cerrar(true);
+        toast(debo ? 'Deuda eliminada' : 'Préstamo eliminado');
+        if (typeof onSaved === 'function') onSaved();
+      } catch (err) {
+        console.warn('[Bolsillo] eliminar préstamo falló:', err);
+        toast('No se pudo eliminar');
+      }
+    });
+    // Al crear, el cursor va al primer campo porque no hay nada escrito. Al
+    // editar NO: abrir el teclado tapa medio formulario cuando lo que se viene
+    // a cambiar suele ser el monto, o a borrar.
+    if (!editando) requestAnimationFrame(() => $('#pre-persona').focus());
+    else refrescarRinde();
   });
 }
 
