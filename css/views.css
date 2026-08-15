@@ -2333,10 +2333,18 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
    El z-index la deja por encima de las tarjetas pero por debajo del dock. */
 .wallet-sticky {
   position: sticky;
-  top: 0;
+  /* El .view tiene padding-top (safe-area + header + aire) y sticky se pega al
+     final de ese padding, no al borde de la pantalla: quedaba un canal arriba
+     por donde se veía pasar el contenido. Con `top` negativo del tamaño de ese
+     padding se pega al borde real, y el padding interno devuelve el aire para
+     que nada quede bajo la isla dinámica. */
+  top: calc(-1 * (var(--header-h) + var(--sp-3)));
   z-index: 20;
-  margin: 0 calc(-1 * max(var(--sp-5), env(safe-area-inset-left))) var(--sp-2);
-  padding: var(--sp-2) max(var(--sp-5), env(safe-area-inset-left)) 0;
+  margin: calc(-1 * (var(--header-h) + var(--sp-3)))
+          calc(-1 * max(var(--sp-5), env(safe-area-inset-left)))
+          var(--sp-2);
+  padding: calc(var(--header-h) + var(--sp-3) + var(--sp-2))
+           max(var(--sp-5), env(safe-area-inset-left)) 0;
   /* Mismo vidrio que el header: velo tenue, el peso lo pone el desenfoque. */
   background: linear-gradient(to bottom,
     var(--glass-header) 0%, var(--glass-header-medio) 55%, rgba(11, 11, 13, 0) 100%);
@@ -2346,6 +2354,14 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
      desenfoque se sigue viendo como una línea. */
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0, 0, 0, .45) 90%, transparent 100%);
           mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0, 0, 0, .45) 90%, transparent 100%);
+}
+/* Dentro de la barra, el segmento pierde su desenfoque (el ancestro ya lo hizo)
+   y se quedaba hueco: se veía el contenido pasar por debajo del control. Lo
+   compensa el color, no otro blur —anidarlos no funciona—. */
+.wallet-sticky .seg--dock {
+  background: var(--glass-hundido-opaco);
+  -webkit-backdrop-filter: none;
+          backdrop-filter: none;
 }
 .wallet-back-row { display: flex; align-items: center; gap: var(--sp-3); }
 /* El título solo aparece cuando el contenido ya subió: en reposo el segmento
