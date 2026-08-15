@@ -2313,6 +2313,43 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 /* --- segmentos de la cartera --- */
 /* Control segmentado canónico .seg (components.css) + js/segmented.js */
 
+/* --- Barra pegajosa de la cartera: back + título + segmento ---
+   Sticky dentro de .view, que es el scroller. Sangra a los bordes con margen
+   negativo para que el vidrio llegue de lado a lado y el contenido pase por
+   detrás, no por un canal más estrecho.
+   El z-index la deja por encima de las tarjetas pero por debajo del dock. */
+.wallet-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 calc(-1 * max(var(--sp-5), env(safe-area-inset-left))) var(--sp-2);
+  padding: var(--sp-2) max(var(--sp-5), env(safe-area-inset-left)) 0;
+  /* Mismo vidrio que el header: velo tenue, el peso lo pone el desenfoque. */
+  background: linear-gradient(to bottom,
+    var(--glass-header) 0%, var(--glass-header-medio) 55%, rgba(11, 11, 13, 0) 100%);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  backdrop-filter: blur(22px) saturate(1.3);
+  /* El blur cae con el color: si solo se desvanece el fondo, el corte del
+     desenfoque se sigue viendo como una línea. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0, 0, 0, .45) 90%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 72%, rgba(0, 0, 0, .45) 90%, transparent 100%);
+}
+.wallet-back-row { display: flex; align-items: center; gap: var(--sp-3); }
+/* El título solo aparece cuando el contenido ya subió: en reposo el segmento
+   de justo abajo ya dice en qué sección estás. Reusa --header-p, que app.js
+   mueve siguiendo el dedo. */
+.wallet-sticky__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3); font-weight: var(--fw-bold); letter-spacing: -.01em;
+  color: var(--text-1);
+  opacity: var(--header-p, 0);
+  transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
+  transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wallet-sticky__title { transform: none; }
+}
+
 /* --- Forma de ver la cartera: tarjetas ↔ agenda --- */
 .wallet-layout { display: flex; gap: 4px; justify-content: flex-end; margin: 0 0 var(--sp-3); }
 .wallet-layout__b {
@@ -2463,7 +2500,8 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 /* --- volver --- */
 /* El back es el canónico (.btn.btn--ghost.btn--head.btn--back); esta fila solo lo
    separa del saludo cuando va suelto en la lista. */
-.wallet-back-row { display: flex; margin-bottom: var(--sp-3); }
+/* .wallet-back-row se define ahora junto a .wallet-sticky, que es quien la
+   contiene y le da el espaciado. */
 
 /* --- detalle: totales / segmento / chips --- */
 .dif-tot-label { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .05em; text-transform: uppercase; color: var(--text-3); }

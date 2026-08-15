@@ -15,7 +15,7 @@ import { formatCOP } from '../money.js';
 import { esc } from '../html.js';
 import { abrirCreditos } from './cfg-creditos.js';
 import { SKINS_TARJETA } from '../model.js';
-import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar } from '../prestamos.js';
+import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar, interesEstimado } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
 import { segHTML, colocarThumb } from '../segmented.js';
@@ -130,6 +130,12 @@ function prestamoHTML(p, debo) {
   const liquidado = saldo <= 0;
   const meta = [p.concepto || (debo ? 'Deuda personal' : 'Préstamo')];
   if (p.tasaEA != null) meta.push(`${String(p.tasaEA).replace('.', ',')}% E.A.`);
+  // Cuánto rinde (o cuesta) el interés pactado. Se veía solo al crear el
+  // préstamo y luego desaparecía: la tasa quedaba como un número suelto sin
+  // traducir a pesos. Va sobre el SALDO, no sobre el monto original —es lo que
+  // sigue generando interés— y por eso desaparece cuando ya está saldado.
+  const rinde = liquidado ? null : interesEstimado(saldo, p.tasaEA);
+  if (rinde) meta.push(`${debo ? 'te cuesta' : 'rinde'} ${formatCOP(rinde.mensual)}/mes`);
   return `
     <article class="pcard${liquidado ? ' pcard--ok' : ''}">
       <div class="pcard__top">
@@ -201,11 +207,18 @@ function agendaHTML(creditos, cortes) {
 }
 
 function listaHTML(creditos, cortes, prestamos) {
+  // Back + título + segmento viajan juntos en una barra pegajosa: al subir el
+  // contenido pasa por detrás y estos tres se quedan. El título entra con el
+  // scroll (--header-p) porque en reposo el segmento ya dice dónde estás.
+  const titulo = (TABS.find((t) => t[0] === tabActivo) || TABS[0])[1];
   const head = `
-    <div class="wallet-back-row">
-      <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio aria-label="Volver a Hoy">${ICON_BACK}</button>
-    </div>
-    ${tabsHTML()}`;
+    <div class="wallet-sticky">
+      <div class="wallet-back-row">
+        <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio aria-label="Volver a Hoy">${ICON_BACK}</button>
+        <span class="wallet-sticky__title" aria-hidden="true">${esc(titulo)}</span>
+      </div>
+      ${tabsHTML()}
+    </div>`;
 
   if (tabActivo === 'productos') {
     if (!creditos.length) {
