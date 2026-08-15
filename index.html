@@ -12,7 +12,7 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=132" />
+  <link rel="manifest" href="./manifest.webmanifest?v=133" />
   <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
        isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
@@ -68,11 +68,11 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=132" />
-  <link rel="stylesheet" href="./css/base.css?v=132" />
-  <link rel="stylesheet" href="./css/components.css?v=132" />
-  <link rel="stylesheet" href="./css/views.css?v=132" />
-  <link rel="stylesheet" href="./css/splash.css?v=132" />
+  <link rel="stylesheet" href="./css/tokens.css?v=133" />
+  <link rel="stylesheet" href="./css/base.css?v=133" />
+  <link rel="stylesheet" href="./css/components.css?v=133" />
+  <link rel="stylesheet" href="./css/views.css?v=133" />
+  <link rel="stylesheet" href="./css/splash.css?v=133" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
@@ -101,6 +101,25 @@
     <!-- Header (respeta notch / Dynamic Island) -->
     <header class="app-header">
       <h2 class="app-header__title" id="header-title" aria-hidden="true"></h2>
+      <!-- Solo en Hoy: al colapsarse, el header se pone la marca en vez de
+           repetir el saludo. El saludo es de la persona y ya vive en el hero;
+           el chrome es de la app. Mismo anillo+plus del splash, sin el halo ni
+           el trazo animado: a 22px no se leerían. -->
+      <div class="hdr-marca hdr-hoy" aria-hidden="true">
+        <svg class="hdr-marca__ico" viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="hdr-ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#A98CFF" /><stop offset=".55" stop-color="#8B6CFF" /><stop offset="1" stop-color="#5B3FE0" />
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="40" fill="none" stroke="url(#hdr-ring)" stroke-width="14" />
+          <g fill="url(#hdr-ring)">
+            <rect x="55" y="42" width="10" height="36" rx="4" />
+            <rect x="42" y="55" width="36" height="10" rx="4" />
+          </g>
+        </svg>
+        <span class="hdr-marca__word">olbo</span>
+      </div>
       <!-- Solo en Hoy: al colapsarse el hero, su orbe sube aquí. Es la acción
            distintiva de la app, así que es la que se queda a la vista. -->
       <button class="icon-btn hdr-hoy" id="hdr-orbe" type="button" aria-label="Tu conciencia financiera">
@@ -175,6 +194,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=132"></script>
+  <script type="module" src="./js/app.js?v=133"></script>
 </body>
 </html>

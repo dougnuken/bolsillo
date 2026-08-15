@@ -50,6 +50,13 @@ body[data-route="hoy"] .hdr-hoy {
   transition: opacity var(--dur-fast) linear;
 }
 body[data-route="hoy"].header-fijo .hdr-hoy { pointer-events: auto; }
+/* La marca es lo único de .hdr-hoy que NO es un botón: va en fila (el `grid` de
+   arriba es para los iconos) y nunca captura el toque, ni con el header puesto.
+   Y ocupa el lugar del título, así que en Hoy el título se calla: si no, el
+   saludo quedaría debajo de la marca, uno encima del otro. */
+body[data-route="hoy"] .hdr-marca { display: flex; }
+body[data-route="hoy"].header-fijo .hdr-marca { pointer-events: none; }
+body[data-route="hoy"] .app-header__title { display: none; }
 /* Padding superior menor (el saludo arranca bajo el notch); scroll normal. */
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))

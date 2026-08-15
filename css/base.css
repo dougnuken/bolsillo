@@ -254,6 +254,38 @@ img { max-width: 100%; display: block; }
   .app-header__title { transform: none; }
 }
 
+/* ---- Marca en el header colapsado de Hoy ----
+   Ocupa el mismo sitio que .app-header__title y se mueve con la misma rampa:
+   para el ojo es el título de Hoy, solo que el título es la app. El display y
+   la opacidad los pone la regla de .hdr-hoy (views.css), que ya sabe cuándo
+   el header está puesto. */
+.hdr-marca {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(env(safe-area-inset-top) + 15px);
+  height: var(--header-h);
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
+  transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
+}
+.hdr-marca__ico { width: 22px; height: 22px; flex: 0 0 auto; }
+/* El wordmark va en plano, sin el degradado del splash: ahí es el héroe de la
+   pantalla, aquí es chrome y compite con el contenido si brilla. */
+.hdr-marca__word {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hdr-marca { transform: none; }
+}
+
 /* ---- Zona de vistas (scroll) ---- */
 .view-stage {
   position: relative;

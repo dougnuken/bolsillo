@@ -664,10 +664,6 @@ async function pintar(root) {
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
   const nameEl = root.querySelector('#hoy-name');
   if (nameEl) nameEl.textContent = saludoTexto(nombre);
-  // El header colapsado repite este mismo saludo (ver tituloHeader).
-  saludoActual = saludoTexto(nombre);
-  const hdr = document.getElementById('header-title');
-  if (hdr) hdr.textContent = saludoActual;
 
   const datos = { estado, negocios, historial, recs, catComp };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
@@ -676,15 +672,13 @@ async function pintar(root) {
   mostrarPanel(root, tabActivo, datos, false);
 }
 
-/* Último saludo pintado, para que el header colapsado repita lo que estaba
-   justo encima en vez de un "Hoy" genérico. */
-let saludoActual = '';
-
 export default {
   label: 'Hoy',
 
-  /** Título del header condensado. Lo consulta app.js al cambiar de ruta. */
-  tituloHeader() { return saludoActual; },
+  /* Sin tituloHeader: al colapsarse, Hoy no pone texto en el header sino la
+     marca (.hdr-marca en index.html). El saludo se queda donde nace, en el
+     hero — repetirlo arriba era decirle dos veces lo mismo a la misma persona,
+     y el chrome de la app es el sitio de la app, no el suyo. */
 
   render() {
     return `
