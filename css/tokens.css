@@ -61,7 +61,12 @@
      segmentado de la cartera), no flotando sobre él como el dock. */
   --glass-hundido: rgba(10, 5, 25, 0.30);
   --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
-  --glass-header: rgba(11, 11, 13, 0.78);
+  /* Velo del header. Estaba en .78 —tan opaco que tapaba el contenido y se leía
+     como una banda negra, no como vidrio—. A .38 el fondo se sigue viendo por
+     detrás y es el BLUR el que hace el esmerilado, que es de lo que va el
+     glassmorfismo: dejar ver, pero desenfocado. */
+  --glass-header: rgba(11, 11, 13, 0.38);
+  --glass-header-medio: rgba(11, 11, 13, 0.26);   /* mitad de la caída */
   --glass-gloss: rgba(255, 255, 255, 0.08);  /* brillo especular sutil (sustituye los inset blancos .55/.7 del light) */
   --switch-knob: #EDEDF0;       /* perilla del toggle: near-white opaca (visible sobre track oscuro) */
   --blur: 16px;                 /* backdrop-filter discreto */
