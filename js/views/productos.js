@@ -143,7 +143,11 @@ let tabActivo = 'productos';
 let tabPrevio = null;
 
 function tabsHTML() {
-  return segHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de la cartera' });
+  return segHTML(TABS, tabActivo, {
+    attr: TAB_ATTR,
+    label: 'Secciones de la cartera',
+    clase: 'seg--dock',   // mismo vidrio que la barra inferior
+  });
 }
 
 function listaHTML(creditos, cortes, prestamos) {

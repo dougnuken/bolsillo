@@ -1641,6 +1641,19 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
 /* La cuenta de columnas va por clase y no por style inline: la CSP prohíbe
    `style="..."` en el marcado. */
 .seg--3 { --seg-cols: 3; }
+
+/* Material del DOCK: el mismo vidrio oscuro flotante de la tab bar, valores
+   calcados (no aproximados) de .tabbar. Sirve para los controles que viven
+   sueltos sobre el canvas, como el de la cartera: con --glass-2 el track se
+   teñía del morado del fondo y se leía como una superficie clara pegada
+   encima; con este se lee como una pieza del mismo sistema que el dock. */
+.seg--dock {
+  background: var(--glass-nav);
+  border-color: var(--glass-nav-line);
+  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+  backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
+  box-shadow: var(--sh-nav);
+}
 /* Etiquetas largas en 3 columnas estrechas (la cartera): baja un punto y
    aprieta el tracking antes que partir la palabra. */
 .seg--3 .seg__opt {

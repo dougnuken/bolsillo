@@ -14,7 +14,7 @@ const SEL_THUMB = '.seg__thumb';
 
 /* opciones = [[id, etiqueta], ...] · activo = id de la encendida.
    attr = atributo de datos con el que la vista engancha sus clics. */
-export function segHTML(opciones, activo, { attr = 'data-seg', label = '' } = {}) {
+export function segHTML(opciones, activo, { attr = 'data-seg', label = '', clase = '' } = {}) {
   const botones = opciones.map(([id, texto]) => {
     const on = id === activo;
     return `<button type="button" class="seg__opt${on ? ' is-on' : ''}" role="tab"`
@@ -22,7 +22,8 @@ export function segHTML(opciones, activo, { attr = 'data-seg', label = '' } = {}
   }).join('');
   const aria = label ? ` aria-label="${esc(label)}"` : '';
   const cols = opciones.length === 3 ? ' seg--3' : '';
-  return `<div class="seg${cols}" role="tablist"${aria}>`
+  const extra = clase ? ` ${esc(clase)}` : '';
+  return `<div class="seg${cols}${extra}" role="tablist"${aria}>`
     + `<span class="seg__thumb" aria-hidden="true"></span>${botones}</div>`;
 }
 
