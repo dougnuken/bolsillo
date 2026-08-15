@@ -2663,6 +2663,12 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
   color: color-mix(in srgb, var(--skin-text) 78%, transparent);
   background: color-mix(in srgb, var(--skin-text) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--skin-text) 26%, transparent); }
+/* El proveedor de un servicio ocupa el hueco de la franquicia, pero es un
+   NOMBRE PROPIO: sin la versalita ni el tracking de la etiqueta genérica ("Air-e"
+   en mayúsculas deja de ser la marca). Se le pone tope de ancho porque el nombre
+   lo escribe el usuario y "Gases del Caribe" se comería la entidad de al lado. */
+.cc__tag--prov { text-transform: none; letter-spacing: .01em; font-size: 10.5px; max-width: 46%;
+  overflow: hidden; text-overflow: ellipsis; }
 .cc--credit .cc__amount { font-size: 26px; }
 .cc__visa { font-style: italic; font-weight: 800; font-size: 18px; letter-spacing: -.03em; color: var(--skin-text); line-height: 1; }
 .mc { display: block; width: 36px; height: auto; }

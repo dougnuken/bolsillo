@@ -54,6 +54,36 @@ function skinClase(c) {
 function productoDe(c) {
   return (c && ((c.producto && c.producto.trim()) || (c.tipo && c.tipo.trim()))) || 'Producto';
 }
+/** ¿Es un recibo de servicios y no un crédito? PURA. Sin el campo = crédito. */
+function esServicio(c) {
+  return !!c && c.naturaleza === 'servicio';
+}
+/**
+ * Lo que va en la esquina de la banda: la marca de la franquicia en una tarjeta,
+ * el PROVEEDOR en un servicio, la etiqueta "Crédito" en un préstamo sin plástico.
+ * Es el mismo hueco porque responde la misma pregunta —¿de quién es esto?— y en
+ * un recibo eso lo contesta la empresa que presta el servicio, no una marca de
+ * plástico que no existe.
+ *
+ * Si el proveedor repite la entidad (pasa seguido: entidad "Air-e", proveedor
+ * "Air-e") se pone la etiqueta genérica: escribir dos veces lo mismo en la misma
+ * banda se lee como un error, no como información.
+ */
+function insigniaHTML(cred, uid) {
+  if (esServicio(cred)) {
+    const prov = typeof cred.proveedor === 'string' ? cred.proveedor.trim() : '';
+    const entidad = (cred.entidad || '').trim();
+    return prov && prov.toLowerCase() !== entidad.toLowerCase()
+      ? `<span class="cc__tag cc__tag--prov">${esc(prov)}</span>`
+      : '<span class="cc__tag">Servicio</span>';
+  }
+  if (cred.franquicia) return marcaHTML(cred.franquicia, uid);
+  return sinPlastico(cred) ? '<span class="cc__tag">Crédito</span>' : '';
+}
+/** Producto sin plástico (un préstamo, una libranza, un recibo): tile de color. */
+function sinPlastico(c) {
+  return !c.franquicia && !c.ultimosCuatro;
+}
 /** Id corto y seguro (para clip-path de SVG) desde el id del crédito. */
 function uidDe(c) {
   return String((c && c.id) || 'x').replace(/[^a-zA-Z0-9]/g, '').slice(-10) || 'x';
@@ -73,13 +103,15 @@ function marcaHTML(fr, uid) {
 }
 /** Monto principal de la tarjeta: LO QUE TOCA PAGAR este mes (la cuota), no el saldo. */
 function montoTarjeta(cred, cortes) {
-  if (Number.isFinite(cred.cuotaMensual) && cred.cuotaMensual > 0) return { eyebrow: 'Cuota del mes', amount: cred.cuotaMensual };
+  // Un recibo no tiene "cuota": tiene el valor que llegó este mes.
+  const etiquetaBase = esServicio(cred) ? 'Valor del mes' : 'Cuota del mes';
+  if (Number.isFinite(cred.cuotaMensual) && cred.cuotaMensual > 0) return { eyebrow: etiquetaBase, amount: cred.cuotaMensual };
   // Fallbacks si aún no hay cuota registrada: lo del extracto, o el saldo.
   const g = cortesDe(cred, cortes);
   const cop = g.COP && g.COP.ultimo;
   if (cop) { const r = cop.resumen || {}; return { eyebrow: 'A pagar este mes', amount: r.pagoAPlazos ?? r.pagoTotal ?? totalDiferido(cop.diferidos) }; }
   if (cred.saldo != null) return { eyebrow: 'Saldo', amount: cred.saldo };
-  return { eyebrow: 'Cuota del mes', amount: 0 };
+  return { eyebrow: etiquetaBase, amount: 0 };
 }
 
 /* ---- cortes de un producto (por moneda), último y anterior ---- */
@@ -100,8 +132,8 @@ function cortesDe(cred, cortes) {
 function tarjetaHTML(cred, cortes) {
   const uid = uidDe(cred);
   const m = montoTarjeta(cred, cortes);
-  const esCredito = !cred.franquicia && !cred.ultimosCuatro; // crédito sin plástico
-  const logo = cred.franquicia ? marcaHTML(cred.franquicia, uid) : (esCredito ? '<span class="cc__tag">Crédito</span>' : '');
+  const esCredito = sinPlastico(cred); // sin plástico → tile de color
+  const logo = insigniaHTML(cred, uid);
   const numero = formatCOP(m.amount).replace('$', '');
   const last4 = cred.ultimosCuatro ? `<span class="cc__last4">•••• ${esc(cred.ultimosCuatro)}</span>` : '';
   return `
@@ -327,8 +359,7 @@ function detalleHTML(cred, cortes, monedaSel) {
   const g = sel ? grupos[sel] : null;
 
   const uid = uidDe(cred);
-  const esCred = !cred.franquicia && !cred.ultimosCuatro;
-  const logoMini = cred.franquicia ? marcaHTML(cred.franquicia, uid) : (esCred ? '<span class="cc__tag">Crédito</span>' : '');
+  const logoMini = insigniaHTML(cred, uid);
   const cardMini = `
     <div class="cc ${skinClase(cred)} cc--mini">
       <span class="cc__band">
@@ -347,18 +378,27 @@ function detalleHTML(cred, cortes, monedaSel) {
   if (!g || !g.ultimo) {
     // Sin corte con diferidos: crédito de cuota fija o tarjeta sin diferidos este
     // mes → se muestra el estado del producto con lo que se sabe de la ficha.
+    const servicio = esServicio(cred);
     const fila = (et, v) => `<div class="cred-row"><span class="cred-k">${esc(et)}</span><span class="cred-v">${esc(v)}</span></div>`;
     const filas = [
       cred.saldo != null ? fila('Saldo', formatCOP(cred.saldo)) : '',
-      Number.isFinite(cred.cuotaMensual) && cred.cuotaMensual > 0 ? fila('Cuota del mes', formatCOP(cred.cuotaMensual)) : '',
+      Number.isFinite(cred.cuotaMensual) && cred.cuotaMensual > 0
+        ? fila(servicio ? 'Valor del mes' : 'Cuota del mes', formatCOP(cred.cuotaMensual)) : '',
       cred.tasaEA != null ? fila('Tasa', `${String(cred.tasaEA).replace('.', ',')}% E.A.`) : '',
-      cred.diaPago != null ? fila('Día de pago', String(cred.diaPago)) : '',
+      cred.diaPago != null ? fila(servicio ? 'Día límite' : 'Día de pago', String(cred.diaPago)) : '',
+      // La referencia es el dato por el que se abre la ficha de un servicio: es
+      // el número que hay que teclear en el banco para pagarlo.
+      servicio && cred.referenciaPago ? fila('Referencia de pago', cred.referenciaPago) : '',
     ].filter(Boolean).join('');
-    return `${back}${cardMini}
-      <div class="dif-tot-label">Estado del producto</div>
-      <div class="cred-summary">${filas || '<p class="cred-empty">Aún no registras el saldo ni la cuota.</p>'}</div>
+    // A un recibo no se le suben extractos ni tiene diferidos: mandarlo al chat
+    // a "ver su seguimiento mes a mes" sería mandarlo a una pantalla vacía.
+    const pie = servicio ? '' : `
       <p class="dif-hint">Súbele el extracto a <strong>Tu conciencia</strong> para ver diferidos y el seguimiento mes a mes (aplica a tarjetas con compras a cuotas).</p>
       <button class="btn btn--primary btn--block" type="button" data-ir-conciencia>Subir extracto en el chat</button>`;
+    return `${back}${cardMini}
+      <div class="dif-tot-label">Estado del producto</div>
+      <div class="cred-summary">${filas || `<p class="cred-empty">Aún no registras ${servicio ? 'el valor de este recibo' : 'el saldo ni la cuota'}.</p>`}</div>
+      ${pie}`;
   }
 
   const corte = g.ultimo;

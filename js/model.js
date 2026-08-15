@@ -238,16 +238,23 @@ export const NATURALEZAS = Object.freeze(['credito', 'servicio']);
    que alguien tenga un proveedor que no previmos. */
 /* Referencia de pago: solo dígitos, hasta 30. Los recibos la imprimen con
    espacios o guiones para leerla mejor; se guarda limpia porque es lo que se
-   teclea o se copia al banco. */
-function referenciaOpcional(v) {
+   teclea o se copia al banco.
+
+   Se EXPORTA porque tiene tres entradas —el formulario, la lectura del recibo
+   con IA y este constructor— y las tres tienen que dejar el MISMO string: si el
+   formulario guardara "4900 1234" y la IA "49001234", el mismo recibo se vería
+   distinto según por dónde entró. */
+export const MAX_REFERENCIA_PAGO = 30;
+export function limpiarReferenciaPago(v) {
   if (v == null) return null;
-  const s = String(v).replace(/\D/g, '').slice(0, 30);
+  const s = String(v).replace(/\D/g, '').slice(0, MAX_REFERENCIA_PAGO);
   return s === '' ? null : s;
 }
 
+export const MAX_PROVEEDOR = 40;
 function proveedorOpcional(v) {
   if (v == null) return null;
-  const s = String(v).trim().slice(0, 40);
+  const s = String(v).trim().slice(0, MAX_PROVEEDOR);
   return s === '' ? null : s;
 }
 export const SKINS_TARJETA = Object.freeze([
@@ -320,7 +327,7 @@ export function crearCredito(datos = {}, { now = new Date() } = {}) {
     /* Referencia de pago del recibo (el número largo que se teclea en el banco).
        Solo tiene sentido en servicios; un crédito se paga por su propio número
        de producto. */
-    referenciaPago: esServicio ? referenciaOpcional(datos.referenciaPago) : null,
+    referenciaPago: esServicio ? limpiarReferenciaPago(datos.referenciaPago) : null,
     /* Quién presta el servicio (Movistar, Triple A, Air-e…). Ocupa el lugar que
        en una tarjeta ocupa la franquicia. */
     proveedor: esServicio ? proveedorOpcional(datos.proveedor) : null,
@@ -363,6 +370,16 @@ export function validarCredito(obj = {}) {
   if (obj.ultimosCuatro != null && !/^\d{1,4}$/.test(String(obj.ultimosCuatro))) errores.push('Los últimos dígitos deben ser 1 a 4 números, o quedar vacío.');
   if (obj.franquicia != null && !FRANQUICIAS.includes(obj.franquicia)) errores.push('Franquicia inválida.');
   if (obj.naturaleza != null && !NATURALEZAS.includes(obj.naturaleza)) errores.push('Naturaleza inválida.');
+  /* Estos dos los sanea crearCredito, pero EDITAR no pasa por ahí: actualizar()
+     mezcla los cambios sobre el objeto guardado y solo valida. Sin estas dos
+     reglas, el formulario podría escribir una referencia con espacios —y el
+     mismo recibo se vería distinto según si se creó o se editó. */
+  if (obj.referenciaPago != null && !new RegExp(`^\\d{1,${MAX_REFERENCIA_PAGO}}$`).test(String(obj.referenciaPago))) {
+    errores.push(`La referencia de pago deben ser solo dígitos (máximo ${MAX_REFERENCIA_PAGO}), o quedar vacía.`);
+  }
+  if (obj.proveedor != null && (!esTextoNoVacio(obj.proveedor) || obj.proveedor.length > MAX_PROVEEDOR)) {
+    errores.push(`El proveedor debe ser un texto de máximo ${MAX_PROVEEDOR} caracteres, o quedar vacío.`);
+  }
   if (obj.skin != null && !SKINS_TARJETA.includes(obj.skin)) errores.push('Skin de tarjeta inválido.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }

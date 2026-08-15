@@ -1033,6 +1033,16 @@ body.nav-min .fab {
 .field__col { display: flex; flex-direction: column; min-width: 0; }
 .field__col .field__input { width: 100%; margin-top: auto; }
 .field__col .field__label { margin-bottom: var(--sp-2); }
+/* Un split que se queda con una sola columna visible (p. ej. el día de pago
+   cuando el producto es un servicio y no hay tasa): que ocupe la fila entera en
+   vez de dejar medio ancho vacío. */
+.field--split.field--solo { grid-template-columns: 1fr; }
+/* `hidden` tiene que ganarle a estos display. El atributo trae display:none del
+   UA, pero una regla de autor —aunque sea de la misma especificidad— pisa la
+   hoja del navegador: sin esto, poner .hidden = true en un .field no ocultaba
+   nada. Vale para todos los formularios que muestran u ocultan campos según lo
+   que el usuario elija. */
+.field[hidden], .field__col[hidden], .acct-row[hidden] { display: none; }
 
 /* Disparador de fecha: se ve como un input pero abre la hoja de fecha. */
 .date-trigger {

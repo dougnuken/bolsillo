@@ -23,7 +23,7 @@
 import { ANTHROPIC_MESSAGES_URL, ANTHROPIC_VERSION } from './foto-gasto.js';
 import { extraerToolUse } from './voz-gasto.js';
 import { parseCOP } from './money.js';
-import { tasaEAaMV } from './model.js';
+import { tasaEAaMV, limpiarReferenciaPago, MAX_PROVEEDOR } from './model.js';
 import { normalizarDiferido } from './diferidos.js';
 
 /* Los extractos son PDFs "densos": Sonnet lee tablas y encabezados mejor.
@@ -151,15 +151,91 @@ export const SISTEMA_EXTRACTO = [
 
 const TEXTO_INSTRUCCION = 'Extrae el ciclo de esta tarjeta con la herramienta.';
 
-function cuerpoBase(modelo, content) {
+/* ============================================================
+   RECIBO de servicios públicos (energía, agua, gas, internet, telefonía)
+
+   Es una lectura DISTINTA, no un extracto con menos campos: lo que hay que
+   sacar de un recibo son otras tres cosas —cuánto, hasta cuándo y con qué
+   referencia se paga— y el prompt del extracto empieza diciendo "eres un lector
+   de extractos de CRÉDITOS", así que a una factura de la luz le pondría
+   encontrado=false. Herramienta y sistema propios; la red se comparte.
+   ============================================================ */
+export const TOOL_RECIBO = Object.freeze({
+  name: 'registrar_recibo',
+  description:
+    'Registra los datos de un recibo/factura de servicios públicos (energía, agua, gas, aseo, internet, telefonía o televisión).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      proveedor: {
+        type: 'string',
+        description: 'Empresa que presta el servicio, tal como aparece en el recibo (ej. Air-e, Triple A, Gases del Caribe, Movistar). Cadena vacía si no se ve.',
+      },
+      /* STRING y no integer a propósito: las referencias colombianas llegan a
+         20+ dígitos y como número JSON perderían precisión —el banco rechaza un
+         dígito cambiado—. Además pueden empezar por cero. */
+      referenciaPago: {
+        type: ['string', 'null'],
+        description: 'REFERENCIA DE PAGO: el número largo que se teclea en el banco o la app. Devuélvelo como TEXTO con solo dígitos, sin espacios ni guiones (el recibo lo imprime separado para leerlo mejor). null si no aparece.',
+      },
+      valor: {
+        type: ['integer', 'null'],
+        description: 'TOTAL A PAGAR del recibo pagando a tiempo, en pesos COP enteros (sin puntos ni símbolos). NO el valor con recargo por mora ni el consumo del período. null si no aparece.',
+      },
+      limite: {
+        type: ['integer', 'null'],
+        description: 'Día del mes (1 a 31) de la FECHA LÍMITE / oportuna de pago. null si no aparece.',
+      },
+      limiteISO: {
+        type: ['string', 'null'],
+        description: 'FECHA LÍMITE DE PAGO completa en formato YYYY-MM-DD. null si no aparece.',
+      },
+      encontrado: {
+        type: 'boolean',
+        description: 'true si el documento es un recibo/factura de servicios y pudiste leer al menos el valor, la referencia o la fecha límite.',
+      },
+    },
+    required: ['encontrado'],
+  },
+});
+
+export const SISTEMA_RECIBO = [
+  'Eres un lector de RECIBOS (facturas) de servicios públicos de Colombia: energía, acueducto y',
+  'alcantarillado, gas, aseo, internet, telefonía y televisión.',
+  'Lee el documento y llama SIEMPRE a la herramienta registrar_recibo con lo que encuentres.',
+  'PROVEEDOR: la empresa que presta el servicio (ej. Air-e, Triple A, Gases del Caribe, EPM, Claro, Movistar).',
+  'REFERENCIA DE PAGO: el número largo que se teclea en el banco. Suele ir rotulado "referencia de pago",',
+  '"referencia 1" o junto al código de barras. Devuélvelo como TEXTO con solo dígitos: quítale espacios y guiones.',
+  'Si el recibo trae varias referencias, usa la rotulada como "referencia de pago" o, si no hay rótulo, la más larga.',
+  'VALOR: el TOTAL A PAGAR pagando a tiempo, entero en pesos COP. Los recibos suelen traer también un valor',
+  'con recargo por pago extemporáneo y el consumo del período: esos NO son. Si hay "pago oportuno" y',
+  '"pago con mora", devuelve el OPORTUNO.',
+  'FECHA LÍMITE: la fecha de pago oportuno ("pague hasta", "fecha límite de pago", "pago oportuno hasta").',
+  'Devuelve el DÍA del mes en "limite" y la fecha completa YYYY-MM-DD en "limiteISO".',
+  'No inventes datos que no estén en el documento: lo que no encuentres va como null (o cadena vacía en "proveedor").',
+  'Pon encontrado=true si es un recibo de servicios y pudiste leer al menos el valor, la referencia o la fecha límite.',
+  'Solo encontrado=false si NO es un recibo de servicios.',
+].join('\n');
+
+const TEXTO_INSTRUCCION_RECIBO = 'Extrae los datos de pago de este recibo con la herramienta.';
+
+function cuerpoBase(modelo, content, { sistema = SISTEMA_EXTRACTO, tool = TOOL_EXTRACTO } = {}) {
   return {
     model: modelo || MODELO_EXTRACTO_DEFAULT,
     max_tokens: 500,
-    system: SISTEMA_EXTRACTO,
-    tools: [TOOL_EXTRACTO],
-    tool_choice: { type: 'tool', name: TOOL_EXTRACTO.name },
+    system: sistema,
+    tools: [tool],
+    tool_choice: { type: 'tool', name: tool.name },
     messages: [{ role: 'user', content }],
   };
+}
+
+/** Bloques `image` de las páginas ya rendidas por pdf.js (o de una foto). PURA. */
+function bloquesImagen(imagenes = []) {
+  return imagenes.map((im) => ({
+    type: 'image',
+    source: { type: 'base64', media_type: (im && im.mediaType) || 'image/jpeg', data: im && im.base64 },
+  }));
 }
 
 /**
@@ -180,12 +256,20 @@ export function construirPeticionExtracto({ base64, mediaType = 'application/pdf
  * @param {{imagenes:Array<{base64:string, mediaType?:string}>, modelo?:string}} p
  */
 export function construirPeticionExtractoImagenes({ imagenes = [], modelo }) {
-  const content = imagenes.map((im) => ({
-    type: 'image',
-    source: { type: 'base64', media_type: (im && im.mediaType) || 'image/jpeg', data: im && im.base64 },
-  }));
+  const content = bloquesImagen(imagenes);
   content.push({ type: 'text', text: TEXTO_INSTRUCCION });
   return cuerpoBase(modelo, content);
+}
+
+/**
+ * Cuerpo para leer un RECIBO de servicios a partir de imágenes (páginas del PDF
+ * rendidas, o la foto del recibo). PURA.
+ * @param {{imagenes:Array<{base64:string, mediaType?:string}>, modelo?:string}} p
+ */
+export function construirPeticionReciboImagenes({ imagenes = [], modelo }) {
+  const content = bloquesImagen(imagenes);
+  content.push({ type: 'text', text: TEXTO_INSTRUCCION_RECIBO });
+  return cuerpoBase(modelo, content, { sistema: SISTEMA_RECIBO, tool: TOOL_RECIBO });
 }
 
 /** Día del mes válido (1..31) o null. PURA. */
@@ -271,6 +355,36 @@ export function normalizarExtracto(input) {
   };
 }
 
+/** Día del mes de una fecha ISO ya validada, o null. PURA. */
+function diaDeISO(iso) {
+  return iso ? diaValido(parseInt(iso.slice(8, 10), 10)) : null;
+}
+
+/**
+ * Normaliza el `input` del recibo a { proveedor, referenciaPago, valor, limite,
+ * limiteISO, encontrado }. PURA y tolerante: nunca lanza.
+ *
+ * La referencia pasa por el MISMO limpiador que usa el modelo al guardar, para
+ * que un recibo leído por la IA y uno tecleado a mano queden idénticos.
+ */
+export function normalizarRecibo(input) {
+  const obj = input && typeof input === 'object' ? input : {};
+
+  const proveedor = typeof obj.proveedor === 'string' ? obj.proveedor.trim().slice(0, MAX_PROVEEDOR) : '';
+  const referenciaPago = limpiarReferenciaPago(
+    typeof obj.referenciaPago === 'string' || typeof obj.referenciaPago === 'number' ? obj.referenciaPago : null,
+  );
+  const valor = enteroCOP(obj.valor);
+  const limiteISO = fechaISOValida(obj.limiteISO);
+  /* El recibo casi siempre imprime la fecha completa ("Pague hasta 12/09/2026")
+     y no un día suelto, así que cuando el modelo solo devuelve la ISO el día se
+     saca de ahí: es el que el formulario necesita para `diaPago`. */
+  const limite = diaValido(obj.limite) ?? diaDeISO(limiteISO);
+  const encontrado = obj.encontrado === true;
+
+  return { proveedor, referenciaPago, valor, limite, limiteISO, encontrado };
+}
+
 /** Un consumo del ciclo, saneado. PURA. Devuelve null si no es utilizable. */
 function normalizarConsumo(m) {
   if (!m || typeof m !== 'object') return null;
@@ -304,12 +418,31 @@ export function cuotaDesdeExtracto(extracto = {}) {
   return null;
 }
 
+/* Qué cambia entre leer un extracto y leer un recibo, una vez armado el cuerpo:
+   cómo se normaliza la salida, qué cuenta como "sí traía datos" y cómo se le
+   llama a la cosa en los mensajes de error. Todo lo demás —cabeceras, estados,
+   la clave que solo viaja en x-api-key— es idéntico y no se duplica. */
+const LECTOR_EXTRACTO = Object.freeze({
+  cosa: 'el extracto',
+  normalizar: normalizarExtracto,
+  hayDatos: (d) => d.encontrado || d.corte != null || d.limite != null,
+  sinDatos: 'No parece un extracto de tarjeta. Ingresa el ciclo a mano.',
+});
+
+const LECTOR_RECIBO = Object.freeze({
+  cosa: 'el recibo',
+  normalizar: normalizarRecibo,
+  hayDatos: (d) => d.encontrado || d.valor != null || d.referenciaPago != null,
+  sinDatos: 'No parece un recibo de servicios. Ingrésalo a mano.',
+});
+
 /**
  * Envía un cuerpo ya armado a /v1/messages y normaliza la respuesta a los
- * estados públicos. IMPURA (red). PRIVADA: la comparten los caminos documento
- * e imágenes. La clave viaja SOLO en x-api-key.
+ * estados públicos. IMPURA (red). PRIVADA: la comparten los caminos documento,
+ * imágenes y recibo. La clave viaja SOLO en x-api-key.
  */
-async function enviarExtracto(body, key, doFetch) {
+async function enviarLectura(body, key, doFetch, lector) {
+  const { cosa, normalizar, hayDatos, sinDatos } = lector;
   let res;
   try {
     res = await doFetch(ANTHROPIC_MESSAGES_URL, {
@@ -323,26 +456,24 @@ async function enviarExtracto(body, key, doFetch) {
       body: JSON.stringify(body),
     });
   } catch {
-    return { estado: 'red', mensaje: 'No se pudo leer el extracto: revisa tu conexión e intenta de nuevo.' };
+    return { estado: 'red', mensaje: `No se pudo leer ${cosa}: revisa tu conexión e intenta de nuevo.` };
   }
 
   if (res.status === 401 || res.status === 403) {
     return { estado: 'invalida', mensaje: 'Clave inválida. Revísala en Perfil.' };
   }
   if (!res.ok) {
-    return { estado: 'error', mensaje: `No se pudo leer el extracto (HTTP ${res.status}).` };
+    return { estado: 'error', mensaje: `No se pudo leer ${cosa} (HTTP ${res.status}).` };
   }
 
   let cuerpo;
   try { cuerpo = await res.json(); } catch { return { estado: 'error', mensaje: 'La respuesta no se pudo leer.' }; }
 
   const input = extraerToolUse(cuerpo);
-  if (!input) return { estado: 'error', mensaje: 'No entendí el extracto. Ingrésalo a mano.' };
+  if (!input) return { estado: 'error', mensaje: `No entendí ${cosa}. Ingrésalo a mano.` };
 
-  const datos = normalizarExtracto(input);
-  if (!datos.encontrado && datos.corte == null && datos.limite == null) {
-    return { estado: 'sin-datos', mensaje: 'No parece un extracto de tarjeta. Ingresa el ciclo a mano.' };
-  }
+  const datos = normalizar(input);
+  if (!hayDatos(datos)) return { estado: 'sin-datos', mensaje: sinDatos };
   return { estado: 'ok', ...datos };
 }
 
@@ -365,7 +496,7 @@ export async function analizarExtracto({ base64, mediaType, apiKey, modelo }, { 
   const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
   if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
 
-  return enviarExtracto(construirPeticionExtracto({ base64, mediaType, modelo }), key, doFetch);
+  return enviarLectura(construirPeticionExtracto({ base64, mediaType, modelo }), key, doFetch, LECTOR_EXTRACTO);
 }
 
 /**
@@ -388,5 +519,28 @@ export async function analizarExtractoImagenes({ imagenes, apiKey, modelo }, { f
   const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
   if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
 
-  return enviarExtracto(construirPeticionExtractoImagenes({ imagenes, modelo }), key, doFetch);
+  return enviarLectura(construirPeticionExtractoImagenes({ imagenes, modelo }), key, doFetch, LECTOR_EXTRACTO);
+}
+
+/**
+ * Lee un RECIBO de servicios públicos a partir de IMÁGENES (páginas del PDF
+ * rendidas por pdf.js, o la foto del recibo). IMPURA (red). `fetchImpl`
+ * inyectable. Espeja a analizarExtractoImagenes en estados y errores.
+ *
+ * @param {{imagenes:Array<{base64:string, mediaType?:string}>, apiKey:string, modelo?:string}} p
+ * @param {{fetchImpl?: typeof fetch}} [opts]
+ * @returns {Promise<{estado:'ok'|'sin-clave'|'sin-datos'|'invalida'|'red'|'error', mensaje?:string, proveedor?, referenciaPago?, valor?, limite?, limiteISO?, encontrado?}>}
+ */
+export async function analizarReciboImagenes({ imagenes, apiKey, modelo }, { fetchImpl } = {}) {
+  const key = typeof apiKey === 'string' ? apiKey.trim() : '';
+  if (key === '') {
+    return { estado: 'sin-clave', mensaje: 'Configura tu clave de Anthropic en Perfil → Clave de Anthropic.' };
+  }
+  if (!Array.isArray(imagenes) || imagenes.length === 0) {
+    return { estado: 'error', mensaje: 'No se pudo leer el recibo.' };
+  }
+  const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+  if (!doFetch) return { estado: 'error', mensaje: 'Este entorno no puede hacer peticiones de red.' };
+
+  return enviarLectura(construirPeticionReciboImagenes({ imagenes, modelo }), key, doFetch, LECTOR_RECIBO);
 }

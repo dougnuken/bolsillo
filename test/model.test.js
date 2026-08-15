@@ -18,6 +18,9 @@ import {
   ingresoNecesitaMigracion,
   FRANQUICIAS,
   SKINS_TARJETA,
+  limpiarReferenciaPago,
+  MAX_REFERENCIA_PAGO,
+  MAX_PROVEEDOR,
 } from '../js/model.js';
 
 const movBase = {
@@ -532,4 +535,51 @@ test('una naturaleza inventada se rechaza', () => {
     () => crearCredito({ naturaleza: 'otra-cosa', entidad: 'X', producto: 'Y', cuotaMensual: 0 }),
     /Naturaleza inválida/,
   );
+});
+
+test('limpiarReferenciaPago deja el mismo string venga de donde venga', () => {
+  // Tiene tres entradas —el formulario, la IA leyendo el recibo y crearCredito—
+  // y las tres tienen que coincidir, o el mismo recibo se vería distinto según
+  // por dónde entró.
+  assert.equal(limpiarReferenciaPago('4900 1234-5678 90'), '490012345678 90'.replace(/\D/g, ''));
+  assert.equal(limpiarReferenciaPago(123456), '123456');
+  assert.equal(limpiarReferenciaPago('sin dígitos'), null);
+  assert.equal(limpiarReferenciaPago(''), null);
+  assert.equal(limpiarReferenciaPago(null), null);
+  assert.equal(limpiarReferenciaPago('1'.repeat(40)).length, MAX_REFERENCIA_PAGO);
+});
+
+/* EDITAR no pasa por crearCredito: actualizar() mezcla los cambios sobre lo
+   guardado y solo se valida. Sin estas reglas, el formulario podía escribir por
+   ahí una referencia sucia que crear jamás habría dejado entrar. */
+test('editar no puede colar una referencia sin sanear', () => {
+  const servicio = crearCredito({
+    naturaleza: 'servicio', entidad: 'Air-e', producto: 'Energía',
+    cuotaMensual: 180000, referenciaPago: '123456',
+  });
+
+  const sucio = actualizar(servicio, { referenciaPago: '4900 1234' });
+
+  const v = validarCredito(sucio);
+  assert.equal(v.ok, false);
+  assert.match(v.errores.join(' '), /referencia de pago/i);
+});
+
+test('editar no puede colar un proveedor más largo del que cabe', () => {
+  const servicio = crearCredito({
+    naturaleza: 'servicio', entidad: 'Triple A', producto: 'Acueducto', cuotaMensual: 60000,
+  });
+
+  assert.equal(validarCredito(actualizar(servicio, { proveedor: 'x'.repeat(MAX_PROVEEDOR + 1) })).ok, false);
+  assert.equal(validarCredito(actualizar(servicio, { proveedor: '   ' })).ok, false);
+  // Lo válido sigue pasando, incluido "sin proveedor".
+  assert.equal(validarCredito(actualizar(servicio, { proveedor: 'Triple A' })).ok, true);
+  assert.equal(validarCredito(actualizar(servicio, { proveedor: null })).ok, true);
+});
+
+test('un crédito viejo (sin los campos de servicio) sigue siendo válido', () => {
+  // Retrocompat: nada de lo guardado antes tiene proveedor ni referencia.
+  const viejo = { entidad: 'Banco Demo', producto: 'Tarjeta', cuotaMensual: 100000, desgloses: [] };
+
+  assert.equal(validarCredito(viejo).ok, true);
 });
