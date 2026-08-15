@@ -55,6 +55,11 @@
   --glass-3: rgba(255, 255, 255, 0.12);
   --glass-tag: rgba(255, 255, 255, 0.06);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
   --glass-nav: rgba(19, 19, 22, 0.72);       /* barra inferior: vidrio flotante oscuro */
+  /* Velo que HUNDE en el canvas en vez de posarse encima: es --bg-0 con alpha
+     baja, así oscurece en el mismo tono violeta del fondo y no como una capa
+     negra ajena. Para controles que deben leerse dentro del lienzo (el
+     segmentado de la cartera), no flotando sobre él como el dock. */
+  --glass-hundido: rgba(10, 5, 25, 0.30);
   --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
   --glass-header: rgba(11, 11, 13, 0.78);
   --glass-gloss: rgba(255, 255, 255, 0.08);  /* brillo especular sutil (sustituye los inset blancos .55/.7 del light) */

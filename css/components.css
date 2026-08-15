@@ -1642,17 +1642,23 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
    `style="..."` en el marcado. */
 .seg--3 { --seg-cols: 3; }
 
-/* Material del DOCK: el mismo vidrio oscuro flotante de la tab bar, valores
-   calcados (no aproximados) de .tabbar. Sirve para los controles que viven
-   sueltos sobre el canvas, como el de la cartera: con --glass-2 el track se
-   teñía del morado del fondo y se leía como una superficie clara pegada
-   encima; con este se lee como una pieza del mismo sistema que el dock. */
+/* Material HUNDIDO: el control se mete en el canvas en vez de posarse encima.
+   Antes llevaba el vidrio del dock tal cual (--glass-nav opaco + borde
+   --glass-nav-line + --sh-nav), y el resultado era una caja oscura con marco y
+   sombra propia flotando sobre el morado: se leía como una pieza pegada, no
+   como parte del fondo. El dock puede permitírselo porque flota de verdad,
+   anclado al viewport y por encima del contenido; este control vive DENTRO del
+   lienzo y tiene que pertenecerle.
+
+   Los tres cambios van juntos y por eso el marco desaparece: el velo oscurece
+   en el propio tono violeta (--glass-hundido), el borde baja a un hairline
+   apenas insinuado y se va la sombra, que era lo que más lo despegaba. */
 .seg--dock {
-  background: var(--glass-nav);
-  border-color: var(--glass-nav-line);
-  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
-  backdrop-filter: blur(var(--blur-nav)) saturate(1.4);
-  box-shadow: var(--sh-nav);
+  background: var(--glass-hundido);
+  border-color: var(--line-1);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(1.15);
+  backdrop-filter: blur(var(--blur)) saturate(1.15);
+  box-shadow: none;
 }
 /* Sobre el vidrio oscuro la pastilla NO va blanca sólida: gritaba y rompía la
    calma del resto del chrome. Aquí es translúcida —como el segmentado de iOS
