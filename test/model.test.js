@@ -459,3 +459,77 @@ test('crearCredito: normaliza últimos 4 (toma solo dígitos, últimos 4) y desc
   assert.equal(c.franquicia, null); // 'diners' no está en la lista
   assert.equal(c.skin, null);       // 'fucsia' no está en la lista
 });
+
+/* ---- Recibos y servicios públicos en la cartera ---- */
+
+test('sin naturaleza es crédito: lo guardado antes sigue leyéndose igual', () => {
+  const c = crearCredito({ entidad: 'Banco Demo', producto: 'Tarjeta', cuotaMensual: 100000, tasaEA: 26 });
+
+  assert.equal(c.naturaleza, 'credito');
+  assert.equal(c.tasaEA, 26);
+});
+
+test('un servicio NO guarda tasa aunque se la manden', () => {
+  // Si no se descartara aquí, un recibo de la luz seguiría generando intereses
+  // en la cartera por un dato que nunca debió existir.
+  const s = crearCredito({
+    naturaleza: 'servicio', entidad: 'Air-e', producto: 'Energía',
+    cuotaMensual: 180000, tasaEA: 26, tasaMV: 1.9,
+  });
+
+  assert.equal(s.tasaEA, null);
+  assert.equal(s.tasaMV, null);
+});
+
+test('cambiar de crédito a servicio se lleva la tasa vieja', () => {
+  const credito = crearCredito({ entidad: 'Banco Demo', producto: 'Libre inversión', cuotaMensual: 500000, tasaEA: 22 });
+  const ahoraServicio = crearCredito({ ...credito, naturaleza: 'servicio' });
+
+  assert.equal(ahoraServicio.tasaEA, null);
+  assert.equal(ahoraServicio.tasaMV, null);
+});
+
+test('el proveedor ocupa el lugar de la franquicia, y no conviven', () => {
+  const s = crearCredito({
+    naturaleza: 'servicio', entidad: 'Movistar', producto: 'Internet',
+    cuotaMensual: 90000, proveedor: 'Movistar', franquicia: 'visa',
+  });
+
+  assert.equal(s.proveedor, 'Movistar');
+  assert.equal(s.franquicia, null);
+});
+
+test('un crédito no se queda con datos de servicio', () => {
+  const c = crearCredito({
+    entidad: 'Banco Demo', producto: 'Tarjeta', cuotaMensual: 100000,
+    proveedor: 'Triple A', referenciaPago: '123456',
+  });
+
+  assert.equal(c.proveedor, null);
+  assert.equal(c.referenciaPago, null);
+});
+
+test('la referencia de pago se guarda limpia: los recibos la imprimen espaciada', () => {
+  const s = crearCredito({
+    naturaleza: 'servicio', entidad: 'Triple A', producto: 'Acueducto',
+    cuotaMensual: 60000, referenciaPago: '4900 1234-5678 90',
+  });
+
+  assert.equal(s.referenciaPago, '4900123456789 0'.replace(/\D/g, ''));
+});
+
+test('el proveedor es texto libre: el catálogo de servicios es local y cambia', () => {
+  // Air-e no existía antes de 2020 y Triple A es solo de la costa. Un enum
+  // obligaría a tocar código cada vez que alguien tenga uno que no previmos.
+  for (const nombre of ['Air-e', 'Triple A', 'Gases del Caribe', 'Una empresa nueva']) {
+    const s = crearCredito({ naturaleza: 'servicio', entidad: nombre, producto: 'Servicio', cuotaMensual: 1000, proveedor: nombre });
+    assert.equal(s.proveedor, nombre);
+  }
+});
+
+test('una naturaleza inventada se rechaza', () => {
+  assert.throws(
+    () => crearCredito({ naturaleza: 'otra-cosa', entidad: 'X', producto: 'Y', cuotaMensual: 0 }),
+    /Naturaleza inválida/,
+  );
+});

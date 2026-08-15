@@ -221,6 +221,35 @@ export function tasaEAaMV(ea) {
 /* Identidad visual de la tarjeta en la CARTERA (todos opcionales). La franquicia
    pinta la marca (Mastercard/Visa…); el skin, el color del plástico. */
 export const FRANQUICIAS = Object.freeze(['mastercard', 'visa', 'amex', 'otra']);
+
+/* QUÉ ES el producto. Nace porque la cartera dejó de ser solo de crédito: un
+   recibo de servicios también es algo que vence, tiene un valor y se paga —que
+   es lo que la cartera resuelve— pero NO tiene tasa de interés ni franquicia.
+   Pedirle un % E.A. a la factura de la luz es pedir un dato que no existe.
+
+   La distinción va en el modelo y no en la vista porque cambia qué campos son
+   válidos, no solo cuáles se pintan. */
+export const NATURALEZAS = Object.freeze(['credito', 'servicio']);
+
+/* En un servicio, el hueco de la franquicia lo ocupa QUIÉN presta el servicio.
+   Lista abierta a propósito: es un nombre libre, no un enum — el catálogo de
+   empresas de servicios es local y cambia (Air-e existe desde 2020, Triple A es
+   solo de la costa). Encerrarlo en una lista obligaría a tocar código cada vez
+   que alguien tenga un proveedor que no previmos. */
+/* Referencia de pago: solo dígitos, hasta 30. Los recibos la imprimen con
+   espacios o guiones para leerla mejor; se guarda limpia porque es lo que se
+   teclea o se copia al banco. */
+function referenciaOpcional(v) {
+  if (v == null) return null;
+  const s = String(v).replace(/\D/g, '').slice(0, 30);
+  return s === '' ? null : s;
+}
+
+function proveedorOpcional(v) {
+  if (v == null) return null;
+  const s = String(v).trim().slice(0, 40);
+  return s === '' ? null : s;
+}
 export const SKINS_TARJETA = Object.freeze([
   'platino', 'grafito', 'gris', 'azul', 'teal', 'verde',
   'dorado', 'naranja', 'rojo', 'rosa', 'olbo',
@@ -264,14 +293,37 @@ export function crearCredito(datos = {}, { now = new Date() } = {}) {
   const tasaMV = tasaMVDada != null && Number.isFinite(tasaMVDada)
     ? tasaMVDada
     : (tasaEA != null && Number.isFinite(tasaEA) ? tasaEAaMV(tasaEA) : null);
+  /* RETROCOMPAT: sin el campo = 'credito'. Todo lo guardado antes de que
+     existieran los servicios es crédito, y así sigue leyéndose sin migración. */
+  /* AUSENTE y INVÁLIDA no son lo mismo. Ausente cae a 'credito' —eso es la
+     retrocompat—, pero una naturaleza que no reconocemos se rechaza en vez de
+     caer al default: un producto guardado por una versión futura con otra
+     naturaleza se leería como crédito y la cartera le pintaría intereses que no
+     tiene. Fallar es más seguro que adivinar. */
+  const naturaleza = datos.naturaleza == null || datos.naturaleza === ''
+    ? 'credito'
+    : datos.naturaleza;
+  const esServicio = naturaleza === 'servicio';
   const base = {
     entidad: typeof datos.entidad === 'string' ? datos.entidad.trim() : '',
     producto,
     tipo: typeof datos.tipo === 'string' ? datos.tipo : '', // se conserva por compatibilidad
+    naturaleza,
     saldo: montoOpcional(datos.saldo),
     cuotaMensual: Number.isInteger(datos.cuotaMensual) ? datos.cuotaMensual : aEntero(datos.cuotaMensual, 0),
-    tasaEA,
-    tasaMV,
+    /* Un servicio NO tiene tasa: se descartan aquí en vez de confiar en que la
+       vista no las mande. Si un producto cambia de crédito a servicio al
+       editarlo, la tasa vieja tiene que irse con él — dejarla puesta haría que
+       la cartera siguiera calculándole intereses a un recibo de la luz. */
+    tasaEA: esServicio ? null : tasaEA,
+    tasaMV: esServicio ? null : tasaMV,
+    /* Referencia de pago del recibo (el número largo que se teclea en el banco).
+       Solo tiene sentido en servicios; un crédito se paga por su propio número
+       de producto. */
+    referenciaPago: esServicio ? referenciaOpcional(datos.referenciaPago) : null,
+    /* Quién presta el servicio (Movistar, Triple A, Air-e…). Ocupa el lugar que
+       en una tarjeta ocupa la franquicia. */
+    proveedor: esServicio ? proveedorOpcional(datos.proveedor) : null,
     diaPago: diaOpcional(datos.diaPago),
     // Un crédito activo pesa en los fijos del mes (su cuota). Default true;
     // los créditos viejos (sin el campo) se tratan como activos en budget.js.
@@ -279,7 +331,8 @@ export function crearCredito(datos = {}, { now = new Date() } = {}) {
     desgloses: Array.isArray(datos.desgloses) ? datos.desgloses.map(normalizarDesglose) : [],
     // Identidad visual en la CARTERA (opcionales; null = sin dato).
     ultimosCuatro: ult4Opcional(datos.ultimosCuatro),
-    franquicia: unoDeONull(datos.franquicia, FRANQUICIAS),
+    // La franquicia es del plástico: un recibo no tiene. En su lugar va proveedor.
+    franquicia: esServicio ? null : unoDeONull(datos.franquicia, FRANQUICIAS),
     skin: unoDeONull(datos.skin, SKINS_TARJETA),
   };
   const v = validarCredito(base);
@@ -309,6 +362,7 @@ export function validarCredito(obj = {}) {
   if (!Array.isArray(obj.desgloses)) errores.push('desgloses debe ser un arreglo.');
   if (obj.ultimosCuatro != null && !/^\d{1,4}$/.test(String(obj.ultimosCuatro))) errores.push('Los últimos dígitos deben ser 1 a 4 números, o quedar vacío.');
   if (obj.franquicia != null && !FRANQUICIAS.includes(obj.franquicia)) errores.push('Franquicia inválida.');
+  if (obj.naturaleza != null && !NATURALEZAS.includes(obj.naturaleza)) errores.push('Naturaleza inválida.');
   if (obj.skin != null && !SKINS_TARJETA.includes(obj.skin)) errores.push('Skin de tarjeta inválido.');
   return errores.length ? { ok: false, errores } : { ok: true, value: obj };
 }
