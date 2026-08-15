@@ -145,7 +145,7 @@ function tabsHTML() {
 function listaHTML(creditos, cortes, prestamos) {
   const head = `
     <div class="wallet-back-row">
-      <button class="btn btn--ghost btn--sm btn--back" type="button" data-inicio>${ICON_BACK}<span>Inicio</span></button>
+      <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio>${ICON_BACK}<span>Hoy</span></button>
     </div>
     <header class="view-greet view-greet--wallet">
       <p class="view-greet__eyebrow">Mi cartera</p>
@@ -254,8 +254,8 @@ function detalleHTML(cred, cortes, monedaSel) {
 
   const back = `
     <div class="wallet-detalle-top">
-      <button class="btn btn--ghost btn--sm btn--back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
-      <button class="btn btn--ghost btn--sm" type="button" data-editar>Editar</button>
+      <button class="btn btn--ghost btn--head btn--back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
+      <button class="btn btn--ghost btn--head" type="button" data-editar>Editar</button>
     </div>`;
 
   if (!g || !g.ultimo) {

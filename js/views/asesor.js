@@ -68,9 +68,9 @@ export default {
     return `
       <section class="asesor-room">
         <header class="asesor-top">
-          <button type="button" class="btn btn--ghost btn--sm btn--back" id="asesor-back">${ICON_BACK}<span>Inicio</span></button>
+          <button type="button" class="btn btn--ghost btn--head btn--back" id="asesor-back">${ICON_BACK}<span>Hoy</span></button>
           <span class="asesor-top__title"><span class="asesor-top__spark">${SPARK}</span>Tu conciencia</span>
-          <span class="btn btn--ghost btn--sm btn--back asesor-top__pad" aria-hidden="true">${ICON_BACK}<span>Inicio</span></span>
+          <span class="btn btn--ghost btn--head btn--back asesor-top__pad" aria-hidden="true">${ICON_BACK}<span>Hoy</span></span>
         </header>
         <div class="chat-scroll" id="chat-scroll">
           <div class="asesor-hello">

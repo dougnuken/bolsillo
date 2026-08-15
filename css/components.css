@@ -62,15 +62,17 @@
 
 .btn--block { display: flex; width: 100%; }
 
-/* Tamaño compacto: acciones DENTRO de una vista (volver, editar). Mismo vidrio y
-   mismo radio que el botón grande, solo más bajo — así el back y el "Editar" del
-   detalle de un producto hermanan en la misma fila. */
-.btn--sm { min-height: 36px; padding: 0 14px; font-weight: var(--fw-bold); }
-.btn--sm svg { width: 18px; height: 18px; }
+/* Acciones de CABECERA de una vista (volver, editar). Mismo vidrio y mismo radio
+   que el botón grande, solo más bajo — así el back y el "Editar" del detalle de
+   un producto hermanan en la misma fila. 44px = tap target mínimo accesible.
+   Ojo: es distinto de .btn--sm (38px, más abajo), que es el chip de acción
+   dentro de listas y hojas ("Agregar", "Retomar"). */
+.btn--head { min-height: 44px; padding: 0 var(--sp-4); font-weight: var(--fw-bold); }
+.btn--head svg { width: 18px; height: 18px; }
 
 /* Back canónico de la app: chevron + destino. El chevron ya aporta aire a la
    izquierda, por eso ese lado va más ajustado. */
-.btn--back { gap: 4px; padding-left: 10px; }
+.btn--back { gap: 4px; padding-left: var(--sp-3); }
 
 /* ---- Cards glass ---- */
 .card {

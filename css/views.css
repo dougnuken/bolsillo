@@ -785,7 +785,7 @@ body[data-route="asesor"] .nav-blur {
   display: flex; align-items: center; gap: var(--sp-2);
   padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-4) var(--sp-2);
 }
-/* el back es el canónico de la app: .btn.btn--ghost.btn--sm.btn--back */
+/* el back es el canónico de la app: .btn.btn--ghost.btn--head.btn--back */
 .asesor-top__title {
   flex: 1 1 auto;
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
@@ -2253,7 +2253,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 
 /* cabecera del detalle: volver + editar */
 .wallet-detalle-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
-/* el "Editar" es el botón compacto del DS: .btn.btn--ghost.btn--sm */
+/* el "Editar" es la acción de cabecera del DS: .btn.btn--ghost.btn--head */
 
 /* --- card "Mi cartera" en Hoy (glass + peek de tarjetas en abanico) --- */
 .hoy-productos {
@@ -2408,7 +2408,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .cc__mini-num { position: relative; z-index: 2; display: flex; align-items: center; min-height: 42px; padding: 0 16px; font-size: 12px; font-weight: var(--fw-semibold); letter-spacing: .05em; color: var(--skin-text-dim); }
 
 /* --- volver --- */
-/* El back es el canónico (.btn.btn--ghost.btn--sm.btn--back); esta fila solo lo
+/* El back es el canónico (.btn.btn--ghost.btn--head.btn--back); esta fila solo lo
    separa del saludo cuando va suelto en la lista. */
 .wallet-back-row { display: flex; margin-bottom: var(--sp-3); }
 
