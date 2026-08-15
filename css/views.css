@@ -2279,32 +2279,100 @@ body[data-route="asesor"] .nav-blur {
 /* ============================================================
    Notificaciones (campana → hoja)
    ============================================================ */
-.notif-group { margin-top: var(--sp-4); }
-.notif-group__label {
+/* Se agrupaba por familia —Pagos, Presupuestos, Personas— y dentro de cada una
+   mandaba su propio orden. El efecto: un tope YA excedido quedaba debajo de un
+   pago que vence en dos días, solo por ser de otra familia. La familia le
+   importa a quien programó; a quien mira la pantalla le importa qué atender
+   primero. Ahora los tramos son de urgencia y una fila es una fila, venga de
+   donde venga. */
+
+/* Lo primero que se lee: cuántas cosas y de qué tono. Sin esto hay que contar
+   filas para saber si el día está tranquilo. */
+.notif-resumen {
+  font-size: var(--fs-body);
+  line-height: 1.35;
+  color: var(--text-1);
+  margin: calc(-1 * var(--sp-2)) 0 var(--sp-5);
+}
+.notif-resumen--ok { color: var(--semaforo-verde-text); }
+
+.notif-tramo { margin-bottom: var(--sp-5); }
+/* La etiqueta lleva el color del tramo en un punto, no en el texto: teñir la
+   palabra entera de rojo grita más que las propias alertas. */
+.notif-tramo__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: var(--sp-2);
+  margin-bottom: var(--sp-3);
 }
-.notif-item {
+.notif-tramo__label::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.notif-tramo__label--rojo::before { background: var(--semaforo-rojo); }
+.notif-tramo__label--ambar::before { background: var(--semaforo-ambar); }
+
+/* Franja lateral en vez de un punto de 8px: es la señal de gravedad y tiene que
+   verse de reojo, recorriendo la lista sin leerla. El fondo se queda neutro —
+   teñir cada fila entera convertía la hoja en un semáforo. */
+.notif-fila {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--sp-3);
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
   background: var(--glass-2);
-  border: 1px solid var(--line-2);
-  margin-bottom: var(--sp-2);
+  border-left: 3px solid var(--text-3);
+  border-radius: 4px;
+  margin-bottom: 2px;
 }
-.notif-item p { font-size: var(--fs-sm); color: var(--text-1); line-height: 1.4; }
-.notif-item__dot { width: 8px; height: 8px; flex: none; margin-top: 6px; border-radius: var(--r-full); background: var(--text-3); }
-.notif-item--ambar { background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); }
-.notif-item--ambar .notif-item__dot { background: var(--semaforo-ambar); }
-.notif-item--rojo { background: var(--semaforo-rojo-bg); border-color: var(--semaforo-rojo-line); }
-.notif-item--rojo .notif-item__dot { background: var(--semaforo-rojo); }
-.notif-group .btn { margin-top: var(--sp-2); }
+/* Solo las puntas del bloque se redondean: las filas se leen como una pila. */
+.notif-fila:first-of-type { border-radius: var(--r-md) var(--r-md) 4px 4px; }
+.notif-fila:last-of-type { border-radius: 4px 4px var(--r-md) var(--r-md); margin-bottom: 0; }
+.notif-fila:only-of-type { border-radius: var(--r-md); }
+.notif-fila--rojo { border-left-color: var(--semaforo-rojo); }
+.notif-fila--ambar { border-left-color: var(--semaforo-ambar); }
+
+.notif-fila__txt { min-width: 0; }
+.notif-fila__titulo {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notif-fila__detalle { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.35; margin-top: 2px; }
+/* La cifra a la derecha y alineada entre filas: es lo que se compara de un
+   vistazo, y en columna se compara sola. */
+.notif-fila__dato {
+  flex: 0 0 auto;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+.notif-fila--rojo .notif-fila__dato { color: var(--semaforo-rojo-text); }
+
+/* La tarea va separada por una línea y sin color de alerta: no es algo que esté
+   pasando, es algo que falta hacer. */
+.notif-tarea {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line-1);
+}
+.notif-tarea__titulo { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-1); }
+.notif-tarea__sub { font-size: var(--fs-xs); color: var(--text-3); margin: 4px 0 var(--sp-4); line-height: 1.35; }
 
 /* ============================================================
    CARTERA (Mis productos) — lista de tarjetas + detalle de diferidos
@@ -2715,7 +2783,7 @@ select.field__input::-ms-expand { display: none; }
    equivocado. Pasó: .toast--ok perdió su verde y se veía plano.
      · .toast     → --ok verde, --error rojo
      · .cfg-note  → --warn, --ok, --err
-     · .notif-item→ --ambar, --rojo
+     · .notif-fila→ --ambar, --rojo (franja lateral)
      · .cfg-extracto → [disabled]
    Regla para el futuro: si el borde de un componente cambia de color según el
    estado, no lo metas aquí. */

@@ -83,7 +83,7 @@ function nuevoHTMLDir(direccion, previo) {
         <span class="sueldo-hint" id="pre-rinde" hidden></span>
       </label>
       <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">${editando ? 'Guardar cambios' : (debo ? 'Guardar deuda' : 'Guardar préstamo')}</button>
-      ${editando ? `<button type="button" class="btn btn--ghost btn--block btn--danger" id="pre-eliminar">${debo ? 'Eliminar esta deuda' : 'Eliminar este préstamo'}</button>` : ''}
+      ${editando ? `<button type="button" class="btn btn--ghost btn--block btn--danger pre-eliminar" id="pre-eliminar">${debo ? 'Eliminar esta deuda' : 'Eliminar este préstamo'}</button>` : ''}
     </form>`;
 }
 

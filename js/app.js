@@ -32,6 +32,7 @@ import { hoja, menu } from './overlay.js';
 import { iniciarViewport } from './viewport.js';
 import { smsDelHash } from './sms-banco.js';
 import { esc } from './html.js';
+import { agruparNotificaciones, resumenNotificaciones, tituloTramo, AHORA, PRONTO } from './notificaciones.js';
 
 const CUENTAS_SEMILLA = ['Efectivo', 'Nequi', 'Bancolombia'];
 
@@ -563,77 +564,74 @@ async function refrescarBadge() {
   });
 }
 
-/** Centro de notificaciones (hoja): pendientes por registrar + alertas. */
+/** Centro de notificaciones (hoja): lo urgente arriba, la tarea al final. */
 async function abrirNotificaciones() {
   const [alertas, pagos, topes] = await Promise.all([
     recolectarAlertas(), recolectarPagos(), recolectarPresupuestos(),
   ]);
   const pend = pendientesFijos;
-  const vacio = pend.length === 0 && alertas.length === 0 && pagos.length === 0 && topes.length === 0;
+  const g = agruparNotificaciones({ pagos, topes, personas: alertas });
 
-  /* Presupuestos por categoría: van con los pagos, arriba, porque son las dos
-     cosas que cuestan plata si se ignoran. */
-  const topeItem = (t) => {
-    const cat = categoriaPorId(t.categoriaId);
-    const pct = Math.round(t.pctTope * 100);
-    const msg = t.color === 'rojo'
-      ? `<strong>${esc(cat.label)}</strong>: te pasaste del tope de ${esc(formatCOP(t.presupuesto))} por <strong>${esc(formatCOP(t.excedido))}</strong> (vas en ${pct}%)`
-      : `<strong>${esc(cat.label)}</strong>: llevas el ${pct}% del tope de ${esc(formatCOP(t.presupuesto))}`;
-    return `<div class="notif-item notif-item--${t.color}"><span class="notif-item__dot"></span><p>${msg}</p></div>`;
-  };
-  const topeBloque = topes.length ? `
-    <div class="notif-group">
-      <p class="notif-group__label">Presupuestos</p>
-      ${topes.map(topeItem).join('')}
-    </div>` : '';
-
-  /* Los pagos van PRIMERO: son los únicos con fecha de vencimiento, y llegar
-     tarde cuesta mora sobre todo el saldo. */
-  const pagoItem = (p) => {
-    const cuando = textoAlerta(p);
-    const monto = p.monto != null ? ` · mínimo <strong>${esc(formatCOP(p.monto))}</strong>` : '';
-    return `<div class="notif-item notif-item--${p.nivel}"><span class="notif-item__dot"></span>`
-      + `<p><strong>${esc(p.titulo)}</strong>: ${esc(cuando)} (${esc(fechaCorta(p.fecha))})${monto}</p></div>`;
-  };
-  const pagoBloque = pagos.length ? `
-    <div class="notif-group">
-      <p class="notif-group__label">Pagos próximos</p>
-      ${pagos.map(pagoItem).join('')}
-    </div>` : '';
-
-  const alertaItem = (a) => {
-    const cls = a.color === 'rojo' ? 'rojo' : 'ambar';
-    const topePct = Math.round(a.topeFrac * 100);
-    const vaPct = Math.round(a.pctIngreso * 100);
-    const msg = a.color === 'rojo'
-      ? `<strong>${esc(a.label)}</strong>: pasaste tu tope del ${topePct}% (vas en ${vaPct}%)`
-      : `<strong>${esc(a.label)}</strong>: cerca del tope del ${topePct}% (vas en ${vaPct}%)`;
-    return `<div class="notif-item notif-item--${cls}"><span class="notif-item__dot"></span><p>${msg}</p></div>`;
+  /* Cada fuente sabe decir lo suyo, pero todas caben en la misma fila: qué es,
+     qué pasa, y la cifra. Que un pago y un tope se lean igual es el punto — lo
+     que los ordena es la urgencia, no de qué familia vienen. */
+  const detalleDe = (n) => {
+    if (n.fuente === 'pago') {
+      return { titulo: n.titulo, detalle: `${textoAlerta(n)} · ${fechaCorta(n.fecha)}`, dato: n.monto != null ? formatCOP(n.monto) : '' };
+    }
+    if (n.fuente === 'tope') {
+      const cat = categoriaPorId(n.categoriaId);
+      const pct = Math.round(n.pctTope * 100);
+      return n.excedido > 0
+        ? { titulo: cat.label, detalle: `te pasaste del tope de ${formatCOP(n.presupuesto)} · vas en ${pct}%`, dato: `+${formatCOP(n.excedido)}` }
+        : { titulo: cat.label, detalle: `llevas el ${pct}% del tope de ${formatCOP(n.presupuesto)}`, dato: '' };
+    }
+    const tope = Math.round(n.topeFrac * 100);
+    const va = Math.round(n.pctIngreso * 100);
+    return {
+      titulo: n.titulo,
+      detalle: n.nivel === 'rojo' ? `pasaste tu tope del ${tope}% de tus ingresos` : `cerca del tope del ${tope}% de tus ingresos`,
+      dato: `${va}%`,
+    };
   };
 
-  const pendBloque = pend.length ? `
-    <div class="notif-group">
-      <p class="notif-group__label">Por registrar</p>
-      <div class="notif-item notif-item--ambar"><span class="notif-item__dot"></span>
-        <p>Tienes <strong>${pend.length}</strong> gasto${pend.length > 1 ? 's' : ''} fijo${pend.length > 1 ? 's' : ''} por registrar este mes.</p></div>
+  const filaHTML = (n) => {
+    const d = detalleDe(n);
+    return `
+      <div class="notif-fila notif-fila--${esc(n.nivel)}">
+        <div class="notif-fila__txt">
+          <p class="notif-fila__titulo">${esc(d.titulo)}</p>
+          <p class="notif-fila__detalle">${esc(d.detalle)}</p>
+        </div>
+        ${d.dato ? `<span class="notif-fila__dato num">${esc(d.dato)}</span>` : ''}
+      </div>`;
+  };
+
+  const tramoHTML = (lista, tramo) => (lista.length ? `
+    <section class="notif-tramo">
+      <p class="notif-tramo__label notif-tramo__label--${tramo === AHORA ? 'rojo' : 'ambar'}">${esc(tituloTramo(tramo))}</p>
+      ${lista.map(filaHTML).join('')}
+    </section>` : '');
+
+  /* Los fijos por registrar van aparte y al final: no son un aviso sino una
+     tarea, la única con botón. Arriba competirían con lo que sí cuesta plata. */
+  const tareaHTML = pend.length ? `
+    <section class="notif-tarea">
+      <p class="notif-tarea__titulo">Te falta registrar ${pend.length} gasto${pend.length > 1 ? 's' : ''} fijo${pend.length > 1 ? 's' : ''}</p>
+      <p class="notif-tarea__sub">Del mes en curso. Sin ellos, tu balance se ve mejor de lo que está.</p>
       <button type="button" class="btn btn--primary btn--block" data-n="reg">Registrarlos ahora</button>
-    </div>` : '';
+    </section>` : '';
 
-  const alertaBloque = alertas.length ? `
-    <div class="notif-group">
-      <p class="notif-group__label">Alertas de personas</p>
-      ${alertas.map(alertaItem).join('')}
-    </div>` : '';
-
+  const vacio = !g.hayAlgo && pend.length === 0;
   const html = `
     <div class="ov-grip" aria-hidden="true"></div>
     <button type="button" class="icon-btn ov-close" data-n="close" aria-label="Cerrar">${ICON_X}</button>
     <h3 class="ov-title ov-title--menu">Notificaciones</h3>
-    ${vacio ? '<p class="ov-text">Todo al día. Sin pendientes ni alertas por ahora.</p>' : ''}
-    ${pagoBloque}
-    ${topeBloque}
-    ${pendBloque}
-    ${alertaBloque}`;
+    <p class="notif-resumen${vacio ? ' notif-resumen--ok' : ''}">${esc(resumenNotificaciones({ ahora: g.ahora, pronto: g.pronto, pendientes: pend.length }))}</p>
+    ${vacio ? '<p class="ov-text">Sin pendientes ni alertas por ahora.</p>' : ''}
+    ${tramoHTML(g.ahora, AHORA)}
+    ${tramoHTML(g.pronto, PRONTO)}
+    ${tareaHTML}`;
 
   hoja(html, (panel, cerrar) => {
     const reg = panel.querySelector('[data-n="reg"]');

@@ -681,6 +681,10 @@ body.nav-min .fab {
   font-weight: var(--fw-bold);
 }
 .btn--danger:hover { background: color-mix(in srgb, var(--semaforo-rojo) 22%, transparent); }
+/* Un botón que borra no puede quedar pegado al que guarda: en un pulgar sobre
+   vidrio son el mismo objetivo, y equivocarse en un sentido se deshace y en el
+   otro no. El aire aquí no es estético, es el margen de error. */
+.pre-eliminar { margin-top: var(--sp-4); }
 .btn[disabled] { opacity: 0.42; pointer-events: none; }
 
 /* ============================================================
