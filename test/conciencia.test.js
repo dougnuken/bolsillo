@@ -369,6 +369,31 @@ test('aconsejar: fallo de red → estado red', async () => {
   assert.equal(r.estado, 'red');
 });
 
+test('SISTEMA manda conversar, no soltar un informe', () => {
+  assert.match(SISTEMA, /CONVERSA, no informes/);
+  assert.match(SISTEMA, /PREGÚNTALO en vez de suponerlo/);
+  assert.match(SISTEMA, /Mantén el hilo/);
+});
+
+test('SISTEMA fija el formato de burbuja y prohíbe tablas y encabezados', () => {
+  // Era la queja concreta: la información salía desorganizada.
+  assert.match(SISTEMA, /\*\*negrita\*\*/);
+  assert.match(SISTEMA, /Nunca tablas ni encabezados/);
+  assert.match(SISTEMA, /Máximo 8 líneas/);
+  assert.match(SISTEMA, /Una idea por línea/);
+});
+
+test('SISTEMA explica cómo simular con los factores, sin calcular de cabeza', () => {
+  assert.match(SISTEMA, /cuota = monto × factor/);
+  assert.match(SISTEMA, /ni dividas la tasa anual entre 12/);
+  assert.match(SISTEMA, /cuota mensual, intereses totales y total pagado/);
+});
+
+test('SISTEMA prohíbe inventarse una tasa cuando falta el extracto', () => {
+  assert.match(SISTEMA, /pídelo/);
+  assert.match(SISTEMA, /tasa "típica"/);
+});
+
 test('SISTEMA es crudo pero con propósito (no humillar) y sin groserías', () => {
   assert.match(SISTEMA, /CRUDA/);
   assert.match(SISTEMA, /no para humillarlo/);

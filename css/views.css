@@ -834,6 +834,11 @@ body[data-route="asesor"] .nav-blur {
 }
 .chat-msg--yo { align-self: flex-end; background: var(--grad-cta); color: var(--text-inverse); border-bottom-right-radius: var(--r-sm); }
 .chat-msg--ia { align-self: flex-start; background: var(--glass-2); color: var(--text-1); border: 1px solid var(--line-2); border-bottom-left-radius: var(--r-sm); }
+/* Marcado de la respuesta de la conciencia (ver js/formato-chat.js). La
+   burbuja ya es --text-1, así que la negrita no puede destacar por color: lo
+   hace por peso, que es lo que separa la cifra del resto de la frase. */
+.chat-msg--ia strong { font-weight: var(--fw-bold); letter-spacing: -0.01em; }
+.chat-msg--ia em { font-style: normal; color: var(--text-2); }
 .chat-msg--wait { display: inline-flex; gap: 4px; align-items: center; }
 .chat-msg--wait span { width: 6px; height: 6px; border-radius: var(--r-full); background: var(--text-3); animation: chatDot 1s infinite; }
 .chat-msg--wait span:nth-child(2) { animation-delay: 0.15s; }

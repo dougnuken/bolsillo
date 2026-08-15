@@ -17,6 +17,7 @@
    ============================================================ */
 
 import { aconsejar, MAX_PAGINAS_CHAT } from '../conciencia.js';
+import { renderRespuesta } from '../formato-chat.js';
 import { armarContexto } from '../agente-datos.js';
 import { elegirArchivoPDF, abrirConClave, CANCELADO } from '../pdf-picker.js';
 import { paginasAImagenes } from '../pdf-render.js';
@@ -48,7 +49,11 @@ const SUGERENCIAS = [
 const NINGUNO = '__ninguno__';
 
 function burbujaHTML(rol, texto) {
-  return `<div class="chat-msg chat-msg--${rol === 'assistant' ? 'ia' : 'yo'}">${esc(texto)}</div>`;
+  const esIA = rol === 'assistant';
+  // Solo la respuesta de la conciencia pasa por el marcado: lo que escribe el
+  // usuario se muestra tal cual lo escribió, sin interpretarle nada.
+  const cuerpo = esIA ? renderRespuesta(texto) : esc(texto);
+  return `<div class="chat-msg chat-msg--${esIA ? 'ia' : 'yo'}">${cuerpo}</div>`;
 }
 
 /** Nombre corto de un crédito para chips y etiquetas. PURA. */
