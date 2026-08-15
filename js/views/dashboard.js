@@ -14,7 +14,6 @@ import { formatCOP } from '../money.js';
 import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
-import { agruparUltimosCortes, totalDiferido } from '../diferidos.js';
 import { segHTML, colocarThumb, marcarActiva } from '../segmented.js';
 
 const R = 42;
@@ -587,9 +586,7 @@ function productosCardHTML() {
   return `
     <button class="hoy-productos" id="hoy-productos" type="button" aria-label="Ver mis productos">
       <span class="hoy-productos__content">
-        <span class="hoy-productos__eyebrow">Mi cartera</span>
         <span class="hoy-productos__title">Mis productos</span>
-        <span class="hoy-productos__stat" id="hoy-productos-stat">Tus tarjetas y créditos</span>
         <span class="hoy-productos__go">Ver mis tarjetas
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         </span>
@@ -605,22 +602,6 @@ function productosCardHTML() {
 async function pintar(root) {
   const body = root.querySelector('#hoy-body');
   if (!body) return;
-
-  // Card "Mis productos": conteo + total diferido (independiente del semáforo).
-  (async () => {
-    try {
-      const [creditos, cortes] = await Promise.all([getAll('creditos'), getAll('cortes').catch(() => [])]);
-      const statEl = root.querySelector('#hoy-productos-stat');
-      if (!statEl) return;
-      const n = (creditos || []).length;
-      let dif = 0;
-      for (const { ultimo } of agruparUltimosCortes(cortes || []).values()) {
-        if (ultimo && ultimo.moneda === 'COP') dif += totalDiferido(ultimo.diferidos);
-      }
-      if (!n) statEl.textContent = 'Agrega tus tarjetas y créditos';
-      else statEl.innerHTML = `${n} producto${n > 1 ? 's' : ''}${dif > 0 ? ` · <strong>${formatCOP(dif)}</strong> en diferidos` : ''}`;
-    } catch { /* si falla, la card queda con su texto por defecto */ }
-  })();
 
   let estado;
   let negocios = [];

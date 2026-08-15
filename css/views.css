@@ -2255,7 +2255,9 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 /* --- card "Mi cartera" en Hoy (glass + peek de tarjetas en abanico) --- */
 .hoy-productos {
   position: relative; overflow: hidden; display: block; width: 100%; text-align: left;
-  border-radius: 26px; padding: 20px 20px 22px; min-height: 176px; margin-bottom: var(--sp-4); cursor: pointer;
+  /* Al irse el eyebrow y el conteo, la card ya no necesita 176px: se ajusta a
+     lo que queda (título + botón) y deja de ocupar media pantalla. */
+  border-radius: 26px; padding: 18px 20px 20px; min-height: 128px; margin-bottom: var(--sp-4); cursor: pointer;
   background:
     radial-gradient(120% 130% at 2% -8%, rgba(139,108,255,.20), transparent 52%),
     radial-gradient(120% 130% at 100% 116%, rgba(91,63,224,.20), transparent 55%),
@@ -2267,19 +2269,35 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 }
 .hoy-productos:active { transform: scale(.99); }
 .hoy-productos__content { position: relative; z-index: 3; display: block; max-width: 208px; }
-.hoy-productos__eyebrow { display: block; font-size: 10px; font-weight: var(--fw-bold); letter-spacing: .2em; text-transform: uppercase; color: var(--accent-light); }
-.hoy-productos__title { display: block; font-size: 23px; font-weight: 800; letter-spacing: -.025em; margin-top: 8px; }
-.hoy-productos__stat { display: block; font-size: 12.5px; color: var(--text-2); margin-top: 8px; line-height: 1.4; }
-.hoy-productos__stat strong { color: var(--text-1); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
-.hoy-productos__go { display: inline-flex; align-items: center; gap: 7px; margin-top: 16px; padding: 9px 15px; border-radius: 999px; font-size: 12.5px; font-weight: var(--fw-bold); color: #EFEBFF; background: linear-gradient(180deg, rgba(139,108,255,.28), rgba(139,108,255,.13)); border: 1px solid rgba(139,108,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.16); }
+/* 800 pesaba más que el propio saldo del mes y desequilibraba la jerarquía de
+   Hoy. Con --fw-bold el título sigue mandando en su card sin gritar. */
+.hoy-productos__title { display: block; font-size: 23px; font-weight: var(--fw-bold); letter-spacing: -.02em; }
+.hoy-productos__go { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; padding: 9px 15px; border-radius: 999px; font-size: 12.5px; font-weight: var(--fw-bold); color: #EFEBFF; background: linear-gradient(180deg, rgba(139,108,255,.28), rgba(139,108,255,.13)); border: 1px solid rgba(139,108,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.16); }
 .hoy-productos__go svg { width: 14px; height: 14px; }
 .hoy-productos__peek { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.wcard { position: absolute; width: 150px; aspect-ratio: 2.05 / 1; border-radius: 14px; overflow: hidden;
-  background: var(--skin-bg); box-shadow: 0 14px 28px -12px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.07); }
+/* Más pequeñas y más juntas, para caber en la card ya recortada sin que el
+   abanico se salga por abajo. */
+.wcard { position: absolute; width: 122px; aspect-ratio: 2.05 / 1; border-radius: 12px; overflow: hidden;
+  background: var(--skin-bg); box-shadow: 0 12px 24px -12px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.07);
+  /* Entrada del abanico: cada tarjeta cae a su sitio con un desfase. Animar
+     solo transform/opacity, y `both` para que arranquen ya en su estado
+     inicial y no den un parpadeo en el primer frame. */
+  animation: wcardEntra .52s var(--ease) both; }
 .wcard::before { content: ""; position: absolute; inset: 0 0 auto; height: 40%; background: var(--skin-band); border-bottom: 1px solid var(--skin-hairline); }
-.wcard--1 { top: 8px; right: -32px; transform: rotate(-10deg); z-index: 1; filter: brightness(.95); }
-.wcard--2 { top: 42px; right: -18px; transform: rotate(-3deg); z-index: 2; }
-.wcard--3 { top: 80px; right: -4px; transform: rotate(6deg); z-index: 3; }
+.wcard--1 { top: 2px; right: -26px; transform: rotate(-10deg); z-index: 1; filter: brightness(.95); animation-delay: .04s; }
+.wcard--2 { top: 27px; right: -14px; transform: rotate(-3deg); z-index: 2; animation-delay: .12s; }
+/* La última manda: con la card en 128px, su base + la rotación tienen que caber
+   o el abanico se corta contra el borde inferior. */
+.wcard--3 { top: 52px; right: -2px; transform: rotate(6deg); z-index: 3; animation-delay: .20s; }
+
+/* El `to` no fija transform: así cada tarjeta aterriza en la rotación que le
+   toca por su clase, sin repetirla aquí. */
+@keyframes wcardEntra {
+  from { opacity: 0; transform: translate(14px, -10px) rotate(0deg) scale(.94); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wcard { animation: none; }
+}
 
 /* Acceso a préstamos desde Personas (el dato vive en Mi cartera). */
 .prestamos-link { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); width: 100%; text-align: left;
