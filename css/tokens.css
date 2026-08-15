@@ -402,6 +402,41 @@
   --z-sheet: 70;
   --z-toast: 90;
 
+  /* ---- Splash "Halo" ----
+     Seis losas anidadas que entran en cascada por la diagonal, con relleno
+     degradado y canto luminoso. El volumen lo hace el CONTRASTE entre capas
+     —de casi negro en la exterior a lavanda encendida en la interior—, no un
+     glow pegado encima. Hereda el ángulo del símbolo (−28°).
+
+     El fondo va con 11 paradas y no con tres: un degradado oscuro interpolado
+     en pocos pasos salta de valor y el escalón se lee como una franja sobre
+     OLED. El dither de img/tex/ termina de disolver el borde. */
+  --splash-bg: radial-gradient(86% 70% at 74% 78%,
+    #2A1E7E 0%, #261B74 9%, #221867 18%, #1D1559 27%, #19124B 36%,
+    #150F3E 45%, #110C32 54%, #0E0A28 63%, #0C0820 72%, #0A071B 82%, #0A0519 100%);
+  --splash-angulo: -28deg;
+  --splash-marca: #FFFFFF;   /* la marca es plana y de un solo tono */
+
+  /* de fuera hacia dentro: menor, más desplazada, más brillante */
+  --losa-1: linear-gradient(138deg, #0B0624, #1C1259);
+  --losa-2: linear-gradient(138deg, #140C40, #2A1C86);
+  --losa-3: linear-gradient(138deg, #1E1360, #3D28BE);
+  --losa-4: linear-gradient(138deg, #2A1A8E, #5538E8);
+  --losa-5: linear-gradient(138deg, #3C24B8, #7A54FF);
+  --losa-6: linear-gradient(138deg, #5A38E2, #B49CFF);
+  --canto-1: rgba(150, 124, 255, 0.60);
+  --canto-2: rgba(174, 150, 255, 0.72);
+  --canto-3: rgba(198, 180, 255, 0.84);
+  --canto-4: rgba(220, 208, 255, 0.92);
+  --canto-5: rgba(238, 232, 255, 0.97);
+  --canto-6: rgba(255, 253, 255, 1);
+  --halo-1: rgba(108, 80, 220, 0.24);
+  --halo-2: rgba(122, 92, 236, 0.30);
+  --halo-3: rgba(138, 106, 250, 0.36);
+  --halo-4: rgba(154, 120, 255, 0.42);
+  --halo-5: rgba(170, 138, 255, 0.48);
+  --halo-6: rgba(190, 164, 255, 0.56);
+
   color-scheme: dark;
 }
 

@@ -1,49 +1,126 @@
 /* ============================================================
-   olbo · Splash de bienvenida (cold start)
-   Overlay que dibuja el logo y se funde hacia la app. CSS-ONLY
+   olbo · Splash de bienvenida (cold start) — textura "Halo"
+   Overlay que dibuja la marca y se funde hacia la app. CSS-ONLY
    (la CSP es style-src/script-src 'self' → sin inline ni JS).
    Se muestra en cada carga completa (reabrir tras cerrar el proceso);
    si la app queda en segundo plano y vuelve, no recarga → no aparece.
    Respeta prefers-reduced-motion. Depende de tokens.css (cargar después).
+
+   La atmósfera son seis losas anidadas que entran en cascada por la
+   diagonal, con relleno degradado y canto luminoso. Heredan el ángulo
+   del símbolo (−28°), así que la pantalla entera es la marca en
+   movimiento y no un patrón de fondo pegado detrás.
+
+   Todo el color vive en tokens.css. Aquí solo hay geometría y tiempo.
    ============================================================ */
 
 #splash {
   position: fixed;
   inset: 0;
   z-index: 9999;
+  overflow: hidden; /* las losas desbordan a propósito; el recorte lo hace la pantalla */
+  background: var(--splash-bg);
+  /* se funde solo hacia la app; forwards deja el estado final (invisible/no-click) */
+  animation: splashOut 0.6s var(--ease) 1.9s forwards;
+}
+@keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+/* ---- Losas: la cascada diagonal ----
+   Tamaño y posición en vmin para que la composición se conserve en
+   cualquier pantalla. Van de casi negra y grande (fuera) a lavanda y
+   pequeña (dentro); esa progresión es la que da la profundidad. */
+.splash__losas { position: absolute; inset: 0; }
+.splash__losas i {
+  position: absolute;
+  display: block;
+  border-radius: 17%;
+  border: 1.6px solid;
+  opacity: 0;
+  transform: rotate(var(--splash-angulo));
+  animation: losaIn 0.72s var(--ease) both;
+}
+.splash__losas i:nth-child(1) {
+  width: 260vmin; height: 260vmin; right: -140vmin; bottom: -130vmin;
+  background: var(--losa-1); border-color: var(--canto-1);
+  box-shadow: 0 0 44px var(--halo-1);
+  animation-delay: 0s;
+}
+.splash__losas i:nth-child(2) {
+  width: 218vmin; height: 218vmin; right: -119vmin; bottom: -107vmin;
+  background: var(--losa-2); border-color: var(--canto-2);
+  box-shadow: 0 0 40px var(--halo-2);
+  animation-delay: 0.07s;
+}
+.splash__losas i:nth-child(3) {
+  width: 176vmin; height: 176vmin; right: -98vmin; bottom: -85vmin;
+  background: var(--losa-3); border-color: var(--canto-3);
+  box-shadow: 0 0 36px var(--halo-3);
+  animation-delay: 0.14s;
+}
+.splash__losas i:nth-child(4) {
+  width: 134vmin; height: 134vmin; right: -78vmin; bottom: -62vmin;
+  background: var(--losa-4); border-color: var(--canto-4);
+  box-shadow: 0 0 32px var(--halo-4);
+  animation-delay: 0.21s;
+}
+.splash__losas i:nth-child(5) {
+  width: 96vmin; height: 96vmin; right: -58vmin; bottom: -40vmin;
+  background: var(--losa-5); border-color: var(--canto-5);
+  box-shadow: 0 0 28px var(--halo-5);
+  animation-delay: 0.28s;
+}
+.splash__losas i:nth-child(6) {
+  width: 56vmin; height: 56vmin; right: -40vmin; bottom: -18vmin;
+  background: var(--losa-6); border-color: var(--canto-6);
+  box-shadow: 0 0 26px var(--halo-6);
+  animation-delay: 0.35s;
+}
+@keyframes losaIn {
+  from { opacity: 0; transform: rotate(var(--splash-angulo)) translate3d(9%, 10%, 0); }
+  to   { opacity: 1; transform: rotate(var(--splash-angulo)) translate3d(0, 0, 0); }
+}
+
+/* ---- Dither ----
+   Un degradado oscuro en 8 bits salta de un valor al siguiente y el ojo
+   lee el escalón como una franja. Este ruido de ±1 nivel lo disuelve.
+   Es un asset, no un filtro en vivo: calcular turbulencia a pantalla
+   completa cuesta cientos de ms y un splash no tiene ese presupuesto. */
+.splash__grain {
+  position: absolute;
+  inset: 0;
+  background-image: url("../img/tex/dither.png");
+  background-repeat: repeat;
+  background-size: 64px 64px;
+  opacity: 0.085;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* ---- Marca ---- */
+.splash__lock {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--sp-5);
-  background: var(--bg-app); /* fondo Ontop idéntico al de la app → funde sin costura */
-  /* se funde solo hacia la app; forwards deja el estado final (invisible/no-click) */
-  animation: splashOut 0.6s var(--ease) 1.75s forwards;
 }
-@keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 
-/* Ícono "anillo O" (eco del ícono de app): entra girando + escala, con overshoot */
+/* Anillo Partido: plano y de un solo tono, igual que el ícono de app.
+   El color lo pone el fondo; dentro del símbolo no entra nunca. */
 .splash__icon {
   width: 118px;
   height: 118px;
+  color: var(--splash-marca);
   transform-origin: center;
-  animation: splashIcon 0.95s var(--ease-fan) both;
+  animation: splashIcon 0.85s var(--ease-fan) 0.3s both;
 }
 @keyframes splashIcon {
-  0%   { opacity: 0; transform: scale(0.8) rotate(-26deg); }
+  from { opacity: 0; transform: scale(0.82) rotate(-18deg); }
   60%  { opacity: 1; }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
 }
-/* el aro se DIBUJA (traza) alrededor */
-.splash__trace {
-  stroke-dasharray: 251;
-  stroke-dashoffset: 251;
-  animation: splashDraw 1s var(--ease) 0.15s both;
-}
-@keyframes splashDraw { to { stroke-dashoffset: 0; } }
-/* el "+" enciende un instante después */
-.splash__plus { opacity: 0; animation: splashFade 0.5s var(--ease) 0.78s both; }
-@keyframes splashFade { to { opacity: 1; } }
 
 .splash__word {
   font-family: var(--font-display);
@@ -51,12 +128,9 @@
   font-weight: var(--fw-bold);
   letter-spacing: -0.02em;
   line-height: 1;
-  background: linear-gradient(100deg, #F3EFFF, #A98CFF 45%, #7C5CFC);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-1);
   opacity: 0;
-  animation: splashRise 0.6s var(--ease) 0.52s both;
+  animation: splashRise 0.6s var(--ease) 0.78s both;
 }
 @keyframes splashRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
@@ -64,14 +138,20 @@
   font-size: var(--fs-sm);
   color: var(--text-2);
   opacity: 0;
-  animation: splashFade 0.6s var(--ease) 0.82s both;
+  animation: splashFade 0.6s var(--ease) 1s both;
 }
+@keyframes splashFade { to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .splash__icon, .splash__trace, .splash__plus, .splash__word, .splash__tag {
+  .splash__losas i, .splash__icon, .splash__word, .splash__tag {
     animation-duration: 0.01s;
     animation-delay: 0s;
-    transform: none;
   }
-  .splash__trace { stroke-dashoffset: 0; }
+  /* las losas nacen en opacity:0 y solo la animación las revela: sin
+     reponerlas aquí, quien pida menos movimiento ve la pantalla vacía */
+  .splash__losas i {
+    opacity: 1;
+    transform: rotate(var(--splash-angulo));
+  }
+  .splash__icon, .splash__word, .splash__tag { transform: none; }
 }

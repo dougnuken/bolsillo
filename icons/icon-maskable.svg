@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="olbo">
+  <!-- =========================================================
+       olbo · variante MASKABLE (Android)
+       Fuente de icon-512-maskable.png. Tres diferencias con
+       icon.svg, las tres exigidas por la plataforma:
+
+       1. Sin squircle: Android recorta con SU máscara (círculo,
+          squircle, gota…), así que el fondo va a sangre o
+          aparecen esquinas transparentes.
+       2. Marca al 88%: la zona segura es el círculo central de
+          radio 40%. Aquí la marca queda en radio 25%, con holgura
+          para la máscara circular, que es la más agresiva.
+       3. Losas replegadas hacia la esquina: al recortar en
+          círculo se pierde ~29% del lienzo, y con las posiciones
+          del ícono cuadrado la cascada quedaba cortada por la
+          mitad. Aquí entra más adentro para que sobreviva al
+          recorte más severo.
+       ========================================================= -->
+  <defs>
+    <radialGradient id="bgm" cx="0.72" cy="0.76" r="0.94">
+      <stop offset="0" stop-color="#2A1E7E"/><stop offset=".18" stop-color="#221867"/>
+      <stop offset=".36" stop-color="#19124B"/><stop offset=".54" stop-color="#110C32"/>
+      <stop offset=".72" stop-color="#0C0820"/><stop offset="1" stop-color="#0A0519"/>
+    </radialGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#0B0624"/><stop offset="1" stop-color="#1C1259"/></linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#140C40"/><stop offset="1" stop-color="#2A1C86"/></linearGradient>
+    <linearGradient id="m3" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#1E1360"/><stop offset="1" stop-color="#3D28BE"/></linearGradient>
+    <linearGradient id="m4" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#2A1A8E"/><stop offset="1" stop-color="#5538E8"/></linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bgm)"/>
+  <g stroke-width="4">
+    <rect x="424" y="384" width="1100" height="1100" rx="187" fill="url(#m1)" stroke="#967CFF" stroke-opacity=".50" transform="rotate(-28 974 934)"/>
+    <rect x="534" y="484" width="880"  height="880"  rx="150" fill="url(#m2)" stroke="#AE96FF" stroke-opacity=".62" transform="rotate(-28 974 924)"/>
+    <rect x="644" y="584" width="660"  height="660"  rx="112" fill="url(#m3)" stroke="#C6B4FF" stroke-opacity=".74" transform="rotate(-28 974 914)"/>
+    <rect x="754" y="684" width="440"  height="440"  rx="75"  fill="url(#m4)" stroke="#DCD0FF" stroke-opacity=".85" transform="rotate(-28 974 904)"/>
+  </g>
+  <g transform="translate(512,512) scale(0.88) translate(-512,-512)">
+    <g transform="rotate(-28 512 512)" fill="none" stroke="#FFFFFF" stroke-width="108" stroke-linecap="round">
+      <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3"/>
+      <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7"/>
+    </g>
+  </g>
+</svg>

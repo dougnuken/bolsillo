@@ -12,7 +12,7 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=147" />
+  <link rel="manifest" href="./manifest.webmanifest?v=148" />
   <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
        isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
@@ -68,32 +68,32 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=147" />
-  <link rel="stylesheet" href="./css/base.css?v=147" />
-  <link rel="stylesheet" href="./css/components.css?v=147" />
-  <link rel="stylesheet" href="./css/views.css?v=147" />
-  <link rel="stylesheet" href="./css/splash.css?v=147" />
+  <link rel="stylesheet" href="./css/tokens.css?v=148" />
+  <link rel="stylesheet" href="./css/base.css?v=148" />
+  <link rel="stylesheet" href="./css/components.css?v=148" />
+  <link rel="stylesheet" href="./css/views.css?v=148" />
+  <link rel="stylesheet" href="./css/splash.css?v=148" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
   <div id="splash" aria-hidden="true">
-    <svg class="splash__icon" viewBox="0 0 120 120" role="img" aria-label="olbo">
-      <defs>
-        <linearGradient id="sp-ring" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#A98CFF" /><stop offset=".55" stop-color="#8B6CFF" /><stop offset="1" stop-color="#5B3FE0" />
-        </linearGradient>
-        <filter id="sp-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6" /></filter>
-      </defs>
-      <circle cx="60" cy="60" r="40" fill="none" stroke="#7C5CFC" stroke-width="16" filter="url(#sp-glow)" opacity=".65" />
-      <circle cx="60" cy="60" r="40" fill="none" stroke="url(#sp-ring)" stroke-width="14" />
-      <circle class="splash__trace" cx="60" cy="60" r="40" fill="none" stroke="#EAE3FF" stroke-width="14" stroke-linecap="round" opacity=".5" transform="rotate(-90 60 60)" />
-      <g class="splash__plus" fill="url(#sp-ring)">
-        <rect x="55" y="42" width="10" height="36" rx="4" />
-        <rect x="42" y="55" width="36" height="10" rx="4" />
-      </g>
-    </svg>
-    <div class="splash__word">olbo</div>
-    <div class="splash__tag">Tu riqueza en calma</div>
+    <!-- Seis losas anidadas que entran en cascada por la diagonal. Van vacías a
+         propósito: tamaño, color y tiempo viven en css/splash.css. -->
+    <div class="splash__losas"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="splash__grain"></div>
+    <div class="splash__lock">
+      <!-- Anillo Partido, idéntico al de icons/icon.svg. Plano y de un solo tono:
+           el color lo pone el fondo, nunca el símbolo. currentColor lo resuelve
+           splash.css desde tokens, para no dejar hex fuera de tokens.css. -->
+      <svg class="splash__icon" viewBox="0 0 1024 1024" aria-hidden="true">
+        <g transform="rotate(-28 512 512)" fill="none" stroke="currentColor" stroke-width="108" stroke-linecap="round">
+          <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3" />
+          <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7" />
+        </g>
+      </svg>
+      <div class="splash__word">olbo</div>
+      <div class="splash__tag">Tu riqueza en calma</div>
+    </div>
   </div>
 
   <div class="app-shell">
@@ -103,19 +103,13 @@
       <h2 class="app-header__title" id="header-title" aria-hidden="true"></h2>
       <!-- Solo en Hoy: al colapsarse, el header se pone la marca en vez de
            repetir el saludo. El saludo es de la persona y ya vive en el hero;
-           el chrome es de la app. Mismo anillo+plus del splash, sin el halo ni
-           el trazo animado: a 22px no se leerían. -->
+           el chrome es de la app. Mismo Anillo Partido del splash y del ícono:
+           plano y de un solo tono, que es lo que aguanta 22 px. -->
       <div class="hdr-marca hdr-hoy" aria-hidden="true">
-        <svg class="hdr-marca__ico" viewBox="0 0 120 120" aria-hidden="true">
-          <defs>
-            <linearGradient id="hdr-ring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#A98CFF" /><stop offset=".55" stop-color="#8B6CFF" /><stop offset="1" stop-color="#5B3FE0" />
-            </linearGradient>
-          </defs>
-          <circle cx="60" cy="60" r="40" fill="none" stroke="url(#hdr-ring)" stroke-width="14" />
-          <g fill="url(#hdr-ring)">
-            <rect x="55" y="42" width="10" height="36" rx="4" />
-            <rect x="42" y="55" width="36" height="10" rx="4" />
+        <svg class="hdr-marca__ico" viewBox="0 0 1024 1024" aria-hidden="true">
+          <g transform="rotate(-28 512 512)" fill="none" stroke="currentColor" stroke-width="108" stroke-linecap="round">
+            <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3" />
+            <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7" />
           </g>
         </svg>
         <span class="hdr-marca__word">olbo</span>
@@ -194,6 +188,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=147"></script>
+  <script type="module" src="./js/app.js?v=148"></script>
 </body>
 </html>
