@@ -258,7 +258,18 @@
   --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
   --sh-card: 0 1px 3px rgba(0, 0, 0, 0.35);
   --sh-sheet: 0 -12px 48px -12px rgba(0, 0, 0, 0.60);
-  --sh-fab: 0 8px 24px -4px rgba(91, 63, 224, 0.55), inset 0 1px 0 var(--fab-hi);
+  /* Glow del FAB: BICOLOR, para que la luz que suelta sea la del gradiente que
+     tiene encima (naranja cálido a un lado, azul al otro) y no un halo morado
+     que no se corresponde con nada de lo que se ve. Los tonos salen de los
+     extremos de --grad-cta. Tres capas: los dos halos de color desplazados a su
+     lado + una base amplia que los funde y ancla el botón sobre el fondo. */
+  --fab-glow-calido: rgba(255, 154, 107, 0.55);   /* extremo naranja de --grad-cta */
+  --fab-glow-frio: rgba(110, 123, 242, 0.55);     /* extremo azul-violeta */
+  --sh-fab:
+    -9px 10px 26px -6px var(--fab-glow-calido),
+    9px 10px 26px -6px var(--fab-glow-frio),
+    0 10px 32px -10px rgba(124, 92, 252, 0.50),
+    inset 0 1px 0 var(--fab-hi);
   --sh-cta: 0 10px 26px -8px var(--accent-glow), 0 2px 6px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 var(--fab-hi); /* CTA ancho: glow morado + brillo especular + ancla */
   --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), inset 0 1px 0 var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
   --sh-md: 0 8px 30px -8px rgba(0, 0, 0, 0.50);
