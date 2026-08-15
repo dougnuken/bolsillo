@@ -1766,10 +1766,21 @@ body.has-toast .fab {
    opción activa se pinta directo con el material coral, porque no hay thumb
    detrás que dé el fondo. Sin esto, el texto text-inverse (oscuro) queda sobre
    el fondo oscuro del seg = ilegible. */
+/* "Estático" = sin pastilla deslizante (solo dos opciones que se conmutan, sin
+   JS que mueva un thumb), así que la opción activa lleva puesto el material DEL
+   thumb en lugar de moverse uno.
+
+   Antes se pintaba con el gradiente del FAB: una pastilla morada sólida con
+   texto oscuro, que no se parecía a ningún otro segmentado de la app y además
+   le daba a una elección de formulario el mismo peso visual que al botón de
+   acción principal. Ahora es el mismo vidrio translúcido sobre track hundido
+   que el de Hoy y el de la cartera — el peso lo carga el texto, que pasa a
+   blanco. */
 .seg--estatico .seg__opt.is-on {
-  background: var(--fab-grad);
-  border: 1px solid var(--fab-rim);
-  box-shadow: var(--sh-chip-sel);
+  background: var(--glass-3);
+  border: 1px solid var(--line-3);
+  box-shadow: var(--sh-sm);
+  color: var(--text-1);
 }
 @media (prefers-reduced-motion: reduce) {
   .seg__thumb { transition: none; }
