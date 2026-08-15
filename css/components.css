@@ -11,7 +11,7 @@
   border-radius: var(--r-full);
   color: var(--text-2);
   background: var(--glass-2);   /* gear neutro en círculo suave */
-  border: 1px solid transparent; /* el hairline lo pinta el borde vivo */
+  border: 1px solid var(--line-2);
   /* El contexto del anillo va AQUÍ y no en el bloque del borde vivo (final de
      views.css) a propósito: .icon-btn es genérica y varias clases la
      reposicionan —.ov-close, .sheet__close, .sheet__back, .cfg-back son
@@ -65,7 +65,10 @@
   position: relative;
   background: var(--glass-2);
   color: var(--text-1);
-  border: 1px solid transparent;   /* el hairline lo pinta el borde vivo */
+  /* Hairline PLANO y uniforme, no el borde vivo: en un control pequeño el
+     tramo encendido se alinea con el del control de al lado y los dos juntos
+     se leen como un marco suelto. */
+  border: 1px solid var(--line-2);
 }
 .btn--ghost:hover { background: var(--glass-3); }
 

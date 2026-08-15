@@ -142,6 +142,17 @@ let tabActivo = 'productos';
    veníamos para que la pastilla se deslice en vez de saltar al destino. */
 let tabPrevio = null;
 
+/**
+ * Abre la cartera directamente en un segmento. La usa Personas, cuyo acceso
+ * dice "Te deben": mandarlo a la lista de productos obligaba a un toque extra
+ * para llegar a donde el propio enlace prometía.
+ * Se llama ANTES de cambiar el hash, para que la vista monte ya posicionada.
+ */
+export function abrirEn(tab) {
+  tabActivo = TABS.some(([id]) => id === tab) ? tab : 'productos';
+  tabPrevio = null;   // se entra ya en el segmento: nada que deslizar
+}
+
 function tabsHTML() {
   return segHTML(TABS, tabActivo, {
     attr: TAB_ATTR,

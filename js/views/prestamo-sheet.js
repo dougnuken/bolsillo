@@ -12,7 +12,7 @@
 import { hoja } from '../overlay.js';
 import { put, getConfig } from '../db.js';
 import { crearMovimiento } from '../model.js';
-import { crearPrestamo, agregarAbono, saldoPendiente } from '../prestamos.js';
+import { crearPrestamo, agregarAbono, saldoPendiente, interesEstimado } from '../prestamos.js';
 import { parseCOP, formatCOP } from '../money.js';
 import { bindMontosVivos } from '../money-input.js';
 import { toast } from '../toast.js';
@@ -71,6 +71,7 @@ function nuevoHTMLDir(direccion) {
         <input class="field__input" id="pre-tasa" type="number" min="0" max="100" step="0.01"
           inputmode="decimal" placeholder="Sin interés" />
         <span class="sueldo-hint">Si se pactó un interés, escríbelo. Déjalo vacío si es un favor sin intereses.</span>
+        <span class="sueldo-hint" id="pre-rinde" hidden></span>
       </label>
       <button type="submit" class="btn btn--primary btn--block btn--save" id="pre-guardar">${debo ? 'Guardar deuda' : 'Guardar préstamo'}</button>
     </form>`;
@@ -85,6 +86,22 @@ export function abrirNuevoPrestamo({ onSaved, direccion = 'me-deben' } = {}) {
   return hoja(nuevoHTMLDir(direccion), (panel, cerrar) => {
     const $ = (sel) => panel.querySelector(sel);
     bindMontosVivos(panel);
+
+    // Cuánto rinde el interés pactado, en vivo mientras se escribe. Sin esto,
+    // el "5%" es un número abstracto: nadie sabe si son mil pesos o cien mil.
+    const rinde = $('#pre-rinde');
+    const refrescarRinde = () => {
+      if (!rinde) return;
+      const i = interesEstimado(parseCOP($('#pre-monto').value), parseFloat($('#pre-tasa').value));
+      if (!i) { rinde.hidden = true; rinde.textContent = ''; return; }
+      rinde.hidden = false;
+      rinde.textContent = debo
+        ? `Te costaría ${formatCOP(i.mensual)} al mes · ${formatCOP(i.anual)} en un año.`
+        : `Te rendiría ${formatCOP(i.mensual)} al mes · ${formatCOP(i.anual)} en un año.`;
+    };
+    $('#pre-monto').addEventListener('input', refrescarRinde);
+    $('#pre-tasa').addEventListener('input', refrescarRinde);
+
     $('#pre-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const persona = ($('#pre-persona').value || '').trim();

@@ -11,6 +11,8 @@
      suba — pero eso vive en la vista, no aquí.
    ============================================================ */
 
+import { tasaEAaMV } from './model.js';
+
 const entero = (v) => {
   const n = Math.round(Number(v));
   return Number.isFinite(n) ? n : NaN;
@@ -118,6 +120,27 @@ export function agregarAbono(prestamo, datosAbono = {}, { now = new Date() } = {
 }
 
 /** Total por cobrar de una lista (suma de saldos pendientes). */
+/**
+ * Cuánto rinde un préstamo con interés. PURA.
+ *
+ * La tasa se pacta como % E.A., así que el interés en pesos depende del PLAZO,
+ * y un préstamo entre personas no lo tiene: se paga cuando se pueda. Por eso no
+ * se inventa un plazo — se dan las dos referencias que sí son ciertas y dejan
+ * dimensionar el favor: lo que rinde al mes y lo que rinde en un año.
+ *
+ * @returns {{mensual:number, anual:number}|null} null si falta monto o tasa
+ */
+export function interesEstimado(monto, tasaEA) {
+  const m = Number(monto);
+  const t = Number(tasaEA);
+  if (!Number.isFinite(m) || m <= 0) return null;
+  if (!Number.isFinite(t) || t <= 0) return null;
+  return Object.freeze({
+    mensual: Math.round(m * (tasaEAaMV(t) / 100)),
+    anual: Math.round(m * (t / 100)),
+  });
+}
+
 export function totalPorCobrar(prestamos) {
   return (Array.isArray(prestamos) ? prestamos : []).reduce((s, p) => s + saldoPendiente(p), 0);
 }

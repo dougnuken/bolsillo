@@ -14,6 +14,7 @@ import {
 } from '../budget.js';
 import { resumenPrestamos, saldoPendiente, totalAbonado, fraccionAbonada } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
+import { abrirEn } from './productos.js';
 import { categoriaPorId } from '../categories.js';
 import { formatCOP } from '../money.js';
 import { esc } from '../html.js';
@@ -177,7 +178,9 @@ export default {
     /* Cablea los botones de préstamos (alta + abono). Idempotente por render. */
     function wireCartera(root) {
       const ir = root.querySelector('[data-ir-cartera]');
-      if (ir) ir.addEventListener('click', () => { location.hash = '#/productos'; });
+      // El acceso dice "Te deben": que caiga en ese segmento y no en la lista
+      // de productos, que obligaba a un toque más.
+      if (ir) ir.addEventListener('click', () => { abrirEn('me-deben'); location.hash = '#/productos'; });
     }
 
     function wirePrestamos(prestamos) {
