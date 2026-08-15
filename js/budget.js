@@ -121,6 +121,40 @@ function colorPresupuesto(total, presupuesto) {
 }
 
 /**
+ * Categorías que ya se pasaron de su tope o están por pasarse. PURA.
+ *
+ * El tope se configuraba y se pintaba de color en la vista, pero nadie avisaba:
+ * había que entrar a mirarlo. Un tope del que no te enteras no sirve de nada,
+ * que es justo para lo que se pone.
+ *
+ * Solo devuelve lo accionable —ámbar (>85%) o rojo (pasado)—; el verde no es
+ * una notificación.
+ *
+ * @param {Array<{categoriaId:string,total:number,presupuesto?:number,color?:string}>} porCategoria
+ * @returns {Array<{categoriaId:string,total:number,presupuesto:number,pctTope:number,
+ *                  excedido:number,color:'ambar'|'rojo'}>} lo peor primero
+ */
+export function alertasPresupuesto(porCategoria = []) {
+  const filas = Array.isArray(porCategoria) ? porCategoria : [];
+  const out = [];
+  for (const f of filas) {
+    if (!f || !esEntero(f.presupuesto) || !(f.presupuesto > 0)) continue;
+    if (f.color !== 'ambar' && f.color !== 'rojo') continue;
+    const total = Number(f.total) || 0;
+    out.push(Object.freeze({
+      categoriaId: f.categoriaId,
+      total: redondear(total),
+      presupuesto: f.presupuesto,
+      pctTope: total / f.presupuesto,
+      excedido: total > f.presupuesto ? redondear(total - f.presupuesto) : 0,
+      color: f.color,
+    }));
+  }
+  out.sort((a, b) => b.pctTope - a.pctTope);   // lo más pasado, primero
+  return Object.freeze(out);
+}
+
+/**
  * Gasto variable por categoría del mes (solo gasto no-fijo).
  * Devuelve [{categoriaId, total, pct, presupuesto?, color?}] ordenado desc.
  */

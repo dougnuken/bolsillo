@@ -202,11 +202,24 @@ img { max-width: 100%; display: block; }
 .app-header::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: var(--glass-header);
+  /* Se extiende 24px POR DEBAJO del header para tener sitio donde desvanecerse.
+     Con inset 0 el vidrio terminaba a filo y se veía el corte recto. */
+  inset: 0 0 -24px 0;
+  /* Vidrio esmerilado con caída vertical: opaco arriba y alpha 0 abajo, así el
+     contenido no aparece de golpe al pasar por detrás — se disuelve. */
+  background: linear-gradient(
+    to bottom,
+    var(--glass-header) 0%,
+    var(--glass-header) 55%,
+    rgba(11, 11, 13, 0.45) 78%,
+    rgba(11, 11, 13, 0) 100%
+  );
   -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.2);
   backdrop-filter: blur(var(--blur-strong)) saturate(1.2);
-  border-bottom: 1px solid var(--line-2);
+  /* El propio blur se desvanece con la misma curva: si no, el corte del
+     desenfoque se nota aunque el color ya no esté. Es lo que dibujaba la línea. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, 0.5) 78%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, #000 55%, rgba(0, 0, 0, 0.5) 78%, transparent 100%);
   opacity: var(--header-p, 0);
   transition: opacity var(--dur-fast) linear; /* suaviza entre muestras de scroll */
   pointer-events: none;

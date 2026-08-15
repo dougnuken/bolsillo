@@ -22,7 +22,7 @@ import { openDB, getConfig, saveConfig, getAll, get, put, bulkPut } from './db.j
 import { materializarMes } from './recurring.js';
 import { migrarIngresos, ingresoNecesitaMigracion, crearMovimiento, actualizar } from './model.js';
 import { aplicarPersonalizacion, categoriaPorId } from './categories.js';
-import { calcularEstado, resumenPersonas, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAULT } from './budget.js';
+import { calcularEstado, resumenPersonas, alertasPresupuesto, TOPES_PERSONA_DEFAULT, VIGILADOS_DEFAULT } from './budget.js';
 import { parseCOP, formatCOP } from './money.js';
 import { alertasDePago, textoAlerta } from './alertas-pago.js';
 import { emparejarProductos } from './diferidos.js';
@@ -452,6 +452,27 @@ async function recolectarAlertas() {
 }
 
 /**
+ * Categorías que se pasaron de su tope o están cerca.
+ * Se configuraban y se pintaban de color en la vista, pero nunca avisaban.
+ */
+async function recolectarPresupuestos() {
+  try {
+    const [movs, ingresos, recs, creds, cfg] = await Promise.all([
+      getAll('movimientos'), getAll('ingresos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
+    ]);
+    const empleo = (ingresos || []).find((i) => i && i.fuente === 'empleo') || null;
+    const estado = calcularEstado({
+      ingresoEmpleo: empleo ? empleo.monto : null,
+      movimientos: movs, recurrentes: recs, creditos: creds, hoy: new Date(), config: cfg,
+    });
+    return alertasPresupuesto(estado.porCategoria);
+  } catch (err) {
+    console.warn('[olbo] no se pudieron leer los presupuestos:', err);
+    return [];
+  }
+}
+
+/**
  * Pagos que vencen dentro de la ventana de aviso (o ya vencidos).
  * Blindado igual que las otras alertas: si falla la lectura, el resto del
  * centro de notificaciones sigue funcionando.
@@ -474,8 +495,10 @@ async function recolectarPagos() {
 async function refrescarBadge() {
   const badges = document.querySelectorAll('.notif-badge');
   if (!badges.length) return;
-  const [alertas, pagos] = await Promise.all([recolectarAlertas(), recolectarPagos()]);
-  const total = pendientesFijos.length + alertas.length + pagos.length;
+  const [alertas, pagos, topes] = await Promise.all([
+    recolectarAlertas(), recolectarPagos(), recolectarPresupuestos(),
+  ]);
+  const total = pendientesFijos.length + alertas.length + pagos.length + topes.length;
   badges.forEach((badge) => {
     if (total > 0) { badge.textContent = String(total); badge.hidden = false; }
     else { badge.hidden = true; }
@@ -484,9 +507,27 @@ async function refrescarBadge() {
 
 /** Centro de notificaciones (hoja): pendientes por registrar + alertas. */
 async function abrirNotificaciones() {
-  const [alertas, pagos] = await Promise.all([recolectarAlertas(), recolectarPagos()]);
+  const [alertas, pagos, topes] = await Promise.all([
+    recolectarAlertas(), recolectarPagos(), recolectarPresupuestos(),
+  ]);
   const pend = pendientesFijos;
-  const vacio = pend.length === 0 && alertas.length === 0 && pagos.length === 0;
+  const vacio = pend.length === 0 && alertas.length === 0 && pagos.length === 0 && topes.length === 0;
+
+  /* Presupuestos por categoría: van con los pagos, arriba, porque son las dos
+     cosas que cuestan plata si se ignoran. */
+  const topeItem = (t) => {
+    const cat = categoriaPorId(t.categoriaId);
+    const pct = Math.round(t.pctTope * 100);
+    const msg = t.color === 'rojo'
+      ? `<strong>${esc(cat.label)}</strong>: te pasaste del tope de ${esc(formatCOP(t.presupuesto))} por <strong>${esc(formatCOP(t.excedido))}</strong> (vas en ${pct}%)`
+      : `<strong>${esc(cat.label)}</strong>: llevas el ${pct}% del tope de ${esc(formatCOP(t.presupuesto))}`;
+    return `<div class="notif-item notif-item--${t.color}"><span class="notif-item__dot"></span><p>${msg}</p></div>`;
+  };
+  const topeBloque = topes.length ? `
+    <div class="notif-group">
+      <p class="notif-group__label">Presupuestos</p>
+      ${topes.map(topeItem).join('')}
+    </div>` : '';
 
   /* Los pagos van PRIMERO: son los únicos con fecha de vencimiento, y llegar
      tarde cuesta mora sobre todo el saldo. */
@@ -532,6 +573,7 @@ async function abrirNotificaciones() {
     <h3 class="ov-title ov-title--menu">Notificaciones</h3>
     ${vacio ? '<p class="ov-text">Todo al día. Sin pendientes ni alertas por ahora.</p>' : ''}
     ${pagoBloque}
+    ${topeBloque}
     ${pendBloque}
     ${alertaBloque}`;
 
