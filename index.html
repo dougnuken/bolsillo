@@ -12,22 +12,20 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=100" />
-  <!-- Color de la franja de la barra de estado (la de la isla dinámica).
-       Iba en #0A0519 — la BASE del canvas, casi-negro violeta. Pero el
-       contenido empieza con el radial de --bg-app, cuyo pico es #2B2169: por
-       eso el morado se leía "cortado" justo bajo la isla. No era el degradado
-       parándose, era la franja pintada con el color equivocado.
+  <link rel="manifest" href="./manifest.webmanifest?v=101" />
+  <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
+       isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
-       #261C61 es --bg-app evaluado en su primera fila visible: el radial está
-       centrado en 50% 6% con radio 95% de la altura, así que y=0 cae al ~6.3%
-       del radio, entre los stops #2B2169 (0%) y #23195D (10%). Interpolado da
-       rgb(38,28,97).
+       El intento fue poner aquí #261C61 (= --bg-app evaluado en su primera fila
+       visible) con la teoría de que la franja se pintaba con este token y por
+       eso cortaba. Falso. En standalone iOS NO usa theme-color para la barra de
+       estado —eso es de Safari en modo navegador—: la franja la pinta el
+       sistema a partir de `color-scheme: dark` + status-bar-style `default`.
+       Que el negro coincidiera con el #0A0519 que había aquí era casualidad.
 
-       Esto NO extiende el contenido bajo la barra — eso solo lo hace
-       `black-translucent`, que rompe el viewport (ver la nota de abajo). Iguala
-       el color para que el corte deje de verse. Se verifica en dispositivo. -->
-  <meta name="theme-color" content="#261C61" />
+       Este token sigue en #0A0519 porque es lo que se ve en Safari-navegador,
+       donde sí manda. -->
+  <meta name="theme-color" content="#0A0519" />
   <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -70,11 +68,11 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=100" />
-  <link rel="stylesheet" href="./css/base.css?v=100" />
-  <link rel="stylesheet" href="./css/components.css?v=100" />
-  <link rel="stylesheet" href="./css/views.css?v=100" />
-  <link rel="stylesheet" href="./css/splash.css?v=100" />
+  <link rel="stylesheet" href="./css/tokens.css?v=101" />
+  <link rel="stylesheet" href="./css/base.css?v=101" />
+  <link rel="stylesheet" href="./css/components.css?v=101" />
+  <link rel="stylesheet" href="./css/views.css?v=101" />
+  <link rel="stylesheet" href="./css/splash.css?v=101" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
@@ -166,6 +164,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=100"></script>
+  <script type="module" src="./js/app.js?v=101"></script>
 </body>
 </html>
