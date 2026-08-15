@@ -2478,8 +2478,13 @@ select.field__input::-ms-expand { display: none; }
    .tabbar, .toast y .susurro quedan FUERA a propósito: son `fixed` (el dock es
    una pill flotante anclada al viewport, ver la nota v60 en .tabbar) y
    pisarles el position los devuelve al flujo. Ya están posicionados, así que
-   el ::before absoluto funciona igual. */
-.icon-btn, .mov-search, .composer, .chat-bar, .chat-msg--ia,
+   el ::before absoluto funciona igual.
+
+   .icon-btn tampoco está: lo declara su propio bloque en components.css, porque
+   .ov-close / .sheet__close / .sheet__back / .cfg-back la reposicionan a
+   `absolute` y desde aquí les ganaba la cascada — ese fue el bug que descuadró
+   el cerrar de todas las hojas. */
+.mov-search, .composer, .chat-bar, .chat-msg--ia,
 .persona-card, .prestamo-card, .bonus-card, .notif-item,
 .cfg-extracto, .cfg-note, .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
 .settings-list, .cfg-list, .vf-card, .cred-summary, .ob__resumen {

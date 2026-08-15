@@ -27,6 +27,7 @@ import { abrirPantalla } from './cfg-pantalla.js';
 import { aplicarViewport } from '../viewport.js';
 import { abrirUmbrales } from './cfg-umbrales.js';
 import { abrirOnboarding } from './onboarding.js';
+import { abrirNombre } from './cfg-nombre.js';
 
 const APP_VERSION = '0.6.0';
 
@@ -234,19 +235,18 @@ export default {
       }
       const headEl = root.querySelector('#perfil-head');
       if (headEl) {
+        // El encabezado es pulsable SIEMPRE, no solo cuando falta el nombre:
+        // antes, con nombre puesto, no había forma de corregirlo. Y sin nombre
+        // mandaba al onboarding completo — cinco pasos para escribir una
+        // palabra. Ahora abre la hoja del nombre en los dos casos; el
+        // onboarding sigue disponible en su propia fila de ajustes.
         headEl.classList.toggle('perfil-head--cta', !nom);
-        if (!nom) {
-          headEl.setAttribute('role', 'button');
-          headEl.setAttribute('tabindex', '0');
-          headEl.setAttribute('aria-label', 'Poner tu nombre');
-        } else {
-          headEl.removeAttribute('role');
-          headEl.removeAttribute('tabindex');
-          headEl.removeAttribute('aria-label');
-        }
+        headEl.setAttribute('role', 'button');
+        headEl.setAttribute('tabindex', '0');
+        headEl.setAttribute('aria-label', nom ? 'Cambiar tu nombre' : 'Poner tu nombre');
         if (!headEl.dataset.bound) {
           headEl.dataset.bound = '1';
-          const ir = () => { if (headEl.classList.contains('perfil-head--cta')) abrirOnboarding({ forzado: true, onDone: pintar }); };
+          const ir = () => abrirNombre({ onSaved: pintar });
           headEl.addEventListener('click', ir);
           headEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ir(); } });
         }

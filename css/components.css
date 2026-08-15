@@ -12,6 +12,13 @@
   color: var(--text-2);
   background: var(--glass-2);   /* gear neutro en círculo suave */
   border: 1px solid transparent; /* el hairline lo pinta el borde vivo */
+  /* El contexto del anillo va AQUÍ y no en el bloque del borde vivo (final de
+     views.css) a propósito: .icon-btn es genérica y varias clases la
+     reposicionan —.ov-close, .sheet__close, .sheet__back, .cfg-back son
+     `absolute`—. Declarado aquí, todas esas reglas vienen después y ganan por
+     cascada; declarado al final, les pisaba el position y descuadraba el
+     cerrar de todas las hojas. */
+  position: relative;
   transition: color var(--dur-fast) var(--ease),
               background var(--dur-fast) var(--ease);
 }
