@@ -681,6 +681,10 @@ async function pintar(root) {
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
   const nameEl = root.querySelector('#hoy-name');
   if (nameEl) nameEl.textContent = saludoTexto(nombre);
+  // El header colapsado repite este mismo saludo (ver tituloHeader).
+  saludoActual = saludoTexto(nombre);
+  const hdr = document.getElementById('header-title');
+  if (hdr) hdr.textContent = saludoActual;
 
   const datos = { estado, negocios, historial, recs, catComp };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
@@ -689,8 +693,15 @@ async function pintar(root) {
   mostrarPanel(root, tabActivo, datos, false);
 }
 
+/* Último saludo pintado, para que el header colapsado repita lo que estaba
+   justo encima en vez de un "Hoy" genérico. */
+let saludoActual = '';
+
 export default {
   label: 'Hoy',
+
+  /** Título del header condensado. Lo consulta app.js al cambiar de ruta. */
+  tituloHeader() { return saludoActual; },
 
   render() {
     return `

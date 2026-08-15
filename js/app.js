@@ -28,7 +28,7 @@ import { alertasDePago, textoAlerta } from './alertas-pago.js';
 import { emparejarProductos } from './diferidos.js';
 import { hoyISO, fechaCorta } from './fechas.js';
 import { bindMontosVivos } from './money-input.js';
-import { hoja } from './overlay.js';
+import { hoja, menu } from './overlay.js';
 import { iniciarViewport } from './viewport.js';
 import { smsDelHash } from './sms-banco.js';
 import { esc } from './html.js';
@@ -112,8 +112,14 @@ function navigate(routeId, { replace = false } = {}) {
   syncTabbar(routeId);
   // marca la ruta en <body> (Hoy oculta el header global y va full-bleed)
   document.body.dataset.route = routeId;
-  // título compacto del header (aparece al condensar en scroll)
-  if (headerTitleEl) headerTitleEl.textContent = ROUTES[routeId].label || routeId;
+  // Título compacto del header (aparece al condensar en scroll). Una vista
+  // puede dar el suyo propio: Hoy muestra el saludo en vez de "Hoy", que es lo
+  // que estaba justo encima antes de colapsarse.
+  if (headerTitleEl) {
+    const vista = ROUTES[routeId];
+    const propio = typeof vista.tituloHeader === 'function' ? vista.tituloHeader() : '';
+    headerTitleEl.textContent = propio || vista.label || routeId;
+  }
 
   if (replace) {
     history.replaceState(null, '', '#/' + routeId);
@@ -187,6 +193,29 @@ function initHeader() {
   if (bell) bell.addEventListener('click', () => { abrirNotificaciones(); });
   // la campana del hero de Hoy (otra vista) pide abrir el centro por evento
   document.addEventListener('bolsillo:notif', () => { abrirNotificaciones(); });
+
+  // Header colapsado de Hoy: el orbe se queda a la vista y el resto se pliega.
+  const orbe = document.getElementById('hdr-orbe');
+  if (orbe) orbe.addEventListener('click', () => { location.hash = '#/asesor'; });
+
+  const mas = document.getElementById('hdr-mas');
+  if (mas) {
+    mas.addEventListener('click', async () => {
+      // El badge vive en este botón cuando la campana está plegada: se anuncia
+      // en la propia opción para que el aviso no se pierda dentro del menú.
+      const badge = mas.querySelector('.notif-badge');
+      const pendientes = badge && !badge.hidden ? ` (${badge.textContent})` : '';
+      const elegido = await menu({
+        title: 'Más acciones',
+        items: [
+          { value: 'buscar', label: 'Buscar movimientos' },
+          { value: 'notif', label: `Notificaciones${pendientes}` },
+        ],
+      });
+      if (elegido === 'buscar') location.hash = '#/movimientos';
+      else if (elegido === 'notif') abrirNotificaciones();
+    });
+  }
 }
 
 /* ---- bottom sheet: Registrar ---- */

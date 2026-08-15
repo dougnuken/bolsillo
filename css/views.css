@@ -26,8 +26,17 @@
    HOY v3 — página normal (sin hero naranja): saludo + card de balance
    + tabs (Dashboard/Analytics) + contenido. Scrollea como el resto.
    ============================================================ */
-/* El saludo hace de header propio → se oculta el header global en Hoy. */
-body[data-route="hoy"] .app-header { display: none; }
+/* En Hoy el saludo hace de header propio, PERO el header global ya no se
+   oculta: es su versión colapsada y entra con el scroll, igual que en el resto
+   de vistas (su frost y su título van ligados a --header-p, que fija app.js
+   siguiendo el dedo). Antes desaparecía al bajar y no quedaba nada arriba.
+
+   Sus acciones se pliegan: el orbe —la acción distintiva de la app— se queda a
+   la vista, y buscar + notificaciones caen en el botón de más, que hereda el
+   badge para no perder el aviso al esconder la campana. */
+.hdr-hoy { display: none; }
+body[data-route="hoy"] .hdr-hoy { display: grid; }
+body[data-route="hoy"] #open-notif { display: none; }
 /* Padding superior menor (el saludo arranca bajo el notch); scroll normal. */
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))
@@ -39,7 +48,10 @@ body[data-route="hoy"] .app-header { display: none; }
 /* --- Saludo: nombre + campana + avatar (a la derecha, tipo Finora) --- */
 .hoy-greet {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+  /* Aire real entre el saludo y la primera card: con sp-4 el hero y "Tu dinero"
+     se leían como un solo bloque pegado. Este es el respiro que separa el
+     encabezado del contenido. */
+  margin-bottom: var(--sp-6);
 }
 .hoy-greet__txt { min-width: 0; }
 /* El saludo manda y va primero; "¡Bienvenido!" queda debajo, en susurro. */
