@@ -311,6 +311,10 @@
      que documenta la nota de --safe-b—, así que se toma el mayor: se apoya por
      encima del indicador y sigue leyéndose flotante. */
   --dock-b: max(var(--dock-gap), var(--safe-b));
+  /* Cuánto cede el bloque inferior (dock + FAB) cuando entra un toast: el alto
+     del aviso más un respiro. El FAB no se oculta, se va empujado y asoma justo
+     debajo — la barra vuelve y de paso empuja el toast hacia arriba. */
+  --toast-empuje: 56px;
   /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
      estaba escrito dentro del max() de .tabbar) para que la variante
      edge-to-edge de viewport corto se active desde la cascada de <html>, sin

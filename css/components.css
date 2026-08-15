@@ -298,7 +298,8 @@
   left: 50%;
   /* +sp-4: reanclado a la barra flotante (misma cabalgadura sobre el borde) */
   bottom: calc(var(--dock-b) + var(--nav-h) - 30px);
-  transform: translateX(-50%);
+  /* --dock-shift lo mueve body.has-toast para dejarle el sitio al toast */
+  transform: translateX(-50%) translateY(var(--dock-shift, 0px));
   width: 60px;
   height: 60px;
   border-radius: var(--r-lg); /* cuadrado redondeado (20px) */
@@ -324,7 +325,9 @@
      6px de deslizamiento; la barra sí sigue animando su altura. */
   transition: transform var(--dur-fast) var(--ease), filter var(--dur-fast) var(--ease),
               border-radius var(--dur) var(--ease),
-              background-position var(--dur) var(--ease);
+              background-position var(--dur) var(--ease),
+              /* para ceder el sitio al toast (body.has-toast) */
+              opacity var(--dur-fast) var(--ease);
   will-change: transform, background-position;
   /* long-press del + (atajo de voz): sin menú de selección ni retardos de toque */
   -webkit-touch-callout: none;
@@ -333,7 +336,7 @@
   touch-action: manipulation;
 }
 .fab:hover { filter: brightness(1.06); }
-.fab:active { transform: translateX(-50%) scale(0.93); }
+.fab:active { transform: translateX(-50%) translateY(var(--dock-shift, 0px)) scale(0.93); }
 .fab svg {
   width: 28px; height: 28px;
   position: relative; z-index: 1;                 /* el ícono va sobre el gradiente */
@@ -431,10 +434,14 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
    ANGOSTA (los iconos se acercan) y con la barrita naranja encogida. Vuelve
    a expandirse al subir. Animación sutil pero premium. --- */
 .tabbar {
+  /* --dock-shift lo mueve body.has-toast para dejarle el sitio al toast */
+  transform: translateY(var(--dock-shift, 0px));
   /* colapso suave: ease-in-out simétrico (sin snap) */
   transition: height var(--dur) var(--ease-in-out),
               left var(--dur) var(--ease-in-out),
-              right var(--dur) var(--ease-in-out);
+              right var(--dur) var(--ease-in-out),
+              /* para ceder el sitio al toast (body.has-toast) */
+              transform var(--dur) var(--ease);
 }
 .tab__label {
   max-height: 1.4em;
@@ -1156,13 +1163,22 @@ body.nav-min .fab {
 .toast {
   position: fixed;
   left: 50%;
-  /* Por ENCIMA del FAB (que cabalga la barra flotante). El FAB corona a
-     (nav-h + sp-4 + 30px) desde el borde inferior; sumamos sp-4 de aire para
-     que el toast lo despeje con claridad y el FAB siga tappable. */
-  /* v60: sin resta de --vp-piso. Existía para compensar que el shell se
+  /* Ocupa el sitio del dock, no flota en medio de la pantalla: se lee como
+     parte del chrome inferior y deja de tapar el gauge del balance.
+
+     Cabe ahí porque el bloque inferior le hace sitio, no porque se esconda
+     nada: el aviso entra desde abajo y EMPUJA al dock (con el FAB montado)
+     hacia abajo; al terminar, el dock vuelve a su sitio y de paso empuja el
+     toast hacia arriba hasta desvanecerlo. Ver body.has-toast e .is-leaving.
+
+     Reordenar la pila no servía: con el toast por encima, el FAB queda
+     decapitado (68px de 60); por debajo, el FAB —que está centrado— se come el
+     final del texto.
+
+     v60: sin resta de --vp-piso. Existía para compensar que el shell se
      estirara a 100lvh mientras este fixed seguía en el viewport; ahora el dock
      también es fixed, así que ambos comparten ancla y la resta descuadraba. */
-  bottom: calc(var(--dock-b) + var(--nav-h) + 30px + var(--sp-4));
+  bottom: var(--dock-b);
   transform: translate(-50%, 16px);
   z-index: var(--z-toast);
   display: flex;
@@ -1188,6 +1204,28 @@ body.nav-min .fab {
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility 0s linear var(--dur);
 }
 .toast.is-show { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+
+/* SALIDA: no se cae hacia abajo (por ahí viene el dock de vuelta). Sube y se
+   desvanece, como si la barra lo empujara al recuperar su sitio. Hace falta
+   forzar visibility porque el estado de reposo la apaga tras --dur. */
+.toast.is-leaving {
+  visibility: visible;
+  opacity: 0;
+  transform: translate(-50%, -18px);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+/* El bloque inferior cede el sitio mientras hay un aviso: baja el dock y el FAB
+   montado sobre él. El FAB NO se oculta —sigue visible, asomando bajo el
+   toast—: se aparta y vuelve. Solo transform (el media query de
+   reduced-motion, más abajo, ya le corta la transición a ambos).
+
+   El desplazamiento viaja como VARIABLE y no como una regla descendente
+   (`body.has-toast .tabbar { transform: ... }`): así el transform se declara
+   una sola vez, en la regla base de cada elemento, y aquí solo cambia su valor.
+   Con la regla descendente el transform no llegaba a aplicarse —.tabbar y .fab
+   ya declaran el suyo— y el dock se quedaba quieto. */
+body.has-toast { --dock-shift: var(--toast-empuje); }
 .toast__msg { flex: 1 1 auto; min-width: 0; }
 .toast__ic { flex: none; display: grid; place-items: center; }
 .toast__ic svg { width: 20px; height: 20px; }
