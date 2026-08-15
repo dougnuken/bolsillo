@@ -423,8 +423,10 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   transition: height var(--dur) var(--ease-in-out),
               left var(--dur) var(--ease-in-out),
               right var(--dur) var(--ease-in-out),
-              /* para ceder el sitio al toast (body.has-toast) */
-              transform var(--dur) var(--ease);
+              /* Acuse del toast (body.has-toast): curva con rebote corto y 60ms
+                 de retardo. El retardo es lo que hace que se lea como que el
+                 aviso lo empujó y no como dos piezas moviéndose a la vez. */
+              transform var(--dur) var(--ease-empuje) 60ms;
 }
 .tab__label {
   max-height: 1.4em;
@@ -1158,15 +1160,27 @@ body.nav-min .fab {
      hacia abajo; al terminar, el dock vuelve a su sitio y de paso empuja el
      toast hacia arriba hasta desvanecerlo. Ver body.has-toast e .is-leaving.
 
-     Reordenar la pila no servía: con el toast por encima, el FAB queda
-     decapitado (68px de 60); por debajo, el FAB —que está centrado— se come el
-     final del texto.
+     v143 — QUIÉN VA DÓNDE, que es de lo que iba el bug. Antes el toast se
+     metía en el carril del dock (bottom: --dock-b) y el dock bajaba 56px para
+     hacerle sitio. Nunca cuadró, y el propio código lo documentaba como un
+     callejón sin salida: "con el toast por encima, el FAB queda decapitado;
+     por debajo, el FAB se come el final del texto". Las dos salidas eran malas
+     porque la premisa lo era — dos piezas peleando por el mismo carril, y
+     ninguna reordenación de la pila arregla eso.
+
+     Ahora el toast se apoya ENCIMA del dock, en su propia banda. No hay
+     colisión que resolver: el FAB se ve entero y el texto también. Y el empuje
+     deja de ser un apartarse de 56px para ser lo que de verdad se lee como
+     contacto — el dock cede unos pocos px, como una superficie que acusa el
+     peso de algo que se le posó encima.
 
      v60: sin resta de --vp-piso. Existía para compensar que el shell se
      estirara a 100lvh mientras este fixed seguía en el viewport; ahora el dock
      también es fixed, así que ambos comparten ancla y la resta descuadraba. */
-  bottom: var(--dock-b);
-  transform: translate(-50%, 16px);
+  bottom: calc(var(--dock-b) + var(--nav-h) + var(--fab-asoma) + var(--sp-3));
+  /* Entra desde abajo, desde detrás del dock: viene de donde vive el chrome, no
+     aparece de la nada en mitad de la pantalla. */
+  transform: translate(-50%, 22px) scale(0.96);
   z-index: var(--z-toast);
   display: flex;
   align-items: center;
@@ -1190,22 +1204,39 @@ body.nav-min .fab {
   pointer-events: none;
   transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility 0s linear var(--dur);
 }
-.toast.is-show { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
+/* ENTRADA con rebote corto: sube, se pasa un pelo y se asienta. La escala
+   acompaña al desplazamiento —llega "tomando cuerpo"— en vez de deslizarse
+   rígido. Solo transform y opacity. */
+.toast.is-show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+  transition: opacity var(--dur-fast) linear,
+              transform var(--dur) var(--ease-empuje);
+}
 
-/* SALIDA: no se cae hacia abajo (por ahí viene el dock de vuelta). Sube y se
-   desvanece, como si la barra lo empujara al recuperar su sitio. Hace falta
-   forzar visibility porque el estado de reposo la apaga tras --dur. */
+/* SALIDA: baja por donde vino y se encoge, devuelto por el dock que recupera su
+   sitio. Más rápida que la entrada —una salida lenta se siente como que la app
+   te hace esperar— y sin rebote: rebotar al irse contradice la causa.
+   Hace falta forzar visibility porque el estado de reposo la apaga tras --dur. */
 .toast.is-leaving {
   visibility: visible;
   opacity: 0;
-  transform: translate(-50%, -18px);
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  transform: translate(-50%, 14px) scale(0.97);
+  transition: opacity var(--dur-fast) linear,
+              transform var(--dur-fast) cubic-bezier(0.4, 0, 1, 1);
 }
 
-/* El bloque inferior cede el sitio mientras hay un aviso: baja el dock y el FAB
-   montado sobre él. El FAB NO se oculta —sigue visible, asomando bajo el
-   toast—: se aparta y vuelve. Solo transform (el media query de
-   reduced-motion, más abajo, ya le corta la transición a ambos).
+/* El dock ACUSA el aviso: cede unos pocos px, como una superficie que registra
+   el peso de algo que se le posó encima, y vuelve al soltarlo. Ya no se aparta
+   —el toast tiene su propia banda, encima—, así que el FAB se ve entero todo el
+   rato. Solo transform (el media query de reduced-motion, más abajo, ya le
+   corta la transición a ambos).
+
+   El retardo es lo que convierte dos movimientos en una relación de causa:
+   arrancando a la vez se leen como dos piezas coordinadas por fuera; cediendo
+   un instante DESPUÉS, se lee que una empujó a la otra. 60ms bastan — más y
+   parece que el dock reacciona tarde.
 
    El desplazamiento viaja como VARIABLE y no como una regla descendente
    (`body.has-toast .tabbar { transform: ... }`): así el transform se declara
@@ -1213,6 +1244,20 @@ body.nav-min .fab {
    Con la regla descendente el transform no llegaba a aplicarse —.tabbar y .fab
    ya declaran el suyo— y el dock se quedaba quieto. */
 body.has-toast { --dock-shift: var(--toast-empuje); }
+/* El dock lleva su curva de acuse en la regla base (busca --ease-empuje allí).
+   El FAB no puede: comparte el `transform` con su :active, y retrasarlo 60ms
+   dejaría el botón sintiéndose lento al pulsarlo. Así que el acuse se le pone
+   SOLO mientras hay aviso, y por propiedades sueltas en vez de shorthand —el
+   shorthand borraría el resto de sus transiciones—.
+
+   ⚠️ Las tres listas son POSICIONALES: siguen el orden de la shorthand de .fab
+   (transform, filter, border-radius, background-position, opacity). Si se
+   reordena allí, hay que reordenar aquí o el retardo acaba en otra propiedad. */
+body.has-toast .fab {
+  transition-duration: var(--dur), var(--dur-fast), var(--dur), var(--dur), var(--dur-fast);
+  transition-timing-function: var(--ease-empuje), var(--ease), var(--ease), var(--ease), var(--ease);
+  transition-delay: 60ms, 0s, 0s, 0s, 0s;
+}
 .toast__msg { flex: 1 1 auto; min-width: 0; }
 .toast__ic { flex: none; display: grid; place-items: center; }
 .toast__ic svg { width: 20px; height: 20px; }

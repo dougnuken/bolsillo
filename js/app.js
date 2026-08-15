@@ -179,6 +179,15 @@ function setHeaderProgress(top) {
   if (q === headerP) return;
   headerP = q;
   document.body.style.setProperty('--header-p', String(q));
+  /* El mismo progreso, con curva. --header-p va crudo porque sigue el dedo y
+     ahí mandar una curva sería mentirle al scroll; pero las OPACIDADES con
+     progreso lineal se sienten planas: el header aparece a ritmo constante en
+     vez de asentarse. Este ease-out (1-(1-q)²) hace que se materialice pronto
+     y luego afine, que es como se lee un objeto que llega a su sitio.
+     Se calcula una vez aquí y no en cada regla: así todas las piezas comparten
+     exactamente el mismo ritmo, que es lo que las hace ir a una. */
+  const e = 1 - (1 - q) * (1 - q);
+  document.body.style.setProperty('--header-e', String(Math.round(e * 100) / 100));
   // Bandera binaria además del progreso: la opacidad se puede interpolar, pero
   // `pointer-events` no. Sin esto, los botones del header colapsado siguen
   // capturando toques mientras están invisibles, encima de los del hero.

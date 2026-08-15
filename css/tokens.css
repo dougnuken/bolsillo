@@ -349,7 +349,22 @@
   /* Cuánto cede el bloque inferior (dock + FAB) cuando entra un toast: el alto
      del aviso más un respiro. El FAB no se oculta, se va empujado y asoma justo
      debajo — la barra vuelve y de paso empuja el toast hacia arriba. */
-  --toast-empuje: 56px;
+  /* Cuánto CEDE el dock al recibir un aviso. Valía 56px, que era el alto del
+     toast: la idea era que le hiciera sitio en su propio carril. No funcionaba
+     —el FAB sobresale del dock y seguía cruzándose con el texto— y además 56px
+     de recorrido no se leen como un empuje sino como dos piezas moviéndose
+     cada una por su lado. Ahora el toast va por encima y esto es solo el acuse
+     de recibo: el dock se hunde lo justo para que se vea que algo se le posó
+     encima. */
+  --toast-empuje: 9px;
+  /* Cuánto ASOMA el FAB por encima del dock. El toast tiene que despejar esto,
+     no solo el alto de la barra: el + está montado a caballo del borde superior
+     y sobresale más que ella. Medido en dispositivo — con el toast apoyado solo
+     en --nav-h seguían cruzándose 39px. */
+  --fab-asoma: 52px;
+  /* Curva con rebote corto para el acuse: sobrepasa un pelo y se asienta. Es lo
+     que separa "se movió" de "lo empujaron". */
+  --ease-empuje: cubic-bezier(0.22, 1.4, 0.36, 1);
   /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
      estaba escrito dentro del max() de .tabbar) para que la variante
      edge-to-edge de viewport corto se active desde la cascada de <html>, sin

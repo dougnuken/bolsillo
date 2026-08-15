@@ -224,7 +224,7 @@ img { max-width: 100%; display: block; }
      suave y no aparece la línea. */
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 38%, rgba(0, 0, 0, 0.72) 62%, rgba(0, 0, 0, 0.32) 82%, transparent 100%);
           mask-image: linear-gradient(to bottom, #000 0%, #000 38%, rgba(0, 0, 0, 0.72) 62%, rgba(0, 0, 0, 0.32) 82%, transparent 100%);
-  opacity: var(--header-p, 0);
+  opacity: var(--header-e, 0);
   transition: opacity var(--dur-fast) linear; /* suaviza entre muestras de scroll */
   pointer-events: none;
   z-index: -1;
@@ -245,7 +245,7 @@ img { max-width: 100%; display: block; }
   font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
   color: var(--text-1);
-  opacity: var(--header-p, 0);
+  opacity: var(--header-e, 0);
   transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
   pointer-events: none;
   transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;

@@ -45,19 +45,23 @@ body[data-route="hoy"] #open-notif { display: none; }
    los taps de los botones del hero. */
 body[data-route="hoy"] .hdr-hoy {
   display: grid;
-  opacity: var(--header-p, 0);
+  opacity: var(--header-e, 0);
   pointer-events: none;
   transition: opacity var(--dur-fast) linear;
 }
 body[data-route="hoy"].header-fijo .hdr-hoy { pointer-events: auto; }
-/* Los botones del header esperan a que el viaje del hero termine: aparecen solo
-   en el último tercio de la rampa, cuando el botón que los releva ya está
-   encima. Si aparecieran linealmente, a media rampa se verían los dos a medio
-   camino, cada uno en un sitio distinto — dos fantasmas en vez de un relevo.
-   La marca NO entra aquí: esa sí se funde a lo largo de toda la rampa. */
+/* Los botones del header esperan a que el viaje del hero termine, y entran
+   cuando el que los releva ya está encima: si aparecieran a la vez, a media
+   rampa se verían los dos a medio camino en sitios distintos — dos fantasmas
+   en vez de un relevo.
+
+   Los tres rangos (marca, estos, y los del hero que se van) están calculados
+   sobre --header-e, el progreso YA curvado, para que todos compartan el mismo
+   ritmo. Se solapan a propósito: los del hero empiezan a irse antes de que
+   estos lleguen del todo, así el relevo es un cruce y no un corte. */
 body[data-route="hoy"] #hdr-orbe,
 body[data-route="hoy"] #hdr-mas {
-  opacity: calc(var(--header-p, 0) * 3 - 2);
+  opacity: calc(var(--header-e, 0) * 2.2 - 1.2);
 }
 /* La marca es lo único de .hdr-hoy que NO es un botón: va en fila (el `grid` de
    arriba es para los iconos) y nunca captura el toque, ni con el header puesto.
@@ -108,7 +112,7 @@ body[data-route="hoy"] .app-header__title { display: none; }
    mismo punto, el cruce se lee como una sola pieza que se asienta. */
 body[data-route="hoy"] .hoy-greet__actions .icon-btn {
   transform: translateX(calc(var(--viaje-x, 0px) * var(--header-p, 0)));
-  opacity: calc(3 - var(--header-p, 0) * 3);
+  opacity: calc(2.1 - var(--header-e, 0) * 2.5);
   transition: transform var(--dur-fast) linear, opacity var(--dur-fast) linear;
 }
 /* Buscar y la campana caen las dos en el botón de más —es donde se pliegan—, así
@@ -2527,7 +2531,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
   font-family: var(--font-display);
   font-size: var(--fs-h3); font-weight: var(--fw-bold); letter-spacing: -.01em;
   color: var(--text-1);
-  opacity: var(--header-p, 0);
+  opacity: var(--header-e, 0);
   transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
   transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
 }
