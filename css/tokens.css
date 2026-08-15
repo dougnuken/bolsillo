@@ -64,7 +64,7 @@
      ya desenfoca (la barra de la cartera): ahí su backdrop-filter no aplica
      —no se puede desenfocar detrás de un ancestro que ya desenfocó— y sin más
      cuerpo de color el control se ve hueco. */
-  --glass-hundido-opaco: rgba(10, 5, 25, 0.72);
+  --glass-hundido-opaco: rgba(10, 5, 25, 0.46);
   --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
   /* Velo del header. Estaba en .78 —tan opaco que tapaba el contenido y se leía
      como una banda negra, no como vidrio—. A .38 el fondo se sigue viendo por

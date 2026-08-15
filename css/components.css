@@ -1654,12 +1654,16 @@ body.has-toast { --dock-shift: var(--toast-empuje); }
   box-shadow: var(--sh-sm);
 }
 .seg--dock .seg__opt.is-on { color: var(--text-1); }
-/* Etiquetas largas en 3 columnas estrechas (la cartera): baja un punto y
-   aprieta el tracking antes que partir la palabra. */
-.seg--3 .seg__opt {
-  font-size: var(--fs-xs);
-  letter-spacing: -0.01em;
-  padding: 0 2px;
+/* Tres columnas aprietan, pero no tanto: a 14px "Mis productos" cabe de sobra
+   en un móvil normal, y bajarle el punto hacía que el mismo control se leyera
+   distinto en la cartera que en Hoy sin una razón que lo justificara. El
+   descenso se reserva para pantallas donde la etiqueta sí se partiría. */
+.seg--3 .seg__opt { padding: 0 2px; }
+@media (max-width: 359px) {
+  .seg--3 .seg__opt {
+    font-size: var(--fs-xs);
+    letter-spacing: -0.01em;
+  }
 }
 /* Pill deslizante (posición/ancho por JS: colocarThumb). Material glossy coral
    (Gasto) que se vuelve verde glossy (Ingreso) — mismo brillo/gradiente. */

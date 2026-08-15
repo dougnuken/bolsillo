@@ -2363,6 +2363,10 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
   -webkit-backdrop-filter: none;
           backdrop-filter: none;
 }
+/* El alpha está calibrado para LEERSE igual que el de Hoy, no para coincidir
+   con él en el papel: allá el material sale de 0.30 + desenfoque del lienzo,
+   aquí el desenfoque no existe y el mismo 0.30 deja el control hueco. Si algún
+   día la barra deja de desenfocar, este bloque sobra. */
 .wallet-back-row { display: flex; align-items: center; gap: var(--sp-3); }
 /* El título solo aparece cuando el contenido ya subió: en reposo el segmento
    de justo abajo ya dice en qué sección estás. Reusa --header-p, que app.js
