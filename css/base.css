@@ -271,7 +271,12 @@ img { max-width: 100%; display: block; }
   transform: translateY(calc((1 - var(--header-p, 0)) * 4px));
   transition: opacity var(--dur-fast) linear, transform var(--dur-fast) linear;
 }
-.hdr-marca__ico { width: 22px; height: 22px; flex: 0 0 auto; color: var(--accent-light); }
+/* El símbolo va BLANCO, no morado: el sistema lo define plano y de un solo
+   tono, con el color viviendo en el fondo. En --accent-light se apagaba contra
+   el violeta del header y a 22px no se distinguía del anillo con "+" anterior.
+   26px porque el corte diagonal necesita ese tamaño para leerse; el trazo se
+   queda en el canónico 108/1024 para no fragmentar el símbolo. */
+.hdr-marca__ico { width: 26px; height: 26px; flex: 0 0 auto; color: var(--text-1); }
 /* El wordmark va en plano, sin el degradado del splash: ahí es el héroe de la
    pantalla, aquí es chrome y compite con el contenido si brilla. */
 .hdr-marca__word {
