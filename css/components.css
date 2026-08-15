@@ -1195,14 +1195,28 @@ body.nav-min .fab {
 /* --- Variante ÉXITO: vidrio VERDE glassmorphic (translúcido sobre el canvas) --- */
 .toast--ok {
   background:
+    /* Foco de luz en la esquina: mismo lenguaje que el borde vivo de los
+       containers, pero en verde. Es lo que le quita el aspecto plano — antes
+       era un solo linear-gradient parejo, sin punto de origen de la luz. */
+    radial-gradient(120% 150% at 14% -35%,
+      color-mix(in srgb, var(--verde-light) 44%, transparent),
+      transparent 60%),
     linear-gradient(135deg,
-      color-mix(in srgb, var(--verde-light) 26%, transparent),
-      color-mix(in srgb, var(--semaforo-verde) 15%, transparent)),
-    rgba(11, 11, 13, 0.28);
-  border-color: color-mix(in srgb, var(--verde-light) 42%, transparent);
-  box-shadow: 0 12px 36px -10px var(--verde-glow), inset 0 1px 0 var(--glass-gloss);
+      color-mix(in srgb, var(--verde-light) 32%, transparent),
+      color-mix(in srgb, var(--semaforo-verde) 18%, transparent)),
+    rgba(11, 11, 13, 0.24);
+  border-color: color-mix(in srgb, var(--verde-light) 58%, transparent);
+  box-shadow:
+    /* halo lejano + un rebote corto y saturado pegado al borde */
+    0 14px 42px -10px var(--verde-glow),
+    0 2px 16px -4px color-mix(in srgb, var(--verde-light) 32%, transparent),
+    /* el filo superior en verde claro, no en blanco: lee como luz, no como gloss */
+    inset 0 1px 0 var(--verde-rim);
 }
-.toast--ok .toast__ic { color: var(--verde-light); }
+.toast--ok .toast__ic {
+  color: var(--verde-light);
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--verde-light) 55%, transparent));
+}
 
 /* --- Neutro / error: vidrio OSCURO translúcido --- */
 .toast--info { background: rgba(20, 20, 23, 0.5); }

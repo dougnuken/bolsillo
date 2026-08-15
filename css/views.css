@@ -2462,13 +2462,24 @@ select.field__input::-ms-expand { display: none; }
 
    Dos grupos, por una razón mecánica: `overflow: hidden` recorta al padding box
    y se comería un anillo desbordado, así que esos containers lo llevan por
-   dentro (inset 0) en vez de sobre el borde (inset -1px). */
+   dentro (inset 0) en vez de sobre el borde (inset -1px).
+
+   QUÉ QUEDA FUERA, y no es capricho: este borde es DECORATIVO y siempre morado.
+   Los componentes cuyo borde COMUNICA estado no entran, porque apagarles el
+   border-color les borra el significado y les deja un anillo del color
+   equivocado. Pasó: .toast--ok perdió su verde y se veía plano.
+     · .toast     → --ok verde, --error rojo
+     · .cfg-note  → --warn, --ok, --err
+     · .notif-item→ --ambar, --rojo
+     · .cfg-extracto → [disabled]
+   Regla para el futuro: si el borde de un componente cambia de color según el
+   estado, no lo metas aquí. */
 
 /* El borde plano se apaga en todos; el anillo lo reemplaza. */
 .card, .btn--ghost, .icon-btn, .mov-search,
-.tabbar, .composer, .chat-bar, .chat-msg--ia, .toast, .susurro,
-.persona-card, .prestamo-card, .bonus-card, .notif-item,
-.cfg-extracto, .cfg-note, .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
+.tabbar, .composer, .chat-bar, .chat-msg--ia, .susurro,
+.persona-card, .prestamo-card, .bonus-card,
+.hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
 .settings-list, .cfg-list, .bcard, .hoy-productos, .pcard, .vf-card,
 .cred-summary, .ob__resumen {
   border-color: transparent;
@@ -2485,17 +2496,17 @@ select.field__input::-ms-expand { display: none; }
    `absolute` y desde aquí les ganaba la cascada — ese fue el bug que descuadró
    el cerrar de todas las hojas. */
 .mov-search, .composer, .chat-bar, .chat-msg--ia,
-.persona-card, .prestamo-card, .bonus-card, .notif-item,
-.cfg-extracto, .cfg-note, .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
+.persona-card, .prestamo-card, .bonus-card,
+.hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
 .settings-list, .cfg-list, .vf-card, .cred-summary, .ob__resumen {
   position: relative;
 }
 
 .card::before, .btn--ghost::before, .icon-btn::before, .mov-search::before,
 .tabbar::before, .composer::before, .chat-bar::before, .chat-msg--ia::before,
-.toast::before, .susurro::before,
-.persona-card::before, .prestamo-card::before, .bonus-card::before, .notif-item::before,
-.cfg-extracto::before, .cfg-note::before, .hormiga-note::before,
+.susurro::before,
+.persona-card::before, .prestamo-card::before, .bonus-card::before,
+.hormiga-note::before,
 .cat-preview::before, .empty__art::before, .hoy-skeleton::before,
 .settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
 .pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
