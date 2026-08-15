@@ -17,6 +17,25 @@ export const VERSION_BACKUP = 1;
 export const CAMPOS_SOLO_LOCALES = Object.freeze(['apiKey']);
 
 /**
+ * Stores que viajan en el respaldo como arrays. UNA sola lista para las tres
+ * puertas —serializar, exportar e importar—, porque estaban escritas a mano
+ * por separado y se quedaron desincronizadas: `prestamos` (lo de "me deben" y
+ * "debo") y `cortes` (los extractos) existían en la base pero NO se exportaban,
+ * así que restaurar un respaldo los perdía sin avisar.
+ */
+export const STORES_RESPALDO = Object.freeze([
+  'movimientos', 'recurrentes', 'creditos', 'ingresos', 'prestamos', 'cortes',
+]);
+
+/**
+ * Stores con tratamiento propio, a propósito: `config` se FUSIONA con la local
+ * en vez de sobrescribirla, y `adjuntos` es opcional por peso. Declarados aquí
+ * para que el test de cobertura sepa que su ausencia de STORES_RESPALDO es
+ * deliberada y no un olvido.
+ */
+export const STORES_APARTE = Object.freeze(['config', 'adjuntos']);
+
+/**
  * Copia de la config sin los campos solo-locales (hoy: apiKey). PURA.
  * Se usa en las DOS direcciones: al serializar (que no salga) y al importar
  * (que no entre y pise la clave del usuario).
@@ -107,23 +126,15 @@ export function fusionarConfig(local, importada) {
  * @param {{incluirAdjuntos?:boolean, now?:Date}} [opts]
  */
 export function serializar(datos = {}, { incluirAdjuntos = false, now = new Date() } = {}) {
-  const {
-    movimientos = [],
-    recurrentes = [],
-    creditos = [],
-    ingresos = [],
-    config = null,
-    adjuntos = [],
-  } = datos;
-
-  const payload = {
-    movimientos,
-    recurrentes,
-    creditos,
-    ingresos,
-    config: config ? sinCamposLocales(config) : null,
-  };
-  if (incluirAdjuntos) payload.adjuntos = adjuntos;
+  const d = datos && typeof datos === 'object' ? datos : {};
+  const payload = {};
+  // Recorre la lista única en vez de destructurar a mano: así un store nuevo
+  // entra al respaldo por el solo hecho de estar en STORES_RESPALDO.
+  for (const store of STORES_RESPALDO) {
+    payload[store] = Array.isArray(d[store]) ? d[store] : [];
+  }
+  payload.config = d.config ? sinCamposLocales(d.config) : null;
+  if (incluirAdjuntos) payload.adjuntos = Array.isArray(d.adjuntos) ? d.adjuntos : [];
 
   return {
     formato: FORMATO,
@@ -192,12 +203,13 @@ async function entregar(json, nombre) {
  * @param {object} db módulo db.js (getAll, getConfig, saveConfig)
  */
 export async function exportar(db, { now = new Date(), incluirAdjuntos = false } = {}) {
-  const [movimientos, recurrentes, creditos, ingresos] = await Promise.all([
-    db.getAll('movimientos'),
-    db.getAll('recurrentes'),
-    db.getAll('creditos'),
-    db.getAll('ingresos'),
-  ]);
+  // Un store que aún no exista en una base vieja no debe tumbar el respaldo
+  // entero: se resuelve como lista vacía y el resto sigue.
+  const leidos = await Promise.all(
+    STORES_RESPALDO.map((s) => db.getAll(s).catch(() => [])),
+  );
+  const datos = {};
+  STORES_RESPALDO.forEach((s, i) => { datos[s] = leidos[i] || []; });
   const config = await db.getConfig();
 
   // La fecha de ESTE respaldo se sella DENTRO del archivo: si se sellara solo
@@ -207,13 +219,7 @@ export async function exportar(db, { now = new Date(), incluirAdjuntos = false }
   const exportadoEn = momento.toISOString();
 
   const backup = serializar(
-    {
-      movimientos,
-      recurrentes,
-      creditos,
-      ingresos,
-      config: { ...config, fechaUltimoBackup: exportadoEn },
-    },
+    { ...datos, config: { ...config, fechaUltimoBackup: exportadoEn } },
     { incluirAdjuntos, now: momento },
   );
   const json = JSON.stringify(backup, null, 2);
@@ -242,10 +248,9 @@ export async function importar(db, json) {
   if (!res.ok) throw new Error('No se pudo importar el respaldo: ' + res.error);
 
   const d = res.datos;
-  const stores = ['movimientos', 'recurrentes', 'creditos', 'ingresos'];
   const importados = {};
 
-  for (const store of stores) {
+  for (const store of STORES_RESPALDO) {
     const arr = Array.isArray(d[store]) ? d[store] : [];
     if (arr.length) await db.bulkPut(store, arr);
     importados[store] = arr.length;

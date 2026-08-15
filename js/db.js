@@ -16,6 +16,13 @@ const DB_VERSION = 3;
 
 // Stores con keyPath "id". El de movimientos lleva índices de consulta.
 const STORES_SIMPLES = ['recurrentes', 'creditos', 'ingresos', 'config', 'adjuntos', 'prestamos', 'cortes'];
+
+/**
+ * TODOS los stores de la base. Se exporta para que el respaldo pueda
+ * comprobar que no se le queda ninguno fuera: así, añadir un store aquí y
+ * olvidarlo en backup.js rompe un test en vez de perder datos en silencio.
+ */
+export const STORES = Object.freeze(['movimientos', ...STORES_SIMPLES]);
 const INDICES_MOVIMIENTOS = ['fecha', 'categoria', 'cuenta', 'fuente', 'dedupKey'];
 
 let dbPromise = null;
