@@ -12,7 +12,7 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=149" />
+  <link rel="manifest" href="./manifest.webmanifest?v=150" />
   <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
        isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
@@ -68,11 +68,11 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=149" />
-  <link rel="stylesheet" href="./css/base.css?v=149" />
-  <link rel="stylesheet" href="./css/components.css?v=149" />
-  <link rel="stylesheet" href="./css/views.css?v=149" />
-  <link rel="stylesheet" href="./css/splash.css?v=149" />
+  <link rel="stylesheet" href="./css/tokens.css?v=150" />
+  <link rel="stylesheet" href="./css/base.css?v=150" />
+  <link rel="stylesheet" href="./css/components.css?v=150" />
+  <link rel="stylesheet" href="./css/views.css?v=150" />
+  <link rel="stylesheet" href="./css/splash.css?v=150" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
@@ -82,16 +82,39 @@
     <div class="splash__losas"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="splash__grain"></div>
     <div class="splash__lock">
-      <!-- Anillo Partido, idéntico al de icons/icon.svg. Plano y de un solo tono:
-           el color lo pone el fondo, nunca el símbolo. currentColor lo resuelve
-           splash.css desde tokens, para no dejar hex fuera de tokens.css. -->
-      <svg class="splash__icon" viewBox="0 0 1024 1024" aria-hidden="true">
-        <g transform="rotate(-28 512 512)" fill="none" stroke="currentColor" stroke-width="108" stroke-linecap="round">
-          <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3" />
-          <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7" />
+      <!-- LOCKUP EN DOS TIEMPOS
+           El símbolo entra grande y solo, y cuando "lbo" se revela se encoge a
+           talla de letra y cede el centro. No aparece una segunda "o": el
+           símbolo ES la primera letra de la palabra, así que el logotipo no
+           acompaña a la marca, la completa.
+
+           Los dos grupos viven en el mismo viewBox, así que el kerning entre el
+           símbolo y la "l" es una distancia dibujada y no una suma de anchos en
+           px. El símbolo va a escala 0.3811: iguala su extensión real —anillo
+           más el deslizamiento de los arcos, 600 u— con la "o" del wordmark más
+           un 3% de overshoot óptico, que es lo que una curva necesita para
+           pesar igual que un asta recta.
+
+           Espaciado: b|o 24 < o|l 40 < l|b 48. Dos curvas se acercan más que
+           curva y recta, y estas más que dos astas. Las astas cierran en −23
+           porque su cap redondo de radio 23 lleva la tinta justo a la línea
+           base; son las "o" las que la rebasan 6 u. -->
+      <svg class="splash__lockup" viewBox="-32 -349 898 384" role="img" aria-label="olbo">
+        <g class="lk-o">
+          <g transform="translate(105.1,-105) scale(0.3811) translate(-512,-512)">
+            <g transform="rotate(-28 512 512)" fill="none" stroke="currentColor" stroke-width="108" stroke-linecap="round">
+              <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3" />
+              <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7" />
+            </g>
+          </g>
+        </g>
+        <g class="lk-rest" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round">
+          <path d="M279 -300 V -23" />
+          <path d="M373 -300 V -23" />
+          <circle cx="484" cy="-105" r="88" />
+          <path d="M811.6 -138 A 88 88 0 1 1 763 -186.6" />
         </g>
       </svg>
-      <div class="splash__word">olbo</div>
       <div class="splash__tag">Tu riqueza en calma</div>
     </div>
   </div>
@@ -188,6 +211,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=149"></script>
+  <script type="module" src="./js/app.js?v=150"></script>
 </body>
 </html>

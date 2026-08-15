@@ -21,7 +21,7 @@
   overflow: hidden; /* las losas desbordan a propósito; el recorte lo hace la pantalla */
   background: var(--splash-bg);
   /* se funde solo hacia la app; forwards deja el estado final (invisible/no-click) */
-  animation: splashOut 0.6s var(--ease) 1.9s forwards;
+  animation: splashOut 0.6s var(--ease) 2.15s forwards;
 }
 @keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 
@@ -107,51 +107,63 @@
   gap: var(--sp-5);
 }
 
-/* Anillo Partido: plano y de un solo tono, igual que el ícono de app.
-   El color lo pone el fondo; dentro del símbolo no entra nunca. */
-.splash__icon {
-  width: 118px;
-  height: 118px;
-  color: var(--splash-marca);
-  transform-origin: center;
-  animation: splashIcon 0.85s var(--ease-fan) 0.3s both;
-}
-@keyframes splashIcon {
-  from { opacity: 0; transform: scale(0.82) rotate(-18deg); }
-  60%  { opacity: 1; }
-  to   { opacity: 1; transform: scale(1) rotate(0deg); }
-}
+/* ---- Lockup en dos tiempos ----
+   El símbolo entra grande y solo —es el protagonista del primer medio
+   segundo— y al revelarse "lbo" se encoge a talla de letra y cede el
+   centro. El desplazamiento de 311.9 es la distancia entre el centro
+   del lienzo y el sitio que la "o" ocupa dentro de la palabra.
 
-.splash__word {
-  font-family: var(--font-display);
-  font-size: 2.7rem;
-  font-weight: var(--fw-bold);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--text-1);
-  opacity: 0;
-  animation: splashRise 0.6s var(--ease) 0.78s both;
+   Solo transform / opacity / clip-path: todo se resuelve en el
+   compositor y nada dispara layout.
+
+   overflow visible es obligatorio: el símbolo a escala 2.35 necesita
+   537 u de alto y el viewBox tiene 384, así que sin esto el SVG lo
+   recorta por arriba y por abajo. El recorte lo hace #splash. */
+.splash__lockup {
+  width: 260px;
+  height: auto;
+  overflow: visible;
+  color: var(--splash-marca);
 }
-@keyframes splashRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.lk-o,
+.lk-rest { transform-box: view-box; }
+.lk-o {
+  transform-origin: 105.1px -105px;
+  animation: lkO 1.25s var(--ease) 0.15s both;
+}
+.lk-rest {
+  transform-origin: 256px -105px;
+  animation: lkRest 0.55s var(--ease) 0.85s both;
+}
+@keyframes lkO {
+  0%   { opacity: 0; transform: translate(311.9px, 0) scale(2.35); }
+  12%  { opacity: 1; }
+  52%  { opacity: 1; transform: translate(311.9px, 0) scale(2.35); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+@keyframes lkRest {
+  0%   { opacity: 0; clip-path: inset(-30% 100% -30% 0); transform: translate(-26px, 0); }
+  20%  { opacity: 1; }
+  100% { opacity: 1; clip-path: inset(-30% -4% -30% 0); transform: translate(0, 0); }
+}
 
 .splash__tag {
   font-size: var(--fs-sm);
   color: var(--text-2);
   opacity: 0;
-  animation: splashFade 0.6s var(--ease) 1s both;
+  animation: splashFade 0.6s var(--ease) 1.45s both;
 }
 @keyframes splashFade { to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .splash__losas i, .splash__icon, .splash__word, .splash__tag {
+  .splash__losas i, .lk-o, .lk-rest, .splash__tag {
     animation-duration: 0.01s;
     animation-delay: 0s;
   }
-  /* las losas nacen en opacity:0 y solo la animación las revela: sin
-     reponerlas aquí, quien pida menos movimiento ve la pantalla vacía */
-  .splash__losas i {
-    opacity: 1;
-    transform: rotate(var(--splash-angulo));
-  }
-  .splash__icon, .splash__word, .splash__tag { transform: none; }
+  /* losas y lockup nacen ocultos y solo la animación los revela: sin
+     reponerlos aquí, quien pida menos movimiento ve la pantalla vacía */
+  .splash__losas i { opacity: 1; transform: rotate(var(--splash-angulo)); }
+  .lk-o   { opacity: 1; transform: none; }
+  .lk-rest { opacity: 1; transform: none; clip-path: none; }
+  .splash__tag { opacity: 1; }
 }
