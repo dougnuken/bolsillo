@@ -164,7 +164,7 @@ function tabsHTML() {
 function listaHTML(creditos, cortes, prestamos) {
   const head = `
     <div class="wallet-back-row">
-      <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio>${ICON_BACK}<span>Hoy</span></button>
+      <button class="btn btn--ghost btn--head btn--back" type="button" data-inicio aria-label="Volver a Hoy">${ICON_BACK}</button>
     </div>
     ${tabsHTML()}`;
 
@@ -269,7 +269,7 @@ function detalleHTML(cred, cortes, monedaSel) {
 
   const back = `
     <div class="wallet-detalle-top">
-      <button class="btn btn--ghost btn--head btn--back" type="button" data-back>${ICON_BACK}<span>Mis productos</span></button>
+      <button class="btn btn--ghost btn--head btn--back" type="button" data-back aria-label="Volver a Mis productos">${ICON_BACK}</button>
       <button class="btn btn--ghost btn--head" type="button" data-editar>Editar</button>
     </div>`;
 

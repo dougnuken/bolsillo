@@ -82,9 +82,16 @@
 .btn--head { min-height: 44px; padding: 0 var(--sp-4); font-weight: var(--fw-bold); }
 .btn--head svg { width: 18px; height: 18px; }
 
-/* Back canónico de la app: chevron + destino. El chevron ya aporta aire a la
-   izquierda, por eso ese lado va más ajustado. */
-.btn--back { gap: 4px; padding-left: var(--sp-3); }
+/* Back canónico de la app: SOLO la flecha, en un círculo. Llevaba el destino
+   como label ("Hoy", "Mis productos") y eso lo hacía crecer distinto en cada
+   nivel; con el icono suelto el control es idéntico en todos y ocupa lo mínimo.
+   El destino se anuncia por aria-label, así que no se pierde para lectores. */
+.btn--back {
+  gap: 0;
+  padding: 0;
+  width: 44px;          /* cuadrado = círculo con el radio full de .btn */
+  flex: 0 0 auto;
+}
 
 /* Hubo aquí un componente de tabs con subrayado (.vtabs) para Hoy y la cartera.
    Las dos vistas usan ahora el control segmentado .seg (más abajo) + .seg--dock,
