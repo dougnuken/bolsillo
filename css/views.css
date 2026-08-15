@@ -50,6 +50,15 @@ body[data-route="hoy"] .hdr-hoy {
   transition: opacity var(--dur-fast) linear;
 }
 body[data-route="hoy"].header-fijo .hdr-hoy { pointer-events: auto; }
+/* Los botones del header esperan a que el viaje del hero termine: aparecen solo
+   en el último tercio de la rampa, cuando el botón que los releva ya está
+   encima. Si aparecieran linealmente, a media rampa se verían los dos a medio
+   camino, cada uno en un sitio distinto — dos fantasmas en vez de un relevo.
+   La marca NO entra aquí: esa sí se funde a lo largo de toda la rampa. */
+body[data-route="hoy"] #hdr-orbe,
+body[data-route="hoy"] #hdr-mas {
+  opacity: calc(var(--header-p, 0) * 3 - 2);
+}
 /* La marca es lo único de .hdr-hoy que NO es un botón: va en fila (el `grid` de
    arriba es para los iconos) y nunca captura el toque, ni con el header puesto.
    Y ocupa el lugar del título, así que en Hoy el título se calla: si no, el
@@ -87,6 +96,45 @@ body[data-route="hoy"] .app-header__title { display: none; }
 }
 .hoy-greet__actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }
+
+/* --- El viaje al header colapsado ---
+   Al hacer scroll, estas tres acciones no se apagan donde están: se corren a la
+   derecha hasta el sitio exacto que ocupan en el header, y ahí las releva el
+   botón de debajo. El recorrido lateral lo mide app.js (--viaje-x, de centro a
+   centro); el vertical lo pone el scroll, que ya sube el hero.
+
+   Se desvanecen en el último tercio —justo cuando llegan—, cruzándose con los
+   del header, que aparecen en ese mismo tramo. Como para entonces ocupan el
+   mismo punto, el cruce se lee como una sola pieza que se asienta. */
+body[data-route="hoy"] .hoy-greet__actions .icon-btn {
+  transform: translateX(calc(var(--viaje-x, 0px) * var(--header-p, 0)));
+  opacity: calc(3 - var(--header-p, 0) * 3);
+  transition: transform var(--dur-fast) linear, opacity var(--dur-fast) linear;
+}
+/* Buscar y la campana caen las dos en el botón de más —es donde se pliegan—, así
+   que a mitad de camino se pisaban: dos iconos distintos encimados leen como un
+   choque, no como un relevo. Encogiendo al llegar, el gesto se lee como que el
+   botón de más se los traga. El orbe no encoge: su relevo es uno a uno y llega
+   a su propio sitio. */
+body[data-route="hoy"] #hoy-search,
+body[data-route="hoy"] #hoy-bell {
+  transform: translateX(calc(var(--viaje-x, 0px) * var(--header-p, 0)))
+             scale(calc(1 - var(--header-p, 0) * 0.35));
+}
+/* Ya invisibles y fuera de su sitio: dejan de recibir el toque, que a esa
+   altura pertenece a los del header. */
+body[data-route="hoy"].header-fijo .hoy-greet__actions .icon-btn { pointer-events: none; }
+/* El feedback táctil se compone CON el viaje: declarar solo scale() aquí
+   borraría el translate y el botón daría un salto al pulsarlo. */
+body[data-route="hoy"] .hoy-greet__orb:active {
+  transform: translateX(calc(var(--viaje-x, 0px) * var(--header-p, 0))) scale(0.9);
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-route="hoy"] .hoy-greet__actions .icon-btn,
+  body[data-route="hoy"] #hoy-search,
+  body[data-route="hoy"] #hoy-bell { transform: none; }
+  body[data-route="hoy"] .hoy-greet__orb:active { transform: scale(0.9); }
+}
 
 /* ============================================================
    Destello naranja GLOBAL (estilo Wavix) — en TODAS las páginas

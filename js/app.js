@@ -126,6 +126,10 @@ function navigate(routeId, { replace = false } = {}) {
   }
   document.title = 'Bolsillo · ' + (ROUTES[routeId].label || routeId);
   refrescarBadge(); // el badge vive en el header global Y en la campana del hero de Hoy
+  // Tras el layout de la vista recién montada: antes los rects son los de la
+  // vista anterior, o cero.
+  viajesMedidos = false;
+  requestAnimationFrame(medirViajesHeader);
 }
 
 function syncTabbar(routeId) {
@@ -182,10 +186,57 @@ function setHeaderProgress(top) {
   // corto; más bajo los activa cuando todavía se ven fantasma sobre el hero.
   document.body.classList.toggle('header-fijo', q >= 0.5);
 }
+/* En Hoy, las acciones del hero no se apagan donde están: VIAJAN hasta el sitio
+   que ocupan en el header colapsado, y ahí las releva el botón que ya estaba
+   debajo. El orbe llega al orbe; buscar y la campana convergen en el botón de
+   más, que es justo donde se pliegan.
+
+   Solo se mide el desplazamiento lateral: el vertical ya lo pone el scroll —el
+   hero sube mientras el header se queda—, así que animarlo también sería
+   duplicar un movimiento que la página hace sola. */
+const VIAJES_HEADER = Object.freeze([
+  ['#hoy-asesor', '#hdr-orbe'],
+  ['#hoy-search', '#hdr-mas'],
+  ['#hoy-bell', '#hdr-mas'],
+]);
+
+/* Se pone en false al cambiar de ruta y en true cuando la medida es buena. Al
+   navegar, el rAF puede llegar antes de que el hero exista —el splash del cold
+   start entra justo ahí— y entonces no hay rects que medir; sin este reintento
+   el viaje se quedaba en cero para toda la sesión. */
+let viajesMedidos = false;
+
+function medirViajesHeader() {
+  if (document.body.dataset.route !== 'hoy') return;
+  let alguno = false;
+  for (const [origenSel, destinoSel] of VIAJES_HEADER) {
+    const origen = document.querySelector(origenSel);
+    const destino = document.querySelector(destinoSel);
+    if (!origen || !destino) continue;
+    const o = origen.getBoundingClientRect();
+    const d = destino.getBoundingClientRect();
+    if (!o.width || !d.width) continue;
+    // El origen puede estar A MEDIO VIAJE cuando se remide (un resize con la
+    // página ya scrolleada), así que se le descuenta lo que lleva andado. Se
+    // calcula en vez de borrar la variable para medir: si se borra y la medida
+    // aborta después, el botón se queda sin viaje y ya nadie lo repone.
+    const andado = (parseFloat(origen.style.getPropertyValue('--viaje-x')) || 0)
+      * (parseFloat(getComputedStyle(document.body).getPropertyValue('--header-p')) || 0);
+    // De centro a centro: los dos botones no tienen por qué medir lo mismo.
+    const dx = (d.left + d.width / 2) - (o.left - andado + o.width / 2);
+    origen.style.setProperty('--viaje-x', Math.round(dx) + 'px');
+    alguno = true;
+  }
+  viajesMedidos = alguno;
+}
+
 function onStageScroll(e) {
   const el = e.target;
   if (!el || !el.classList || !el.classList.contains('view')) return;
   const top = el.scrollTop;
+  // Red de seguridad: si la medida del arranque no cuajó, se toma aquí —el
+  // primer scroll es lo antes que el viaje se puede llegar a ver.
+  if (!viajesMedidos) medirViajesHeader();
   setHeaderProgress(top);                            // header: aparece gradual con el scroll
   if (top < 48) setNavMin(false);                   // cerca del tope: expandida
   else if (top - navLastTop > 6) setNavMin(true);    // bajando: resumida
@@ -694,6 +745,12 @@ function boot() {
   stage.addEventListener('scroll', onStageScroll, { passive: true, capture: true });
 
   window.addEventListener('hashchange', () => navigate(routeFromHash()));
+
+  // El viaje de las acciones del hero se mide en px, así que cambia con el
+  // ancho: rotar el teléfono o abrir el teclado lo invalida.
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(medirViajesHeader);
+  }, { passive: true });
 
   // Al vincular un gasto con su fijo desde Movimientos, recalculamos pendientes
   // (así el recordatorio de la campana se apaga sin recargar la app).
