@@ -15,6 +15,7 @@ import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
 import { abrirSueldo } from './sueldo-sheet.js';
 import { agruparUltimosCortes, totalDiferido } from '../diferidos.js';
+import { vtabsHTML, colocarIndicador as colocarInd, marcarActiva } from '../vtabs.js';
 
 const R = 42;
 const CIRC = 2 * Math.PI * R; // circunferencia del aro
@@ -173,24 +174,16 @@ function balanceCardHTML(saldo) {
     </section>`;
 }
 
-/* Tabs sutiles dentro del sheet, con indicador deslizante (se anima al cambiar). */
+/* Tabs sutiles dentro del sheet, con indicador deslizante (se anima al cambiar).
+   El componente vive en js/vtabs.js y lo comparte con la cartera. */
+const TAB_ATTR = 'data-hoy-tab';
+
 function tabsHTML() {
-  const tabs = TABS.map(([id, label]) =>
-    `<button type="button" class="hoy-tab${tabActivo === id ? ' is-on' : ''}" role="tab" data-hoy-tab="${id}">${label}</button>`).join('');
-  return `<div class="hoy-tabs" role="tablist" aria-label="Secciones de Hoy">${tabs}<span class="hoy-tabs__ind" aria-hidden="true"></span></div>`;
+  return vtabsHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de Hoy' });
 }
 
-/* Coloca (y desliza) el indicador bajo la pestaña activa. */
 function colocarIndicador(root, animar) {
-  const tabs = root.querySelector('.hoy-tabs');
-  if (!tabs) return;
-  const ind = tabs.querySelector('.hoy-tabs__ind');
-  const on = tabs.querySelector('.hoy-tab.is-on');
-  if (!ind || !on) return;
-  if (!animar) ind.style.transition = 'none';
-  ind.style.width = on.offsetWidth + 'px';
-  ind.style.transform = `translateX(${on.offsetLeft}px)`;
-  if (!animar) { void ind.offsetWidth; ind.style.transition = ''; }
+  colocarInd(root, { animar, attr: TAB_ATTR });
 }
 
 /* Lista de gastos fijos (pestaña Recurrentes). */
@@ -551,7 +544,7 @@ function aplicarBarras(body) {
 /* Pinta el contenido de la pestaña activa en el sheet (sin recargar datos). */
 function mostrarPanel(root, tab, datos, animar) {
   tabActivo = tab;
-  root.querySelectorAll('[data-hoy-tab]').forEach((b) => b.classList.toggle('is-on', b.dataset.hoyTab === tab));
+  marcarActiva(root, tab, TAB_ATTR);
   colocarIndicador(root, animar);
   const body = root.querySelector('#hoy-body');
   if (!body) return;

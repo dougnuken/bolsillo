@@ -18,6 +18,7 @@ import { SKINS_TARJETA } from '../model.js';
 import { porDireccion, saldoPendiente, totalAbonado, fraccionAbonada, totalPorCobrar } from '../prestamos.js';
 import { abrirNuevoPrestamo, abrirAbono } from './prestamo-sheet.js';
 import { ordenarPorCascada, compararCortes, totalDiferido, fmtMonto, slug } from '../diferidos.js';
+import { vtabsHTML, colocarIndicador } from '../vtabs.js';
 
 const ICON_BACK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
@@ -135,11 +136,15 @@ function prestamoHTML(p, debo) {
 
 /* ---- LISTA (cartera) con 3 tabs ---- */
 const TABS = [['productos', 'Mis productos'], ['me-deben', 'Me deben'], ['debo', 'Debo']];
+const TAB_ATTR = 'data-tab';
 let tabActivo = 'productos';
+/* Cambiar de pestaña re-renderiza la lista entera (el título también cambia),
+   así que guardamos de dónde veníamos para que el subrayado se deslice en vez
+   de aparecer de golpe en la pestaña nueva. */
+let tabPrevio = null;
 
 function tabsHTML() {
-  return `<div class="wallet-tabs" role="tablist">${TABS.map(([id, label]) =>
-    `<button class="wallet-tab${id === tabActivo ? ' is-on' : ''}" type="button" role="tab" data-tab="${id}" aria-selected="${id === tabActivo}">${label}</button>`).join('')}</div>`;
+  return vtabsHTML(TABS, tabActivo, { attr: TAB_ATTR, label: 'Secciones de la cartera' });
 }
 
 function listaHTML(creditos, cortes, prestamos) {
@@ -324,6 +329,8 @@ async function montar(root) {
 
   function pintarLista() {
     wallet.innerHTML = listaHTML(creditos, cortes, prestamos);
+    colocarIndicador(wallet, { animar: false, desde: tabPrevio, attr: TAB_ATTR });
+    tabPrevio = null;
     const recargar = async () => { await cargar(); pintarLista(); };
 
     // Volver a Hoy: la cartera es full-screen (sin tab propio), así que necesita
@@ -335,6 +342,7 @@ async function montar(root) {
     wallet.querySelectorAll('[data-tab]').forEach((b) => {
       b.addEventListener('click', () => {
         if (b.dataset.tab === tabActivo) return;
+        tabPrevio = tabActivo;
         tabActivo = b.dataset.tab;
         pintarLista();
         const view = wallet.closest('.view');

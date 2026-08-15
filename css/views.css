@@ -146,32 +146,7 @@ body[data-route="hoy"] .app-header { display: none; }
   letter-spacing: 0;
 }
 
-/* --- Tabs Dashboard/Analytics, justo debajo del balance --- */
-.hoy-tabs {
-  position: relative;
-  display: flex;
-  gap: var(--sp-6);
-  margin: var(--sp-1) 0 var(--sp-5);
-  border-bottom: 1px solid var(--line-2);
-}
-.hoy-tab {
-  padding: 8px 2px 12px;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-3);
-  background: none; border: none;
-  transition: color var(--dur-fast) var(--ease);
-}
-.hoy-tab.is-on { color: var(--text-1); }
-.hoy-tab:active { transform: scale(0.97); }
-.hoy-tabs__ind {
-  position: absolute;
-  left: 0; bottom: -1px;
-  height: 2.5px; width: 0;
-  border-radius: var(--r-full);
-  background: var(--text-1);
-  transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
-}
+/* Las tabs Dashboard/Analytics son el componente canónico .vtabs (components.css) */
 
 .hoy-empty { text-align: center; color: var(--text-2); font-size: var(--fs-sm); padding: var(--sp-8) var(--sp-4); line-height: 1.5; }
 
@@ -2296,12 +2271,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .view-greet--wallet { padding-top: 0; }
 
 /* --- tabs de la cartera --- */
-.wallet-tabs { display: flex; gap: 6px; margin: 0 -2px var(--sp-4); overflow-x: auto; scrollbar-width: none; }
-.wallet-tabs::-webkit-scrollbar { display: none; }
-.wallet-tab { flex: 0 0 auto; font: inherit; font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-3);
-  background: transparent; border: 1px solid var(--line-1); border-radius: var(--r-full); padding: 8px 15px; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
-.wallet-tab.is-on { color: var(--accent-light); background: var(--accent-soft); border-color: var(--line-accent); }
+/* Las tabs de la cartera son el componente canónico .vtabs (components.css) */
 
 /* --- total de préstamos --- */
 .wallet-total { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-4); }

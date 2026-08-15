@@ -74,6 +74,37 @@
    izquierda, por eso ese lado va más ajustado. */
 .btn--back { gap: 4px; padding-left: var(--sp-3); }
 
+/* ---- Tabs de vista (subrayado + indicador deslizante) ----
+   Un solo patrón para Hoy (Dashboard/Analytics) y la cartera (Mis productos /
+   Me deben / Debo). La cartera usaba píldoras y competían con el botón de
+   volver, que también es una píldora: aquí el peso lo lleva el back y las
+   pestañas se leen como jerarquía, no como otro control. Ver js/vtabs.js. */
+.vtabs {
+  position: relative;
+  display: flex;
+  gap: var(--sp-6);
+  margin: var(--sp-1) 0 var(--sp-5);
+  border-bottom: 1px solid var(--line-2);
+}
+.vtabs__btn {
+  padding: 8px 2px 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-3);
+  background: none; border: none;
+  transition: color var(--dur-fast) var(--ease);
+}
+.vtabs__btn.is-on { color: var(--text-1); }
+.vtabs__btn:active { transform: scale(0.97); }
+.vtabs__ind {
+  position: absolute;
+  left: 0; bottom: -1px;
+  height: 2.5px; width: 0;
+  border-radius: var(--r-full);
+  background: var(--text-1);
+  transition: transform var(--dur) var(--ease), width var(--dur) var(--ease);
+}
+
 /* ---- Cards glass ---- */
 .card {
   position: relative;
