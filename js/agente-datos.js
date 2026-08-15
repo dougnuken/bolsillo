@@ -9,7 +9,23 @@ import { getAll, getConfig } from './db.js';
 import { calcularEstado, historialAhorro, gastoCategoriasComparado } from './budget.js';
 import { categoriaPorId } from './categories.js';
 import { construirContexto } from './conciencia.js';
-import { construirBriefDeuda } from './diferidos.js';
+import { construirBriefDeuda, emparejarProductos, briefProducto } from './diferidos.js';
+import { tablaFactores } from './simulador.js';
+
+/**
+ * Tasa efectiva anual con la que se difiere en un producto. PURA.
+ * Prioriza la ficha que guardó el usuario; si no la tiene, la toma del extracto
+ * —los diferidos vienen con su tasa— usando la más alta, que es la que manda
+ * al estimar el costo de una compra nueva.
+ * @returns {number|null}
+ */
+function tasaDelProducto(p) {
+  const dela = p && p.credito && Number(p.credito.tasaEA);
+  if (Number.isFinite(dela) && dela > 0) return dela;
+  const difs = (p && p.ultimo && Array.isArray(p.ultimo.diferidos)) ? p.ultimo.diferidos : [];
+  const tasas = difs.map((d) => Number(d && d.tasaEA)).filter((t) => Number.isFinite(t) && t > 0);
+  return tasas.length ? Math.max(...tasas) : null;
+}
 
 /**
  * @returns {Promise<{contexto:string, nombre:string, apiKey:string, modelo:string,
@@ -48,6 +64,14 @@ export async function armarContexto() {
       entidad: c.entidad, producto: c.producto, cuotaMensual: c.cuotaMensual, saldo: c.saldo, tasaEA: c.tasaEA,
     })),
     deudaDiferidos: construirBriefDeuda(cortes),
+    // Cada producto con SU extracto y SUS factores de cuota. Es lo que deja a
+    // la conciencia responder sobre un producto concreto: qué debe, a qué tasa
+    // y cuánto costaría diferir ahí una compra nueva.
+    productos: emparejarProductos(activos, cortes).map((p) => ({
+      ...p,
+      briefExtracto: briefProducto(p.ultimo, p.anterior),
+      factores: tasaDelProducto(p) != null ? tablaFactores(tasaDelProducto(p)) : [],
+    })),
   };
   return {
     contexto: construirContexto(facts),

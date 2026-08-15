@@ -65,6 +65,45 @@ const fmt = (n) => {
   return '$' + x.toLocaleString('es-CO');
 };
 const linea = (etq, val) => `- ${etq}: ${val}`;
+const sangrar = (texto, pad) => String(texto || '').split('\n').map((l) => pad + l).join('\n');
+
+/**
+ * Un producto: su ficha, lo que cuesta diferir EN ÉL y su último extracto.
+ * PURA. Recibe {credito, ultimo, factores, briefExtracto} ya resueltos.
+ */
+function bloqueProducto(p, n) {
+  const c = (p && p.credito) || {};
+  const u = (p && p.ultimo) || {};
+  const titulo = [c.entidad || u.entidad, c.producto || u.producto]
+    .filter(Boolean).join(' · ') || (p && p.clave) || 'Producto';
+  const L = [`[${n}] ${titulo}`];
+
+  const ficha = [];
+  if (Number.isFinite(c.cuotaMensual) && c.cuotaMensual > 0) ficha.push(`cuota ${fmt(c.cuotaMensual)}/mes`);
+  if (Number.isFinite(c.saldo)) ficha.push(`saldo ${fmt(c.saldo)}`);
+  if (Number.isFinite(c.tasaEA)) ficha.push(`tasa ${c.tasaEA}% EA`);
+  if (Number.isFinite(c.diaPago)) ficha.push(`paga el día ${c.diaPago}`);
+  if (ficha.length) L.push('    ' + ficha.join(' · '));
+
+  // Factores YA calculados con la tasa real del producto: para simular
+  // cualquier monto basta multiplicar, sin elevar nada a la −24.
+  const fs = Array.isArray(p && p.factores) ? p.factores : [];
+  if (fs.length) {
+    L.push('    Diferir en este producto, por cada millón: '
+      + fs.map((f) => `${f.cuotas}c ${fmt(f.porCadaMillon)}/mes`).join(' · '));
+    L.push('    Cualquier monto: cuota = monto × factor → '
+      + fs.map((f) => `${f.cuotas}c=${f.factor.toFixed(6)}`).join(' · '));
+  }
+
+  const brief = p && typeof p.briefExtracto === 'string' ? p.briefExtracto.trim() : '';
+  if (brief) {
+    L.push('    Último extracto:');
+    L.push(sangrar(brief, '      '));
+  } else {
+    L.push('    (todavía no ha subido extracto de este producto)');
+  }
+  return L;
+}
 
 /** Quita la clave de cualquier texto que vaya a pantalla. PURA. */
 function ocultarClave(texto, clave) {
@@ -97,6 +136,19 @@ export function construirContexto(f = {}) {
   if (cats.length) {
     L.push('En qué se va (top):');
     for (const c of cats) L.push(`  · ${c.label || c.categoriaId}: ${fmt(c.total)}`);
+  }
+
+  // FICHA + EXTRACTO POR PRODUCTO. Es lo que permite responder "¿cómo pago
+  // mejor esta compra diferida?": el producto, su tasa real y su extracto van
+  // juntos, no en listas separadas que hay que adivinar cómo se cruzan.
+  // Si la vista aún no arma `productos`, se cae al formato anterior (créditos
+  // sueltos + brief al final), que es lo que sigue usando el susurro.
+  const productos = Array.isArray(d.productos) ? d.productos.filter(Boolean) : [];
+  if (productos.length) {
+    L.push('');
+    L.push('TUS PRODUCTOS (ficha + último extracto de cada uno):');
+    productos.forEach((p, i) => { L.push(...bloqueProducto(p, i + 1)); });
+    return L.join('\n');
   }
 
   const creds = Array.isArray(d.creditos) ? d.creditos.filter(Boolean) : [];

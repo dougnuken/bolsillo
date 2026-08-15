@@ -352,6 +352,57 @@ export function agruparUltimosCortes(cortes = []) {
 }
 
 /**
+ * Clave con la que un crédito GUARDADO se corresponde con sus cortes. PURA.
+ * crearCorte deriva `cuentaClave` de slug(entidad-producto-moneda) cuando no
+ * viene explícita, así que reconstruirla igual empareja sin heurísticas.
+ */
+export function claveDeCredito(credito = {}, moneda = 'COP') {
+  const c = credito && typeof credito === 'object' ? credito : {};
+  if (esTextoNoVacio(c.cuentaClave)) return c.cuentaClave.trim();
+  return slug(`${txt(c.entidad)}-${txt(c.producto)}-${txt(moneda) || 'COP'}`);
+}
+
+/**
+ * Une cada producto de la cartera con su último extracto. PURA.
+ *
+ * Sin esto la conciencia recibe dos listas sueltas —los créditos por un lado y
+ * los cortes por otro— y no puede saber que tal extracto es tal tarjeta, que
+ * es justo lo que hace falta para razonar "sobre ESTE producto".
+ *
+ * Los cortes que no casan con ningún crédito guardado NO se descartan: se
+ * devuelven al final con `credito: null`. Un extracto subido antes de crear la
+ * ficha del producto sigue siendo información valiosa.
+ *
+ * @returns {Array<{credito:object|null, clave:string, ultimo:object|null, anterior:object|null}>}
+ */
+export function emparejarProductos(creditos = [], cortes = []) {
+  const porClave = agruparUltimosCortes(cortes);
+  const usadas = new Set();
+
+  const conFicha = (Array.isArray(creditos) ? creditos : [])
+    .filter(Boolean)
+    .map((credito) => {
+      const clave = claveDeCredito(credito);
+      const par = porClave.get(clave) || null;
+      if (par) usadas.add(clave);
+      return Object.freeze({
+        credito,
+        clave,
+        ultimo: par ? par.ultimo : null,
+        anterior: par ? par.anterior : null,
+      });
+    });
+
+  const huerfanos = [];
+  for (const [clave, par] of porClave) {
+    if (usadas.has(clave)) continue;
+    huerfanos.push(Object.freeze({ credito: null, clave, ultimo: par.ultimo, anterior: par.anterior }));
+  }
+
+  return Object.freeze([...conFicha, ...huerfanos]);
+}
+
+/**
  * Brief de deuda para el agente de conciencia: por cada producto, el estado
  * del último corte + los cambios frente al corte anterior (lo que responde
  * "¿cómo va mi deuda?" y "¿el banco aplicó el abono como esperábamos?"). PURA.
@@ -359,14 +410,23 @@ export function agruparUltimosCortes(cortes = []) {
 export function construirBriefDeuda(cortes = []) {
   const bloques = [];
   for (const { ultimo, anterior } of agruparUltimosCortes(cortes).values()) {
-    if (!ultimo) continue;
-    const L = [resumenDeudaTexto(ultimo)];
-    if (anterior) {
-      const cmp = compararCortes(anterior, ultimo);
-      if (cmp.resumenTexto) L.push(`CAMBIOS vs el corte anterior (${anterior.corte} → ${ultimo.corte}): ${cmp.resumenTexto}`);
-    }
-    const bloque = L.filter(Boolean).join('\n');
+    const bloque = briefProducto(ultimo, anterior);
     if (bloque) bloques.push(bloque);
   }
   return bloques.join('\n\n');
+}
+
+/**
+ * Brief del extracto de UN solo producto. PURA.
+ * Es la unidad que consume el contexto por producto; construirBriefDeuda la
+ * repite para todos.
+ */
+export function briefProducto(ultimo, anterior) {
+  if (!ultimo) return '';
+  const L = [resumenDeudaTexto(ultimo)];
+  if (anterior) {
+    const cmp = compararCortes(anterior, ultimo);
+    if (cmp.resumenTexto) L.push(`CAMBIOS vs el corte anterior (${anterior.corte} → ${ultimo.corte}): ${cmp.resumenTexto}`);
+  }
+  return L.filter(Boolean).join('\n');
 }
