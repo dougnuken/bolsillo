@@ -119,6 +119,19 @@
       rgba(255, 255, 255, 0.025) 50%,
       rgba(255, 255, 255, 0) 64%);
 
+  /* Variante CERRADA, para controles pequeños (botones, botones-ícono).
+     En una card grande el trazo que muere en alpha 0 se lee como intención;
+     en un botón de 80x44 el contorno queda partido por la mitad y parece un
+     arco suelto al lado del texto —un marco raro—, no un botón. Aquí el foco
+     de luz es el mismo, pero el recorrido termina en un hairline tenue en vez
+     de en nada: el contorno CIERRA y el botón vuelve a leerse como una pieza. */
+  --grad-edge-cerrado: radial-gradient(135% 115% at 4% -20%,
+      rgba(169, 140, 255, 0.50) 0%,
+      rgba(169, 140, 255, 0.20) 17%,
+      rgba(255, 255, 255, 0.085) 33%,
+      rgba(255, 255, 255, 0.055) 60%,
+      rgba(255, 255, 255, 0.05) 100%);
+
   /* El orbe del asesor toma el gradiente firma (momento IA) */
   --accent-grad: var(--grad-cta);
 

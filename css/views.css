@@ -2523,6 +2523,12 @@ select.field__input::-ms-expand { display: none; }
   pointer-events: none;
 }
 
+/* Controles pequeños: el contorno CIERRA (ver --grad-edge-cerrado). Un trazo
+   que muere a la mitad funciona en una card, pero en un botón se lee como un
+   arco suelto en vez de como el borde de la pieza. */
+.btn--ghost::before,
+.icon-btn::before { background: var(--grad-edge-cerrado); }
+
 /* Los de overflow hidden: el anillo por dentro, si no se lo comen al recortar */
 .settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
 .pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
