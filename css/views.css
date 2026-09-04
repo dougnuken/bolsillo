@@ -2869,3 +2869,45 @@ select.field__input::-ms-expand { display: none; }
 .pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
   inset: 0;
 }
+
+/* --- Navegador de meses (Analytics) ---
+   Deja volver a los meses ya registrados para comparar cómo se ha ido gastando.
+   Las flechas se APAGAN en los extremos en vez de esconderse: si desaparecieran,
+   el control cambiaría de ancho al navegar y el mes bailaría de sitio. */
+.mesnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: 3px;
+  border-radius: var(--r-full);
+  background: var(--glass-hundido);
+  border: 1px solid var(--line-1);
+}
+.mesnav__b {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.mesnav__b svg { width: 18px; height: 18px; }
+.mesnav__b:active { background: var(--glass-2); color: var(--text-1); }
+/* En el extremo: se ve que existe pero no invita. Sin cursor de mano, que es lo
+   que delata que no va a pasar nada. */
+.mesnav__b[disabled] { opacity: 0.28; cursor: default; }
+.mesnav__label {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+  letter-spacing: -0.01em;
+}

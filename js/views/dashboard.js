@@ -10,6 +10,7 @@
 
 import { getAll, getConfig } from '../db.js';
 import { calcularEstado, resumenNegocios, historialAhorro, gastoCategoriasComparado } from '../budget.js';
+import { mesesConDatos, etiquetaMes, finDeMes, mesVecino, mesPorDefecto } from '../meses.js';
 import { formatCOP } from '../money.js';
 import { hoyISO } from '../fechas.js';
 import { categoriaPorId } from '../categories.js';
@@ -69,6 +70,10 @@ const ICON_TREND_DOWN =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 9.5 13.5l4-4L21 17"/><path d="M15 17h6v-6"/></svg>';
 const ICON_ARROW_UR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+const ICON_CHEV_IZQ =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>';
+const ICON_CHEV_DER =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>';
 const ICON_SEARCH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
 
@@ -479,8 +484,39 @@ function flujoCardHTML(hist) {
 
 /* "En qué se va, mes a mes": top categorías de ESTE mes con barra + delta vs el
    mes pasado. OJO: en GASTO, subir es MALO → ↑ en rojo, ↓ en verde. */
+/* Mes que se está mirando en Analytics y los meses disponibles. Viven a nivel
+   de módulo —no en config— porque son estado de NAVEGACIÓN: al volver a entrar
+   se quiere el mes más reciente, no el último que se estuvo curioseando. */
+let mesVisto = null;
+let mesesDisp = [];
+/* Los movimientos ya leídos, para recalcular al cambiar de mes sin ir a la base:
+   la comparativa es un recuento sobre datos que ya están en memoria. */
+let movsCache = [];
+
+/* Cabecera con flechas. Se dibuja aunque solo haya un mes: es lo que anuncia
+   que se puede mirar atrás. Las flechas se apagan en los extremos en vez de
+   esconderse, para que el control no cambie de tamaño al navegar. */
+function navMesesHTML() {
+  const hayPrev = !!mesVecino(mesesDisp, mesVisto, -1);
+  const haySig = !!mesVecino(mesesDisp, mesVisto, +1);
+  return `
+    <div class="mesnav">
+      <button type="button" class="mesnav__b" data-mes="-1" ${hayPrev ? '' : 'disabled'} aria-label="Mes anterior">${ICON_CHEV_IZQ}</button>
+      <span class="mesnav__label">${esc(etiquetaMes(mesVisto))}</span>
+      <button type="button" class="mesnav__b" data-mes="1" ${haySig ? '' : 'disabled'} aria-label="Mes siguiente">${ICON_CHEV_DER}</button>
+    </div>`;
+}
+
 function categoriasMesHTML(cc) {
-  if (!cc || !Array.isArray(cc.filas) || !cc.filas.length) return '';
+  if (!cc || !Array.isArray(cc.filas) || !cc.filas.length) {
+    // Con el navegador puesto, un mes sin datos ya no es un hueco mudo: hay que
+    // decir que ESE mes está vacío, o parece que la app se rompió.
+    return `<div class="catmes">
+      <div class="section-head"><span class="section-head__title">En qué se va, mes a mes</span></div>
+      ${navMesesHTML()}
+      <p class="catmes__sub">No hay gastos registrados en este mes.</p>
+    </div>`;
+  }
   const max = Math.max(...cc.filas.map((f) => f.actual), 1);
   const filas = cc.filas.map((f) => {
     const cat = categoriaPorId(f.categoriaId);
@@ -510,7 +546,8 @@ function categoriasMesHTML(cc) {
   return `
     <div class="catmes">
       <div class="section-head"><span class="section-head__title">En qué se va, mes a mes</span></div>
-      <p class="catmes__sub">${cc.hayPasado ? 'La flecha compara con el mes pasado' : 'Este mes'}</p>
+      ${navMesesHTML()}
+      <p class="catmes__sub">${cc.hayPasado ? 'La flecha compara con el mes anterior' : 'Sin mes anterior con el que comparar'}</p>
       <div class="catmes-list">${filas}</div>
     </div>`;
 }
@@ -574,10 +611,29 @@ function mostrarPanel(root, tab, datos, animar) {
     return;
   }
   body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs, datos.catComp);
-  if (tab === 'analytics') animarAnillo(body, datos.estado);
+  if (tab === 'analytics') {
+    animarAnillo(body, datos.estado);
+    /* Cambiar de mes solo recalcula la comparativa y repinta ESTA tarjeta: el
+       resto del panel (el anillo, el flujo) habla del mes en curso y no debe
+       moverse porque estés mirando atrás. Tampoco se vuelve a la base — los
+       movimientos ya están en memoria. */
+    body.querySelectorAll('[data-mes]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const destino = mesVecino(mesesDisp, mesVisto, Number(b.dataset.mes));
+        if (!destino) return;
+        mesVisto = destino;
+        datos.catComp = gastoCategoriasComparado({
+          movimientos: movsCache, hoy: finDeMes(mesVisto), top: 6,
+        });
+        mostrarPanel(root, tab, datos, false);
+      });
+    });
+  }
   aplicarBarras(body);
   const sc = root.closest('.view') || root;
-  if (sc) sc.scrollTop = 0; // al cambiar de pestaña, vuelve arriba
+  // Al cambiar de MES no se vuelve arriba: se está comparando, y saltar al tope
+  // obliga a bajar otra vez para ver la misma tarjeta.
+  if (sc && animar !== false) sc.scrollTop = 0;
 }
 
 /* Card "Mis productos" → puerta a la CARTERA (#/productos). El stat lo rellena
@@ -625,7 +681,14 @@ async function pintar(root) {
     estado = calcularEstado({ ingresoEmpleo: salario, movimientos, recurrentes, creditos, hoy, config });
     negocios = resumenNegocios({ fuentes, movimientos, creditos, hoy });
     historial = historialAhorro({ movimientos, ingresoEmpleo: salario, creditos, hoy, meses: 6 });
-    catComp = gastoCategoriasComparado({ movimientos, hoy, top: 6 });
+    /* El navegador de meses arranca en el más reciente CON datos: si abres la
+       app en septiembre y solo registraste hasta agosto, lo útil es ver agosto y
+       no un mes en blanco. Los movimientos se guardan para poder recalcular al
+       cambiar de mes sin volver a leer la base. */
+    movsCache = movimientos;
+    mesesDisp = mesesConDatos({ movimientos });
+    if (!mesVisto || !mesesDisp.includes(mesVisto)) mesVisto = mesPorDefecto({ movimientos, hoy });
+    catComp = gastoCategoriasComparado({ movimientos, hoy: finDeMes(mesVisto) || hoy, top: 6 });
     recs = recurrentes || [];
     metricaDia = metricaHoy(movimientos, hoy);
   } catch (err) {
