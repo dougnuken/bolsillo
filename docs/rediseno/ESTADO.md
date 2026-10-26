@@ -1,0 +1,37 @@
+# Rediseño olbo 2.0 — Estado vivo
+
+> Cada sesión lee `BRIEF.md` + este archivo y nada más del historial. Al terminar su fase: actualiza la tabla,
+> anota decisiones/riesgos abajo, commit + push a `claude/beautiful-meitner-tb12nk`, y el orquestador arranca la siguiente.
+
+## Fases
+
+| # | Fase | Sesión · modelo | Estado | Commit / nota |
+|---|---|---|---|---|
+| 0a | Marca (`MARCA.md`, fuentes, logo SVG) | orquestador → agente Opus alto | ✅ hecho | fundamentos claro + lila `#B49CFF`, Urbanist + Manrope |
+| 0b | Sistema UI + tablero (`SISTEMA-UI.md`, `mockups/`) | orquestador → agente Opus alto | ✅ hecho | plan F1–F7 en SISTEMA-UI §6 |
+| 0c | QA de diseño (`QA-diseno.md`) | agente Sonnet medio | en curso | |
+| ⏸ | **Aprobación de Doug** de dirección + tablero | — | pendiente | sin esto no se toca código |
+| F1 | Tokens, fuentes, fondo | sesión nueva · ejecutor Sonnet medio + QA Sonnet | — | |
+| F2 | Shell (dock, FAB, sheets, botones) | ídem | — | |
+| F3 | Hoy | ídem (QA Opus si el bento falla 2 veces) | — | |
+| F4 | Registrar + keypad | ídem | — | |
+| F5 | Movimientos, Personas, Perfil/cfg | ídem | — | |
+| F6 | Asesor, onboarding, splash | ídem | — | |
+| F7 | Íconos, manifest, limpieza | ídem | — | |
+| QA | Verificación final (tests, CSP, AA, 390 px, capturas antes/después) | Sonnet medio | — | |
+| M1 | Capturas 3x con `tools/capturas.mjs --scale 3` + SHOTLIST | Sonnet medio, skill `portfolio-mockups` | — | |
+| M2 | Escenas Higgsfield (`gpt_image_2_5`, 3:4, 2k) + composición | Sonnet medio | — | ~13 escenas ≈ 36 créditos |
+| M3 | Caso `/work/olbo` en `dougnuken/douguizard` (formato largo como MakeaPet: cover, film, story) | Sonnet medio + revisión Opus | — | |
+| ⏸ | **Confirmación de Doug** antes de merge a `main` (deploy Pages) y del portafolio | — | — | |
+
+## Herramientas
+
+- `tools/capturas.mjs <dir> [--scale 3]` — siembra datos neutros y captura las vistas a 393×852 (sirve el repo él mismo).
+- `docs/rediseno/mockups/gen.cjs` regenera `tablero.html`; `render.cjs` lo renderiza a PNG.
+
+## Decisiones y riesgos abiertos
+
+- Degradado de fondo muy sutil (vidrio casi blanco): opción de subir lavanda `#E1DBF2` / menta `#D6EBE1` (SISTEMA-UI §7).
+- Copy: «Dashboard/Analytics» → «Resumen/Análisis»; saludo sin «¡Bienvenido!» ni emoji. Requiere aprobación de Doug.
+- Barra de estado iOS sobre perla: verificar en dispositivo (Doug).
+- Íconos de categoría monocromos (se pierde el color por categoría).

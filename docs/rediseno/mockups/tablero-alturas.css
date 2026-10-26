@@ -1,0 +1,145 @@
+/* Generado por el tablero: alturas de barras (h<N> = N px en minibarras/mes, N % en gráficas) */
+.mini-barras .h3, .barras .h3 { height: 3px; }
+.chart__barras .h3 { height: 3%; }
+.mini-barras .h8, .barras .h8 { height: 8px; }
+.chart__barras .h8 { height: 8%; }
+.mini-barras .h10, .barras .h10 { height: 10px; }
+.chart__barras .h10 { height: 10%; }
+.mini-barras .h12, .barras .h12 { height: 12px; }
+.chart__barras .h12 { height: 12%; }
+.mini-barras .h13, .barras .h13 { height: 13px; }
+.chart__barras .h13 { height: 13%; }
+.mini-barras .h14, .barras .h14 { height: 14px; }
+.chart__barras .h14 { height: 14%; }
+.mini-barras .h15, .barras .h15 { height: 15px; }
+.chart__barras .h15 { height: 15%; }
+.mini-barras .h16, .barras .h16 { height: 16px; }
+.chart__barras .h16 { height: 16%; }
+.mini-barras .h17, .barras .h17 { height: 17px; }
+.chart__barras .h17 { height: 17%; }
+.mini-barras .h18, .barras .h18 { height: 18px; }
+.chart__barras .h18 { height: 18%; }
+.mini-barras .h19, .barras .h19 { height: 19px; }
+.chart__barras .h19 { height: 19%; }
+.mini-barras .h20, .barras .h20 { height: 20px; }
+.chart__barras .h20 { height: 20%; }
+.mini-barras .h21, .barras .h21 { height: 21px; }
+.chart__barras .h21 { height: 21%; }
+.mini-barras .h22, .barras .h22 { height: 22px; }
+.chart__barras .h22 { height: 22%; }
+.mini-barras .h23, .barras .h23 { height: 23px; }
+.chart__barras .h23 { height: 23%; }
+.mini-barras .h24, .barras .h24 { height: 24px; }
+.chart__barras .h24 { height: 24%; }
+.mini-barras .h25, .barras .h25 { height: 25px; }
+.chart__barras .h25 { height: 25%; }
+.mini-barras .h26, .barras .h26 { height: 26px; }
+.chart__barras .h26 { height: 26%; }
+.mini-barras .h27, .barras .h27 { height: 27px; }
+.chart__barras .h27 { height: 27%; }
+.mini-barras .h29, .barras .h29 { height: 29px; }
+.chart__barras .h29 { height: 29%; }
+.mini-barras .h30, .barras .h30 { height: 30px; }
+.chart__barras .h30 { height: 30%; }
+.mini-barras .h31, .barras .h31 { height: 31px; }
+.chart__barras .h31 { height: 31%; }
+.mini-barras .h32, .barras .h32 { height: 32px; }
+.chart__barras .h32 { height: 32%; }
+.mini-barras .h33, .barras .h33 { height: 33px; }
+.chart__barras .h33 { height: 33%; }
+.mini-barras .h34, .barras .h34 { height: 34px; }
+.chart__barras .h34 { height: 34%; }
+.mini-barras .h35, .barras .h35 { height: 35px; }
+.chart__barras .h35 { height: 35%; }
+.mini-barras .h36, .barras .h36 { height: 36px; }
+.chart__barras .h36 { height: 36%; }
+.mini-barras .h37, .barras .h37 { height: 37px; }
+.chart__barras .h37 { height: 37%; }
+.mini-barras .h38, .barras .h38 { height: 38px; }
+.chart__barras .h38 { height: 38%; }
+.mini-barras .h39, .barras .h39 { height: 39px; }
+.chart__barras .h39 { height: 39%; }
+.mini-barras .h40, .barras .h40 { height: 40px; }
+.chart__barras .h40 { height: 40%; }
+.mini-barras .h41, .barras .h41 { height: 41px; }
+.chart__barras .h41 { height: 41%; }
+.mini-barras .h42, .barras .h42 { height: 42px; }
+.chart__barras .h42 { height: 42%; }
+.mini-barras .h43, .barras .h43 { height: 43px; }
+.chart__barras .h43 { height: 43%; }
+.mini-barras .h44, .barras .h44 { height: 44px; }
+.chart__barras .h44 { height: 44%; }
+.mini-barras .h45, .barras .h45 { height: 45px; }
+.chart__barras .h45 { height: 45%; }
+.mini-barras .h47, .barras .h47 { height: 47px; }
+.chart__barras .h47 { height: 47%; }
+.mini-barras .h48, .barras .h48 { height: 48px; }
+.chart__barras .h48 { height: 48%; }
+.mini-barras .h49, .barras .h49 { height: 49px; }
+.chart__barras .h49 { height: 49%; }
+.mini-barras .h51, .barras .h51 { height: 51px; }
+.chart__barras .h51 { height: 51%; }
+.mini-barras .h52, .barras .h52 { height: 52px; }
+.chart__barras .h52 { height: 52%; }
+.mini-barras .h53, .barras .h53 { height: 53px; }
+.chart__barras .h53 { height: 53%; }
+.mini-barras .h54, .barras .h54 { height: 54px; }
+.chart__barras .h54 { height: 54%; }
+.mini-barras .h55, .barras .h55 { height: 55px; }
+.chart__barras .h55 { height: 55%; }
+.mini-barras .h57, .barras .h57 { height: 57px; }
+.chart__barras .h57 { height: 57%; }
+.mini-barras .h58, .barras .h58 { height: 58px; }
+.chart__barras .h58 { height: 58%; }
+.mini-barras .h59, .barras .h59 { height: 59px; }
+.chart__barras .h59 { height: 59%; }
+.mini-barras .h60, .barras .h60 { height: 60px; }
+.chart__barras .h60 { height: 60%; }
+.mini-barras .h62, .barras .h62 { height: 62px; }
+.chart__barras .h62 { height: 62%; }
+.mini-barras .h63, .barras .h63 { height: 63px; }
+.chart__barras .h63 { height: 63%; }
+.mini-barras .h64, .barras .h64 { height: 64px; }
+.chart__barras .h64 { height: 64%; }
+.mini-barras .h65, .barras .h65 { height: 65px; }
+.chart__barras .h65 { height: 65%; }
+.mini-barras .h66, .barras .h66 { height: 66px; }
+.chart__barras .h66 { height: 66%; }
+.mini-barras .h67, .barras .h67 { height: 67px; }
+.chart__barras .h67 { height: 67%; }
+.mini-barras .h68, .barras .h68 { height: 68px; }
+.chart__barras .h68 { height: 68%; }
+.mini-barras .h69, .barras .h69 { height: 69px; }
+.chart__barras .h69 { height: 69%; }
+.mini-barras .h70, .barras .h70 { height: 70px; }
+.chart__barras .h70 { height: 70%; }
+.mini-barras .h72, .barras .h72 { height: 72px; }
+.chart__barras .h72 { height: 72%; }
+.mini-barras .h73, .barras .h73 { height: 73px; }
+.chart__barras .h73 { height: 73%; }
+.mini-barras .h76, .barras .h76 { height: 76px; }
+.chart__barras .h76 { height: 76%; }
+.mini-barras .h77, .barras .h77 { height: 77px; }
+.chart__barras .h77 { height: 77%; }
+.mini-barras .h78, .barras .h78 { height: 78px; }
+.chart__barras .h78 { height: 78%; }
+.mini-barras .h81, .barras .h81 { height: 81px; }
+.chart__barras .h81 { height: 81%; }
+.mini-barras .h82, .barras .h82 { height: 82px; }
+.chart__barras .h82 { height: 82%; }
+.mini-barras .h84, .barras .h84 { height: 84px; }
+.chart__barras .h84 { height: 84%; }
+.mini-barras .h86, .barras .h86 { height: 86px; }
+.chart__barras .h86 { height: 86%; }
+.mini-barras .h89, .barras .h89 { height: 89px; }
+.chart__barras .h89 { height: 89%; }
+.mini-barras .h91, .barras .h91 { height: 91px; }
+.chart__barras .h91 { height: 91%; }
+.mini-barras .h92, .barras .h92 { height: 92px; }
+.chart__barras .h92 { height: 92%; }
+.mini-barras .h93, .barras .h93 { height: 93px; }
+.chart__barras .h93 { height: 93%; }
+.mini-barras .h95, .barras .h95 { height: 95px; }
+.chart__barras .h95 { height: 95%; }
+.mini-barras .h97, .barras .h97 { height: 97px; }
+.chart__barras .h97 { height: 97%; }

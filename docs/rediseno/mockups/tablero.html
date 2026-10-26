@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>olbo 2.0 · Tablero UI</title>
+<link rel="stylesheet" href="tablero.css">
+<link rel="stylesheet" href="tablero-alturas.css">
+</head>
+<body>
+<main class="tablero">
+  <header class="tablero__head">
+    <div><img class="tablero__marca" src="../marca/olbo-lockup-tinta.svg" alt="olbo"><h1 class="tablero__titulo">Sistema UI 2.0</h1></div>
+    <p class="tablero__meta">Papel perla, tinta negra y un solo punto lila. Bento a 6 px, losas de 30 px, vidrio claro sobre degradado suave.
+    Datos de demo neutros en COP. Fuente: docs/rediseno/SISTEMA-UI.md.</p>
+  </header>
+  <div class="tablero__fila">
+    <div class="marco"><p class="marco__lbl">Hoy<span>resumen</span></p>
+  <div class="pantalla" id="p-hoy">
+    
+  <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb__ic">
+    <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2m0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c.9-.9 2.2-1.4 3.6-1.4m0 3.6c.5 0 1 .2 1.3.5L8 11.8 6.7 10c.3-.3.8-.5 1.3-.5"/></svg>
+    <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2"/><rect x="24.7" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg>
+  </span></div>
+  <header class="hoy-greet">
+    <div>
+      <p class="hoy-greet__name"><b>Hola, Ana.</b><br>Así va tu octubre</p>
+    </div>
+    <div class="hoy-greet__actions">
+      <button class="icon-btn" type="button" aria-label="Tu conciencia financiera"><img class="orbe" src="../marca/olbo-simbolo-tinta.svg" alt=""></button>
+      <button class="icon-btn" type="button" aria-label="Buscar movimientos"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+      <button class="icon-btn" type="button" aria-label="Notificaciones"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4.6 1.8 6 1.8 6H4.7s1.8-1.4 1.8-6"/><path d="M10 19.5a2.1 2.1 0 0 0 4 0"/></svg><span class="notif-badge"></span></button>
+    </div>
+  </header>
+  <div class="pila">
+    <section class="bcard vidrio">
+      <div class="bcard__top"><span class="lbl lbl--tinta">Tu dinero</span><span class="icon-btn icon-btn--s icon-btn--hundido"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span></div>
+      <p class="bcard__amt"><span class="cifra cifra--hero"><span class="cifra__cur">$</span> 6.248.300</span></p>
+      <p class="bcard__delta"><b class="num">−$ 48.500</b> hoy en 2 movimientos</p>
+      <div class="avance" aria-label="Día 26 de 31">
+        <div class="avance__trazos"><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--hoy"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i></div>
+        <div class="avance__ejes"><span>1 oct</span><span class="chip-valor avance__hoy">hoy, 26</span><span>31</span></div>
+      </div>
+    </section>
+
+    <button class="hoy-productos vidrio" type="button">
+      <span><span class="hoy-productos__title">Mi cartera</span><span class="hoy-productos__go">Ver mis tarjetas <svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></span>
+      <span class="hoy-productos__peek" aria-hidden="true"><span class="wcard wcard--1"></span><span class="wcard wcard--2"></span><span class="wcard wcard--3"></span></span>
+    </button>
+
+    <div class="seg" role="tablist" aria-label="Secciones de Hoy">
+      <span class="seg__thumb" aria-hidden="true"></span>
+      <button class="seg__opt is-on" role="tab" aria-selected="true"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="4.5" width="6" height="6" rx="1.8"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.8"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.8"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.8"/></svg>Resumen</button>
+      <button class="seg__opt" role="tab" aria-selected="false"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19.5h14M8 16V11M12 16V6.5M16 16v-3.5"/></svg>Análisis</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat losa-lila">
+        <div class="stat__top"><span class="lbl">Disponible</span><span class="stat__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></span></div>
+        <span class="stat__value"><span class="cifra cifra--tile"><span class="cifra__cur">$</span> 1.038.500</span></span>
+        <span class="stat__sub num">$ 173.083 por día</span>
+      </div>
+      <div class="stat losa-negra">
+        <div class="stat__top"><span class="lbl">Gastado</span><span class="stat__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/></svg></span></div>
+        <div class="mini-barras" aria-hidden="true"><i class="h10"></i><i class="h16"></i><i class="h12"></i><i class="h22"></i><i class="h8"></i><i class="h18"></i><i class="h26"></i><i class="h14"></i><i class="h20"></i><i class="on h30"></i></div>
+        <span class="stat__value"><span class="cifra cifra--tile"><span class="cifra__cur">$</span> 1.066.500</span></span>
+        <span class="stat__sub">variable este mes</span>
+      </div>
+    </div>
+
+    <div class="fijos-card vidrio">
+      <div><span class="fijos-card__label">Fijos del mes</span><span class="fijos-card__hint">Incluye <span class="num">$ 620.000</span> de créditos</span></div>
+      <span class="fijos-card__val num">$ 2.095.000</span>
+    </div>
+
+    <section class="catcard vidrio">
+      <h3 class="titulo-2">En qué se va</h3>
+      <p class="catcard__proj">A este ritmo cierras el mes en <span class="num">$ 3.381.000</span></p>
+      <div class="catbar"><span>Mercado</span><span class="num">$ 412.300</span><span class="catbar__track"><span class="catbar__fill catbar__fill--80"></span></span></div>
+      <div class="catbar"><span>Restaurantes</span><span class="num">$ 268.900</span><span class="catbar__track"><span class="catbar__fill catbar__fill--55"></span></span></div>
+      <div class="catbar"><span>Transporte</span><span class="num">$ 151.000</span><span class="catbar__track"><span class="catbar__fill catbar__fill--30"></span></span></div>
+    </section>
+  </div>
+    <div class="borde-inf"></div>
+  <div class="dock-zona">
+    <nav class="tabbar vidrio-fuerte" aria-label="Navegación principal">
+      <button class="tab is-active" type="button" aria-current="page"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg><span>Hoy</span></button><button class="tab" type="button" aria-label="Personas"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.3 19.5c.6-3.2 2.9-5 5.7-5s5.1 1.8 5.7 5"/><circle cx="17" cy="9.3" r="2.5"/><path d="M16.3 14.4c2.3.1 4 1.6 4.4 4.3"/></svg></button><button class="tab" type="button" aria-label="Movimientos"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7.5h12l-3.2-3.2M17 16.5H5l3.2 3.2"/></svg></button><button class="tab" type="button" aria-label="Perfil"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
+    </nav>
+    <button class="fab" type="button" aria-label="Registrar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div><div class="home-ind" aria-hidden="true"></div>
+  </div></div>
+    <div class="marco"><p class="marco__lbl">Registrar<span>sheet con teclado</span></p>
+  <div class="pantalla" id="p-registrar">
+    <div class="detras" aria-hidden="true">
+  <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb__ic">
+    <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2m0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c.9-.9 2.2-1.4 3.6-1.4m0 3.6c.5 0 1 .2 1.3.5L8 11.8 6.7 10c.3-.3.8-.5 1.3-.5"/></svg>
+    <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2"/><rect x="24.7" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg>
+  </span></div>
+  <header class="hoy-greet">
+    <div>
+      <p class="hoy-greet__name"><b>Hola, Ana.</b><br>Así va tu octubre</p>
+    </div>
+    <div class="hoy-greet__actions">
+      <button class="icon-btn" type="button" aria-label="Tu conciencia financiera"><img class="orbe" src="../marca/olbo-simbolo-tinta.svg" alt=""></button>
+      <button class="icon-btn" type="button" aria-label="Buscar movimientos"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></button>
+      <button class="icon-btn" type="button" aria-label="Notificaciones"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4.6 1.8 6 1.8 6H4.7s1.8-1.4 1.8-6"/><path d="M10 19.5a2.1 2.1 0 0 0 4 0"/></svg><span class="notif-badge"></span></button>
+    </div>
+  </header>
+  <div class="pila">
+    <section class="bcard vidrio">
+      <div class="bcard__top"><span class="lbl lbl--tinta">Tu dinero</span><span class="icon-btn icon-btn--s icon-btn--hundido"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span></div>
+      <p class="bcard__amt"><span class="cifra cifra--hero"><span class="cifra__cur">$</span> 6.248.300</span></p>
+      <p class="bcard__delta"><b class="num">−$ 48.500</b> hoy en 2 movimientos</p>
+      <div class="avance" aria-label="Día 26 de 31">
+        <div class="avance__trazos"><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--hoy"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i></div>
+        <div class="avance__ejes"><span>1 oct</span><span class="chip-valor avance__hoy">hoy, 26</span><span>31</span></div>
+      </div>
+    </section>
+
+    <button class="hoy-productos vidrio" type="button">
+      <span><span class="hoy-productos__title">Mi cartera</span><span class="hoy-productos__go">Ver mis tarjetas <svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg></span></span>
+      <span class="hoy-productos__peek" aria-hidden="true"><span class="wcard wcard--1"></span><span class="wcard wcard--2"></span><span class="wcard wcard--3"></span></span>
+    </button>
+
+    <div class="seg" role="tablist" aria-label="Secciones de Hoy">
+      <span class="seg__thumb" aria-hidden="true"></span>
+      <button class="seg__opt is-on" role="tab" aria-selected="true"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="4.5" width="6" height="6" rx="1.8"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.8"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.8"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.8"/></svg>Resumen</button>
+      <button class="seg__opt" role="tab" aria-selected="false"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19.5h14M8 16V11M12 16V6.5M16 16v-3.5"/></svg>Análisis</button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat losa-lila">
+        <div class="stat__top"><span class="lbl">Disponible</span><span class="stat__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></span></div>
+        <span class="stat__value"><span class="cifra cifra--tile"><span class="cifra__cur">$</span> 1.038.500</span></span>
+        <span class="stat__sub num">$ 173.083 por día</span>
+      </div>
+      <div class="stat losa-negra">
+        <div class="stat__top"><span class="lbl">Gastado</span><span class="stat__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/></svg></span></div>
+        <div class="mini-barras" aria-hidden="true"><i class="h10"></i><i class="h16"></i><i class="h12"></i><i class="h22"></i><i class="h8"></i><i class="h18"></i><i class="h26"></i><i class="h14"></i><i class="h20"></i><i class="on h30"></i></div>
+        <span class="stat__value"><span class="cifra cifra--tile"><span class="cifra__cur">$</span> 1.066.500</span></span>
+        <span class="stat__sub">variable este mes</span>
+      </div>
+    </div>
+
+    <div class="fijos-card vidrio">
+      <div><span class="fijos-card__label">Fijos del mes</span><span class="fijos-card__hint">Incluye <span class="num">$ 620.000</span> de créditos</span></div>
+      <span class="fijos-card__val num">$ 2.095.000</span>
+    </div>
+
+    <section class="catcard vidrio">
+      <h3 class="titulo-2">En qué se va</h3>
+      <p class="catcard__proj">A este ritmo cierras el mes en <span class="num">$ 3.381.000</span></p>
+      <div class="catbar"><span>Mercado</span><span class="num">$ 412.300</span><span class="catbar__track"><span class="catbar__fill catbar__fill--80"></span></span></div>
+      <div class="catbar"><span>Restaurantes</span><span class="num">$ 268.900</span><span class="catbar__track"><span class="catbar__fill catbar__fill--55"></span></span></div>
+      <div class="catbar"><span>Transporte</span><span class="num">$ 151.000</span><span class="catbar__track"><span class="catbar__fill catbar__fill--30"></span></span></div>
+    </section>
+  </div></div>
+    <div class="scrim"></div>
+    <section class="sheet vidrio-fuerte" role="dialog" aria-label="Nuevo gasto">
+      <div class="sheet__grip"></div>
+      <div class="sheet__head">
+        <button class="icon-btn icon-btn--hundido" type="button" aria-label="Volver"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+        <h2 class="sheet__title">Nuevo gasto</h2>
+        <button class="icon-btn icon-btn--hundido" type="button" aria-label="Cerrar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></button>
+      </div>
+      <button class="amt" type="button" aria-label="Monto">
+        <span><span class="cifra cifra--teclado"><span class="cifra__cur">$</span> 48.500</span><span class="amt__caret"></span></span>
+        <span class="amt__meta"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M8.5 3.5v3M15.5 3.5v3"/></svg> Hoy, 26 de octubre · Débito</span>
+      </button>
+      <div class="keypad">
+        <button class="keypad__key" type="button">1</button><button class="keypad__key" type="button">2</button><button class="keypad__key" type="button">3</button><button class="keypad__key" type="button">4</button><button class="keypad__key is-press" type="button">5</button><button class="keypad__key" type="button">6</button><button class="keypad__key" type="button">7</button><button class="keypad__key" type="button">8</button><button class="keypad__key" type="button">9</button><button class="keypad__key keypad__key--txt" type="button">000</button><button class="keypad__key" type="button">0</button><button class="keypad__key" type="button" aria-label="Borrar"><svg class="ico ico--l" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h10a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 18H9l-5.5-6z"/><path d="m11.5 9.5 5 5M16.5 9.5l-5 5"/></svg></button>
+      </div>
+      <p class="sec-lbl">Categoría</p>
+      <div class="cat-grid">
+        <button class="cat-chip is-sel" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h2l2.2 10.5h9.6L19.5 8H6.4"/><circle cx="9.5" cy="19" r="1.2"/><circle cx="16.5" cy="19" r="1.2"/></svg>Mercado</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5v7a2 2 0 0 0 4 0v-7M9 10.5v10M16 20.5v-17c-2 1-3 3.5-3 6.5v3h3"/></svg>Restaurantes</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="13" rx="2.5"/><path d="M5 11h14M8 17v2.5M16 17v2.5"/><circle cx="8.5" cy="14" r=".6"/><circle cx="15.5" cy="14" r=".6"/></svg>Transporte</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="2"/><ellipse cx="12" cy="12.5" rx="2.2" ry="2.6"/><ellipse cx="12" cy="18" rx="2.6" ry="2.4"/><path d="M9.8 11 6.5 9.5M14.2 11l3.3-1.5M9.6 14l-3.6 1.5M14.4 14l3.6 1.5"/></svg>Hormiga</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3.5 6 13.5h5.5L10.5 20.5l7-10H12z"/></svg>Servicios</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19.5s-7-4.3-7-9.5a3.8 3.8 0 0 1 7-2.1A3.8 3.8 0 0 1 19 10c0 5.2-7 9.5-7 9.5"/></svg>Salud</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v2a2.5 2.5 0 0 0 0 5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-2a2.5 2.5 0 0 0 0-5z"/><path d="M14 6v12" stroke-dasharray="1.5 2"/></svg>Ocio</button><button class="cat-chip" type="button"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg>Otros</button>
+      </div>
+      <p class="sec-lbl">Detalle</p>
+      <div class="field-in"><span class="ph">uniformes, gasolina, dieta…</span></div>
+      <div class="detalles-toggle"><span>Detalles · cuenta, fecha…</span><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></div>
+      <div class="sheet__foot"><button class="btn btn--primary" type="button">Guardar gasto</button></div>
+    </section>
+    <div class="home-ind" aria-hidden="true"></div>
+  </div></div>
+    <div class="marco"><p class="marco__lbl">Movimientos</p>
+  <div class="pantalla" id="p-movimientos">
+    
+  <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb__ic">
+    <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2m0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c.9-.9 2.2-1.4 3.6-1.4m0 3.6c.5 0 1 .2 1.3.5L8 11.8 6.7 10c.3-.3.8-.5 1.3-.5"/></svg>
+    <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2"/><rect x="24.7" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg>
+  </span></div>
+    <header class="view-head"><h1 class="titulo-1">Movimientos</h1><button class="icon-btn" type="button" aria-label="Notificaciones"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4.6 1.8 6 1.8 6H4.7s1.8-1.4 1.8-6"/><path d="M10 19.5a2.1 2.1 0 0 0 4 0"/></svg></button></header>
+    <div class="mov-search vidrio"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span>Buscar concepto, monto, categoría…</span></div>
+    <div class="mov-filters">
+      <span class="mfilter"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="2"/><ellipse cx="12" cy="12.5" rx="2.2" ry="2.6"/><ellipse cx="12" cy="18" rx="2.6" ry="2.4"/><path d="M9.8 11 6.5 9.5M14.2 11l3.3-1.5M9.6 14l-3.6 1.5M14.4 14l3.6 1.5"/></svg>Hormiga</span><span class="mfilter__sep"></span>
+      <span class="mfilter">Mercado</span><span class="mfilter">Restaurantes</span><span class="mfilter">Transporte</span><span class="mfilter">Ocio</span>
+    </div>
+    <section class="mes-losa vidrio">
+      <div class="mes-losa__top">
+        <div><p class="mes-losa__mes">Octubre <span>2026</span></p><p class="mes-losa__amt"><span class="cifra cifra--display"><span class="cifra__cur">$</span> 3.161.500</span></p></div>
+        <span class="icon-btn icon-btn--s icon-btn--hundido"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span>
+      </div>
+      <div class="barras" aria-hidden="true"><span class="barras__prom"></span><span class="barras__chip barras__chip--d12 chip-valor num">$ 230.000</span><i class="h40"></i><i class="h22"></i><i class="h3"></i><i class="h64"></i><i class="h30"></i><i class="h18"></i><i class="h52"></i><i class="h12"></i><i class="h3"></i><i class="h34"></i><i class="h26"></i><i class="on h44"></i><i class="h20"></i><i class="h48"></i><i class="h30"></i><i class="h3"></i><i class="h18"></i><i class="h26"></i><i class="h38"></i><i class="h60"></i><i class="h22"></i><i class="h14"></i><i class="h30"></i><i class="h8"></i><i class="h24"></i><i class="h36"></i><i class="h3"></i><i class="h3"></i><i class="h3"></i><i class="h3"></i><i class="h3"></i></div>
+    </section>
+    <div class="dia-head"><span class="dia-head__d">Miércoles, 14 de octubre</span><span class="num">$ 130.700</span></div>
+    <div class="mov-list vidrio">
+      
+  <div class="mov-row">
+    <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h2l2.2 10.5h9.6L19.5 8H6.4"/><circle cx="9.5" cy="19" r="1.2"/><circle cx="16.5" cy="19" r="1.2"/></svg></span>
+    <span class="mov-row__bd"><span class="mov-row__name">Frutas y verduras</span><span class="mov-row__meta">Mercado · Débito</span></span>
+    <span class="mov-row__amount num">−$ 98.700</span>
+    <button class="mov-row__more" type="button" aria-label="Opciones"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg></button>
+  </div>
+      
+  <div class="mov-row">
+    <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5v7a2 2 0 0 0 4 0v-7M9 10.5v10M16 20.5v-17c-2 1-3 3.5-3 6.5v3h3"/></svg></span>
+    <span class="mov-row__bd"><span class="mov-row__name">Almuerzo</span><span class="mov-row__meta">Restaurantes · Débito</span></span>
+    <span class="mov-row__amount num">−$ 32.000</span>
+    <button class="mov-row__more" type="button" aria-label="Opciones"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg></button>
+  </div>
+    </div>
+    <div class="dia-head"><span>Martes, 13 de octubre</span><span class="num">$ 15.800</span></div>
+    <div class="mov-list vidrio">
+      
+  <div class="mov-row">
+    <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9.5h10.5V14a4.5 4.5 0 0 1-4.5 4.5h-1.5A4.5 4.5 0 0 1 5 14z"/><path d="M15.5 10.5h1.3a2.3 2.3 0 0 1 0 4.6h-1.3M8.5 3.8v2.5M12 3.8v2.5"/></svg></span>
+    <span class="mov-row__bd"><span class="mov-row__name">Café<span class="tag-hormiga">hormiga</span></span><span class="mov-row__meta">Restaurantes · Débito</span></span>
+    <span class="mov-row__amount num">−$ 15.800</span>
+    <button class="mov-row__more" type="button" aria-label="Opciones"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg></button>
+  </div>
+      
+  <div class="mov-row">
+    <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M7.5 9.5 12 14l4.5-4.5M5 19.5h14"/></svg></span>
+    <span class="mov-row__bd"><span class="mov-row__name">Pago de un cliente</span><span class="mov-row__meta">Negocio · Ahorros</span></span>
+    <span class="mov-row__amount num">+$ 850.000</span>
+    <button class="mov-row__more" type="button" aria-label="Opciones"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg></button>
+  </div>
+    </div>
+    <div class="dia-head"><span>Lunes, 12 de octubre</span><span class="num">$ 230.000</span></div>
+    <div class="mov-list vidrio">
+  <div class="mov-row">
+    <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v2a2.5 2.5 0 0 0 0 5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-2a2.5 2.5 0 0 0 0-5z"/><path d="M14 6v12" stroke-dasharray="1.5 2"/></svg></span>
+    <span class="mov-row__bd"><span class="mov-row__name">Concierto</span><span class="mov-row__meta">Ocio · Crédito</span></span>
+    <span class="mov-row__amount num">−$ 230.000</span>
+    <button class="mov-row__more" type="button" aria-label="Opciones"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></svg></button>
+  </div></div>
+    <div class="borde-inf"></div>
+  <div class="dock-zona">
+    <nav class="tabbar vidrio-fuerte" aria-label="Navegación principal">
+      <button class="tab" type="button" aria-label="Hoy"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg></button><button class="tab" type="button" aria-label="Personas"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.3 19.5c.6-3.2 2.9-5 5.7-5s5.1 1.8 5.7 5"/><circle cx="17" cy="9.3" r="2.5"/><path d="M16.3 14.4c2.3.1 4 1.6 4.4 4.3"/></svg></button><button class="tab is-active" type="button" aria-current="page"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7.5h12l-3.2-3.2M17 16.5H5l3.2 3.2"/></svg><span>Movimientos</span></button><button class="tab" type="button" aria-label="Perfil"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
+    </nav>
+    <button class="fab" type="button" aria-label="Registrar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div><div class="home-ind" aria-hidden="true"></div>
+  </div></div>
+    <div class="marco"><p class="marco__lbl">Asesor<span>tu conciencia</span></p>
+  <div class="pantalla" id="p-asesor">
+    
+  <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb__ic">
+    <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2m0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c.9-.9 2.2-1.4 3.6-1.4m0 3.6c.5 0 1 .2 1.3.5L8 11.8 6.7 10c.3-.3.8-.5 1.3-.5"/></svg>
+    <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2"/><rect x="24.7" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg>
+  </span></div>
+    <header class="asesor-top">
+      <button class="icon-btn" type="button" aria-label="Volver"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button>
+      <h1 class="asesor-top__t">Tu conciencia</h1><span></span>
+    </header>
+    <div class="asesor-hero">
+      <img src="../marca/olbo-simbolo-tinta.svg" alt="">
+      <p class="asesor-hero__txt">Sin filtro. Te digo la verdad de tus números para que reacciones.</p>
+    </div>
+    <div class="chat">
+      <p class="chat-msg chat-msg--yo">¿Cuánto puedo gastar hoy sin pasarme?</p>
+      <div class="chat-msg chat-msg--ia vidrio">
+        <p>Hasta esta cifra y cierras octubre en verde. Te quedan 6 días y el mercado ya va en 80 % de lo normal.</p>
+        <div class="chat-msg__dato">
+          <div><span class="cifra cifra--display"><span class="cifra__cur">$</span> 38.000</span><span class="lbl">para hoy</span></div>
+          <span class="pill pill--verde"><span class="pill__dot"></span>Vas bien</span>
+        </div>
+        <div class="avance ritmo-asesor" aria-hidden="true"><div class="avance__trazos"><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--ya"></i><i class="avance__t avance__t--hoy"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i><i class="avance__t"></i></div><div class="avance__ejes"><span>1 oct</span><span class="chip-valor avance__hoy">día 26 de 31</span><span>31</span></div></div>
+      </div>
+    </div>
+    <div class="chat-chips">
+      <span class="chat-chip">¿Me alcanza para los créditos?</span>
+      <span class="chat-chip">Dime la verdad de mi mes</span>
+    </div>
+    <div class="composer vidrio-fuerte">
+      <button class="icon-btn icon-btn--hundido" type="button" aria-label="Adjuntar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m19 11.5-6.8 6.8a4.2 4.2 0 0 1-6-6l7.3-7.3a2.8 2.8 0 0 1 4 4l-7.2 7.2a1.4 1.4 0 0 1-2-2l6.6-6.6"/></svg></button>
+      <span class="composer__ph">Escríbele a tu conciencia…</span>
+      <button class="icon-btn icon-btn--negro" type="button" aria-label="Enviar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg></button>
+    </div>
+    <div class="home-ind" aria-hidden="true"></div>
+  </div></div>
+  </div>
+  <div class="tablero__fila">
+    <div class="marco"><p class="marco__lbl">Onboarding<span>paso 1</span></p>
+  <div class="pantalla pantalla--ob" id="p-onboarding">
+    
+  <div class="sb" aria-hidden="true"><span>9:41</span><span class="sb__ic">
+    <svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg viewBox="0 0 16 12"><path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2m0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c.9-.9 2.2-1.4 3.6-1.4m0 3.6c.5 0 1 .2 1.3.5L8 11.8 6.7 10c.3-.3.8-.5 1.3-.5"/></svg>
+    <svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="23" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2"/><rect x="24.7" y="4" width="1.6" height="4" rx=".8" opacity=".4"/></svg>
+  </span></div>
+    <div class="ob2__top">
+      <div class="ob2__dots" aria-label="Paso 1 de 4"><i class="ob2__dot is-on"></i><i class="ob2__dot"></i><i class="ob2__dot"></i><i class="ob2__dot"></i></div>
+      <button class="ob2__skip" type="button">Saltar</button>
+    </div>
+    <h1 class="ob2__title">Que no se te escape ni un peso.</h1>
+    <p class="ob2__text">olbo te muestra tu plata en tiempo real. Cada gasto queda anotado antes de que se te olvide.</p>
+    <div class="ob2__art vidrio">
+      
+    <div class="gauge gauge--verde " role="img" aria-label="62 del sueldo. del sueldo">
+      <svg class="gauge__svg" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="gauge__track" cx="50" cy="50" r="44"/>
+        <circle class="gauge__arc" cx="50" cy="50" r="44" stroke-dasharray="171.4 276.5"/>
+        <circle class="gauge__tick" cx="17.93" cy="19.88" r="3.2"/>
+      </svg>
+      <div class="gauge__center"><span class="gauge__value">62<small>%</small></span><span class="gauge__caption">del sueldo</span></div>
+    </div>
+      <span class="pill pill--verde">Vas bien</span>
+      <div class="ob2__noti">
+        <span class="mov-row__icon"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9.5h10.5V14a4.5 4.5 0 0 1-4.5 4.5h-1.5A4.5 4.5 0 0 1 5 14z"/><path d="M15.5 10.5h1.3a2.3 2.3 0 0 1 0 4.6h-1.3M8.5 3.8v2.5M12 3.8v2.5"/></svg></span>
+        <span class="mov-row__bd"><span class="mov-row__name">Café</span><span class="mov-row__meta">Anotado hace 2 min</span></span>
+        <span class="mov-row__amount num">−$ 15.800</span>
+      </div>
+    </div>
+    <button class="ob2__cta losa-negra" type="button">
+      <span><span class="ob2__cta-t">Continuar</span><span class="ob2__cta-s">Paso 1 de 4 · toma 2 minutos</span></span>
+      <span class="ob2__cta-go"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg></span>
+    </button>
+    <div class="home-ind" aria-hidden="true"></div>
+  </div></div>
+    <div class="marco"><p class="marco__lbl">Componentes</p>
+  <div class="panel" id="p-componentes">
+    <div class="col">
+      <section class="caja vidrio">
+        <p class="caja__lbl">Materiales <span>de más hundido a más opaco</span></p>
+        <div class="materiales">
+          <div class="mat mat--hundido">Hundido<small>tinta 5 % · sin blur · teclas, inputs</small></div>
+          <div class="mat mat--papel">Papel<small>#FFF sólido · íconos de fila, notas</small></div>
+          <div class="mat mat--vidrio">Vidrio<small>blanco 62 % · canto 75 % · losas</small></div>
+          <div class="mat mat--fuerte">Vidrio fuerte<small>82 % · blur 32 · dock, sheets</small></div>
+          <div class="mat losa-negra">Losa negra<small>tinta + brillo radial · 1 por pantalla</small></div>
+          <div class="mat losa-lila">Losa lila<small>acento · tinta encima · 1 por pantalla</small></div>
+        </div>
+      </section>
+      <section class="caja vidrio">
+        <p class="caja__lbl">Tipografía <span>Urbanist display · Manrope texto</span></p>
+        <div class="tipos">
+          <div class="tipo"><span class="cifra cifra--hero"><span class="cifra__cur">$</span> 6.248.300</span><small>Héroe 56/300</small></div>
+          <div class="tipo"><span class="t-display">Display fino</span><small>40/300</small></div>
+          <div class="tipo"><span class="t-h1">Título uno</span><small>28/400</small></div>
+          <div class="tipo"><span class="t-h2">Título dos</span><small>20/500</small></div>
+          <div class="tipo"><span class="t-body">Cuerpo de lectura en Manrope</span><small>16/400</small></div>
+          <div class="tipo"><span class="lbl">etiqueta en minúscula, tinta-2</span><small>12/500</small></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="caja vidrio">
+        <p class="caja__lbl">Gráfica fina <span>barras 1,5 px · promedio punteado · chip negro</span></p>
+        <div class="chart">
+          <div class="chart__ejes"><span>300k</span><span>150k</span><span>0</span></div>
+          <div class="chart__barras"><i class="h53"></i><i class="h60"></i><i class="h30"></i><i class="h41"></i><i class="h57"></i><i class="h63"></i><i class="h33"></i><i class="h91"></i><i class="h70"></i><i class="h57"></i><i class="h48"></i><i class="h82"></i><i class="h72"></i><i class="h29"></i><i class="h57"></i><i class="h36"></i><i class="h66"></i><i class="h27"></i><i class="h54"></i><i class="h47"></i><i class="h23"></i><i class="h13"></i><i class="h76"></i><i class="h78"></i><i class="h17"></i><i class="h40"></i><i class="h78"></i><i class="h24"></i><i class="h42"></i><i class="h53"></i><i class="h64"></i><i class="h37"></i><i class="h31"></i><i class="h92"></i><i class="h55"></i><i class="h41"></i><i class="h65"></i><i class="h51"></i><i class="h39"></i><i class="h84"></i><i class="h53"></i><i class="h53"></i><i class="h32"></i><i class="h92"></i><i class="h41"></i><i class="h86"></i><i class="h54"></i><i class="h35"></i><i class="h60"></i><i class="h43"></i><i class="h67"></i><i class="h58"></i><i class="h20"></i><i class="h25"></i><i class="h41"></i><i class="h14"></i><i class="h12"></i><i class="h38"></i><i class="h59"></i><i class="h58"></i><i class="h81"></i><i class="h38"></i></div>
+          <span class="chart__prom"></span><span class="chart__guia"></span><span class="chart__punto"></span>
+          <span class="chart__chip chip-valor num">$ 284.000 · 18 oct</span>
+          <div class="chart__x"><span>1 sep</span><span>15 sep</span><span>1 oct</span><span>15 oct</span><span>hoy</span></div>
+        </div>
+      </section>
+      <section class="losa-chart losa-negra">
+        <p class="caja__lbl"><span class="lbl">Dentro de losa negra, el lila puede ser serie</span><span class="lbl">Flujo neto</span></p>
+        <div class="fila"><span class="cifra cifra--display"><span class="cifra__cur">$</span> 1.284.000</span><span class="pill pill--verde"><span class="pill__dot"></span>+12 %</span></div>
+        <div class="chart">
+          <div class="chart__barras"><i class="h42"></i><i class="h36"></i><i class="h89"></i><i class="h51"></i><i class="h73"></i><i class="h45"></i><i class="h97"></i><i class="h59"></i><i class="h55"></i><i class="h63"></i><i class="h95"></i><i class="h78"></i><i class="h51"></i><i class="h69"></i><i class="h72"></i><i class="h21"></i><i class="h82"></i><i class="h68"></i><i class="h76"></i><i class="h24"></i><i class="h27"></i><i class="h32"></i><i class="h69"></i><i class="h53"></i><i class="h66"></i><i class="h33"></i><i class="h32"></i><i class="h62"></i><i class="h19"></i><i class="h66"></i><i class="h52"></i><i class="h55"></i><i class="h39"></i><i class="h62"></i><i class="h25"></i><i class="h52"></i><i class="h49"></i><i class="h29"></i><i class="h60"></i><i class="h40"></i><i class="h95"></i><i class="h93"></i><i class="h67"></i><i class="h38"></i><i class="lila h36"></i><i class="lila h86"></i><i class="lila h33"></i><i class="lila h65"></i><i class="lila h57"></i><i class="lila h38"></i><i class="lila h68"></i><i class="lila h13"></i><i class="lila h15"></i><i class="lila h77"></i><i class="lila h57"></i><i class="lila h66"></i><i class="lila h51"></i><i class="lila h77"></i><i class="lila h78"></i><i class="lila h19"></i><i class="lila h29"></i><i class="lila h82"></i></div>
+        </div>
+      </section>
+      <section class="caja vidrio">
+        <p class="caja__lbl">Semáforo <span>anillo punteado 5 · arco 3 · solo aquí hay color de estado</span></p>
+        <div class="gauges">
+          
+    <div class="gauge gauge--verde gauge--mini" role="img" aria-label="48 del sueldo. Vas bien">
+      <svg class="gauge__svg" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="gauge__track" cx="50" cy="50" r="44"/>
+        <circle class="gauge__arc" cx="50" cy="50" r="44" stroke-dasharray="132.7 276.5"/>
+        <circle class="gauge__tick" cx="6.35" cy="55.51" r="3.2"/>
+      </svg>
+      <div class="gauge__center"><span class="gauge__value">48<small>%</small></span><span class="gauge__caption">Vas bien</span></div>
+    </div>
+          
+    <div class="gauge gauge--ambar gauge--mini" role="img" aria-label="71 del sueldo. Ojo">
+      <svg class="gauge__svg" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="gauge__track" cx="50" cy="50" r="44"/>
+        <circle class="gauge__arc" cx="50" cy="50" r="44" stroke-dasharray="196.3 276.5"/>
+        <circle class="gauge__tick" cx="39.06" cy="7.38" r="3.2"/>
+      </svg>
+      <div class="gauge__center"><span class="gauge__value">71<small>%</small></span><span class="gauge__caption">Ojo</span></div>
+    </div>
+          
+    <div class="gauge gauge--rojo gauge--mini" role="img" aria-label="93 del sueldo. Te pasaste">
+      <svg class="gauge__svg" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="gauge__track" cx="50" cy="50" r="44"/>
+        <circle class="gauge__arc" cx="50" cy="50" r="44" stroke-dasharray="257.1 276.5"/>
+        <circle class="gauge__tick" cx="89.81" cy="31.27" r="3.2"/>
+      </svg>
+      <div class="gauge__center"><span class="gauge__value">93<small>%</small></span><span class="gauge__caption">Te pasaste</span></div>
+    </div>
+        </div>
+        <div class="fila"><span class="pill pill--verde"><span class="pill__dot"></span>Vas bien</span><span class="pill pill--ambar"><span class="pill__dot"></span>Ojo con el ritmo</span><span class="pill pill--rojo"><span class="pill__dot"></span>Te pasaste</span></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="caja vidrio">
+        <p class="caja__lbl">Controles</p>
+        <div class="seg" role="tablist"><span class="seg__thumb"></span><button class="seg__opt is-on">Gasto</button><button class="seg__opt">Ingreso</button></div>
+        <div class="fila">
+          <span class="mfilter">Todos</span><span class="cat-chip is-sel"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h2l2.2 10.5h9.6L19.5 8H6.4"/><circle cx="9.5" cy="19" r="1.2"/><circle cx="16.5" cy="19" r="1.2"/></svg>Mercado</span><span class="mfilter">Ocio</span>
+        </div>
+        <div class="fila">
+          <span class="icon-btn"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M8.5 7H17v8.5"/></svg></span><span class="icon-btn"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg></span><span class="icon-btn icon-btn--hundido"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></span><span class="icon-btn icon-btn--negro"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13.5M13 6.5l5.5 5.5-5.5 5.5"/></svg></span>
+          <span class="switch is-on"><span class="switch__dot"></span></span><span class="switch"><span class="switch__dot"></span></span>
+        </div>
+        <div class="fila"><button class="btn btn--primary btn--sm">Guardar gasto</button><button class="btn btn--ghost btn--sm">Descartar</button></div>
+      </section>
+      <section class="caja vidrio">
+        <p class="caja__lbl">Inputs y avisos</p>
+        <div class="field"><span class="field__label">Sueldo mensual</span><span class="field__input field__input--foco num">$ 4.200.000</span></div>
+        <div class="sep"></div>
+        <div class="field"><span class="field__label">Detalle</span><span class="field__input field__input--error"><span class="ph">Ej. gasolina</span></span><span class="field__err">Escribe un monto mayor a $ 0</span></div>
+        <div class="sep"></div>
+        <div class="toast" role="status"><span class="toast__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="m5.5 12.5 4 4 9-9"/></svg></span>Gasto guardado<span class="toast__act">Deshacer</span></div>
+      </section>
+      <section class="caja vidrio">
+        <p class="caja__lbl">FAB abierto y dock</p>
+        <div class="burbujas"><span class="fab-bubble"><span class="fab-bubble__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/></svg></span>Gasto</span><span class="fab-bubble"><span class="fab-bubble__ic"><svg class="ico ico--s" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/></svg></span>Ingreso</span></div>
+        <div class="sep"></div>
+        <div class="dock-demo">
+          <nav class="tabbar vidrio-fuerte"><button class="tab"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.4 12 4l8 6.4V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg></button><button class="tab is-active"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.3"/><path d="M3.3 19.5c.6-3.2 2.9-5 5.7-5s5.1 1.8 5.7 5"/><circle cx="17" cy="9.3" r="2.5"/><path d="M16.3 14.4c2.3.1 4 1.6 4.4 4.3"/></svg><span>Personas</span></button><button class="tab"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7.5h12l-3.2-3.2M17 16.5H5l3.2 3.2"/></svg></button></nav>
+          <button class="fab" type="button" aria-label="Cerrar"><svg class="ico " viewBox="0 0 24 24" aria-hidden="true"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></svg></button>
+        </div>
+      </section>
+    </div>
+  </div></div>
+  </div>
+</main>
+</body>
+</html>
