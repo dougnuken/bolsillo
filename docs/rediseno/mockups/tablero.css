@@ -556,3 +556,162 @@ svg { display: block; }
 .barras__chip--d12 { left: calc(36.7% - 42px); }
 .chart__chip { left: calc(34px + 61%); transform: translateX(-50%); }
 .ritmo-asesor { margin-top: 14px; }
+
+/* =====================================================================
+   RONDA 2 · vidrio + gradientes + grano + dock oscuro + esfera FAB + motion
+   (este bloque manda sobre lo anterior; SISTEMA-UI §2–§5 recoge los valores)
+   ===================================================================== */
+:root {
+  /* variaciones del lila y del negro (no son colores nuevos de marca) */
+  --lila-leche: #F7F3FF;     /* blanco lechoso con tinte lila */
+  --lila-lavanda: #D8CBFF;   /* paso medio */
+  --lila-hondo: #9677FF;     /* esquina saturada (tinta encima: 5,3:1) */
+  --grafito: #3A3A42;
+  --grano: url('grano.svg');
+  --grano-fino: url('grano-fino.svg');
+
+  --losa-lila:
+    radial-gradient(130% 110% at 100% 100%, var(--lila-hondo) 0%, rgba(150, 119, 255, 0) 58%),
+    radial-gradient(120% 100% at 0% 0%, var(--lila-leche) 0%, rgba(247, 243, 255, 0) 55%),
+    linear-gradient(150deg, var(--lila-lavanda) 0%, var(--lila) 60%);
+  --losa-negra:
+    radial-gradient(90% 80% at 100% 100%, rgba(180, 156, 255, 0.34) 0%, rgba(180, 156, 255, 0) 60%),
+    radial-gradient(80% 70% at 0% 0%, var(--grafito) 0%, rgba(58, 58, 66, 0) 62%),
+    radial-gradient(60% 50% at 30% 110%, rgba(140, 170, 255, 0.14) 0%, rgba(140, 170, 255, 0) 70%),
+    linear-gradient(160deg, #26262B 0%, #1D1D1F 55%, #141416 100%);
+  --vidrio-tinte:
+    radial-gradient(85% 75% at 100% 0%, rgba(205, 188, 255, 0.85) 0%, rgba(216, 203, 255, 0) 60%),
+    radial-gradient(80% 70% at 0% 100%, rgba(190, 228, 210, 0.9) 0%, rgba(205, 233, 220, 0) 62%);
+  --brillo-vidrio: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 42%);
+  --canto-oscuro: rgba(255, 255, 255, 0.12);
+  --canto-color: rgba(255, 255, 255, 0.55);
+
+  /* dock oscuro translúcido (barra «Ask anything») */
+  --glass-tinta: rgba(29, 29, 31, 0.8);
+  --sobre-tinta-sutil: rgba(255, 255, 255, 0.1);
+  --sobre-tinta-icono: rgba(255, 255, 255, 0.86);
+
+  /* esfera FAB: ADN de --grad-cta (única pieza multicolor) */
+  --fab-naranja: #FF7A38;
+  --fab-rojo: #FF5A4E;
+  --fab-morado: #C060D8;
+  --fab-azul: #4F7BFF;
+  --fab-violeta: #8A7CF0;
+  --fab-crema: #FFE3CC;
+  --fab-leche: #FDF8F4;
+  --fab-hielo: #DCE4FF;
+  --fab-esfera:
+    radial-gradient(60% 55% at 32% 26%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(70% 80% at 0% 70%, var(--fab-naranja) 0%, rgba(255, 122, 56, 0) 60%),
+    radial-gradient(60% 60% at 100% 62%, var(--fab-azul) 0%, rgba(79, 123, 255, 0) 64%),
+    radial-gradient(70% 60% at 50% 110%, var(--fab-violeta) 0%, rgba(138, 124, 240, 0) 70%),
+    linear-gradient(120deg, var(--fab-crema) 0%, var(--fab-leche) 45%, var(--fab-hielo) 100%);
+  --fab-blobs:
+    radial-gradient(38% 38% at 26% 72%, var(--fab-rojo) 0%, rgba(255, 90, 78, 0) 100%),
+    radial-gradient(34% 34% at 78% 30%, var(--fab-morado) 0%, rgba(192, 96, 216, 0) 100%),
+    radial-gradient(40% 40% at 74% 80%, var(--fab-azul) 0%, rgba(79, 123, 255, 0) 100%);
+  --sh-fab-color:
+    -10px 14px 26px -12px rgba(255, 122, 56, 0.7),
+    10px 16px 28px -12px rgba(79, 123, 255, 0.7),
+    0 4px 10px -4px rgba(29, 29, 31, 0.25);
+  --dur-respira: 4.2s;
+}
+
+/* ---- grano en todo material ---- */
+.vidrio, .vidrio-fuerte, .chat-chip, .mfilter {
+  background-image: var(--grano-fino);
+  background-size: 160px;
+}
+.bcard, .ob2__art {
+  background: var(--grano-fino) 0 0 / 160px, var(--brillo-vidrio), var(--vidrio-tinte), var(--glass-2);
+}
+.losa-lila, .losa-negra {
+  position: relative; overflow: hidden;
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(160%);
+  backdrop-filter: blur(var(--blur)) saturate(160%);
+}
+.losa-lila {
+  background: var(--grano) 0 0 / 160px, var(--brillo-vidrio), var(--losa-lila);
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-color), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.losa-negra {
+  background: var(--grano) 0 0 / 160px, linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 40%), var(--losa-negra);
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-oscuro), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.losa-lila .cifra__cur { opacity: 0.7; }
+
+/* ---- dock oscuro, contraste invertido ---- */
+.tabbar.vidrio-fuerte {
+  background: var(--grano) 0 0 / 160px, var(--glass-tinta);
+  background-blend-mode: soft-light, normal;
+  border: 1px solid var(--canto-oscuro);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), var(--sh-flota);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(170%);
+  backdrop-filter: blur(var(--blur)) saturate(170%);
+  gap: 4px;
+}
+.tab { color: var(--sobre-tinta-icono); background: transparent; width: 48px; min-width: 48px; height: 48px; }
+.tab.is-active { background: var(--papel); color: var(--tinta); width: auto; box-shadow: inset 0 -1px 0 rgba(29, 29, 31, 0.08); }
+
+/* ---- esfera FAB ---- */
+.fab {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--fab-esfera);
+  color: var(--tinta);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: var(--sh-fab-color), inset 0 1px 1px rgba(255, 255, 255, 0.95), inset 0 -8px 14px -6px rgba(79, 123, 255, 0.45), inset 6px 0 12px -8px rgba(255, 122, 56, 0.5);
+}
+.fab::before {
+  content: ''; position: absolute; inset: -30%; z-index: -1; background: var(--fab-blobs);
+  filter: blur(6px); opacity: 0.85; animation: deriva 14s linear infinite;
+}
+.fab::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: 1; pointer-events: none;
+  background:
+    radial-gradient(45% 30% at 38% 16%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(80% 50% at 50% 115%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 70%);
+  animation: brillo 7s ease-in-out infinite;
+}
+.fab .ico { position: relative; z-index: 2; stroke-width: 2; }
+.fab--quieto::before, .fab--quieto::after { animation: none; }
+
+/* ---- motion de las líneas finas ---- */
+.avance__t, .barras i, .chart__barras i, .mini-barras i {
+  transform-origin: 50% 100%;
+  animation: entra 900ms var(--ease) both, respira var(--dur-respira) ease-in-out infinite;
+}
+.avance__t--hoy, .chart__punto, .gauge__tick { animation: pulso 2.4s ease-in-out infinite; }
+.avance__t--hoy { transform-origin: 50% 100%; }
+.gauge__tick { transform-box: fill-box; transform-origin: center; }
+.chart__punto::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid var(--tinta);
+  animation: onda 2.4s ease-out infinite;
+}
+.gauge__arc { animation: traza 1.4s var(--ease) both; }
+.avance__trazos, .barras { position: relative; }
+.ob2__cta.losa-negra { position: absolute; }
+.barras::after, .chart__barras::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 18%; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0) 100%);
+  animation: barrido 5.5s ease-in-out infinite; opacity: 0;
+}
+.losa-negra .chart__barras::after { background: linear-gradient(90deg, rgba(180, 156, 255, 0) 0%, rgba(180, 156, 255, 0.35) 50%, rgba(180, 156, 255, 0) 100%); }
+
+@keyframes entra { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes respira { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.72); } }
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes onda { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes traza { from { opacity: 0; } to { opacity: 1; } }
+@keyframes barrido { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 85%, 100% { transform: translateX(560%); opacity: 0; } }
+@keyframes deriva { from { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.08); } to { transform: rotate(360deg) scale(1); } }
+@keyframes brillo { 0%, 100% { opacity: 1; transform: translate(0, 0); } 50% { opacity: 0.8; transform: translate(2px, 1px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .vidrio, .vidrio-fuerte, .bcard, .ob2__art { background: var(--glass-solido); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .tabbar.vidrio-fuerte { background: var(--tinta); }
+}

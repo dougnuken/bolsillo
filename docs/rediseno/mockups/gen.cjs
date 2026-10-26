@@ -239,7 +239,7 @@ const pantallaAsesor = `
           <div>${cifra('38.000', 'cifra--display')}<span class="lbl">para hoy</span></div>
           <span class="pill pill--verde"><span class="pill__dot"></span>Vas bien</span>
         </div>
-        <div class="avance ritmo-asesor" aria-hidden="true"><div class="avance__trazos">${avance()}</div><div class="avance__ejes"><span>1 oct</span><span class="chip-valor avance__hoy">día 26 de 31</span><span>31</span></div></div>
+        <div class="avance ritmo-asesor" aria-hidden="true"><div class="avance__trazos">${avance()}</div><div class="avance__ejes"><span>1 oct</span><span class="chip-valor avance__hoy">hoy, 26</span><span>31</span></div></div>
       </div>
     </div>
     <div class="chat-chips">
@@ -436,5 +436,9 @@ let css = '/* Generado por el tablero: alturas de barras (h<N> = N px en minibar
 [...alturas].sort((a, b) => a - b).forEach((h) => {
   css += `.mini-barras .h${h}, .barras .h${h} { height: ${h}px; }\n.chart__barras .h${h} { height: ${h}%; }\n`;
 });
+css += '/* Cascada de entrada + ola de respiración: retraso escalonado por posición */\n';
+for (let n = 1; n <= 62; n++) {
+  css += `.avance__trazos > i:nth-of-type(${n}), .barras > i:nth-of-type(${n}), .chart__barras > i:nth-of-type(${n}), .mini-barras > i:nth-of-type(${n}) { animation-delay: ${n * 16}ms, ${900 + n * 110}ms; }\n`;
+}
 fs.writeFileSync(require('path').join(__dirname, 'tablero-alturas.css'), css);
 console.log('ok', out.length, alturas.size);
