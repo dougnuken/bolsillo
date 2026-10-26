@@ -21,8 +21,8 @@
 | F7 | Íconos, manifest, limpieza | S4 · Sonnet | ✅ | `77b37af` — íconos Anillo y centro (PNG desde el SVG), manifest `#F0EFF2`, fuera Plus Jakarta/Space Grotesk/Inter, `img/brand-3d|empty-states|tex|onboarding`, `--nav-h-min` y tokens/reglas muertas; CLAUDE.md §2/§4/§5/§10 |
 | QA | Verificación final (tests, CSP, AA, 390 px, capturas antes/después) | Sonnet medio | ✅ | `267401f` — sin desborde, consola ni CSP; AA en estados y tarjeta lila; Guardar opaco. Pendientes menores: `.cat-ord-btn` 44×34, toast del onboarding sobre Continuar, dock/FAB ~2 px |
 | M1 | Capturas 3x con `tools/capturas.mjs --scale 3` + SHOTLIST | S4 · Sonnet | ✅ | `docs/rediseno/capturas-3x/` (14 JPG 1179×2556 con barra 9:41, 5,8 MB): hoy, análisis, movimientos, personas, perfil, asesor, productos, fab, registrar-metodos, registrar, onboarding-1…4 |
-| M2 | Escenas Higgsfield (`gpt_image_2_5`, 3:4, 2k) + composición | Sonnet medio | — | ~13 escenas ≈ 36 créditos |
-| M3 | Caso `/work/olbo` en `dougnuken/douguizard` (formato largo como MakeaPet: cover, film, story) | Sonnet medio + revisión Opus | — | |
+| M2 | Escenas Higgsfield (`gpt_image_2_5`, 3:4, 2k) + composición | S5 · Opus | ✅ | 10 escenas, 27,5 créditos, ninguna regenerada; + widgets glass, ícono, antes/después |
+| M3 | Caso `/work/olbo` en `dougnuken/douguizard` (formato largo como MakeaPet: cover, film, story) | S5 · Opus + auditoría orquestador | ✅ | douguizard `f5cdbe3`, PR draft dougnuken/douguizard#9; vitest 145/145, Playwright 96/96, build ok |
 | ⏸ | **Confirmación de Doug** antes de merge a `main` (deploy Pages) y del portafolio | — | — | |
 
 ## Herramientas
