@@ -564,8 +564,8 @@ body[data-route="hoy"] .hoy-greet__orb:active {
   line-height: 1.4;
 }
 .gauge-proj strong { color: var(--text-1); font-weight: var(--fw-semibold); }
-.gauge-proj--ambar strong { color: var(--semaforo-ambar); }
-.gauge-proj--rojo strong { color: var(--semaforo-rojo); }
+.gauge-proj--ambar strong { color: var(--semaforo-ambar-text); }
+.gauge-proj--rojo strong { color: var(--semaforo-rojo-text); }
 
 
 /* bloque de fijos comprometidos */
@@ -745,8 +745,8 @@ body[data-route="hoy"] .hoy-greet__orb:active {
   flex: none; font-size: var(--fs-xs); font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums; min-width: 42px; text-align: right;
 }
-.catmes__delta--up { color: var(--semaforo-rojo); }     /* gastar MÁS = malo */
-.catmes__delta--down { color: var(--semaforo-verde); }  /* gastar MENOS = bueno */
+.catmes__delta--up { color: var(--semaforo-rojo-text); }     /* gastar MÁS = malo */
+.catmes__delta--down { color: var(--semaforo-verde-text); }  /* gastar MENOS = bueno */
 .catmes__delta--new { color: var(--semaforo-ambar-text); }
 .catmes__delta--flat { color: var(--text-2); }
 
@@ -968,7 +968,7 @@ body[data-route="asesor"] .nav-blur {
   font-variant-numeric: tabular-nums;
   font-weight: var(--fw-bold);
   font-size: var(--fs-h3);
-  color: var(--semaforo-verde);
+  color: var(--semaforo-verde-text);
   flex: 0 0 auto;
 }
 .negocio__esp { display: block; font-size: var(--fs-xs); color: var(--text-2); margin-top: 2px; }
@@ -1262,17 +1262,17 @@ body[data-route="asesor"] .nav-blur {
 .cfg-note__ic { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 1px; }
 .cfg-note__ic svg { width: 16px; height: 16px; }
 .cfg-note--warn {
-  color: var(--semaforo-ambar);
+  color: var(--semaforo-ambar-text);
   background: var(--semaforo-ambar-bg);
   border-color: var(--semaforo-ambar-line);
 }
 .cfg-note--ok {
-  color: var(--semaforo-verde);
+  color: var(--semaforo-verde-text);
   background: var(--semaforo-verde-bg);
   border-color: var(--semaforo-verde-line);
 }
 .cfg-note--err {
-  color: var(--semaforo-rojo);
+  color: var(--semaforo-rojo-text);
   background: var(--semaforo-rojo-bg);
   border-color: var(--semaforo-rojo-line);
 }
@@ -1322,7 +1322,7 @@ body[data-route="asesor"] .nav-blur {
 }
 .cat-ord-btn {
   flex: 1 1 0;
-  width: 40px;
+  width: 44px;
   display: grid;
   place-items: center;
   color: var(--text-2);
@@ -1465,7 +1465,7 @@ body[data-route="asesor"] .nav-blur {
   color: var(--semaforo-ambar);
   background: var(--semaforo-ambar-bg);
 }
-.settings-row--alerta .settings-row__sub { color: var(--semaforo-ambar); }
+.settings-row--alerta .settings-row__sub { color: var(--semaforo-ambar-text); }
 
 /* ============================================================
    Onboarding — guía de primer arranque (pantalla completa)
@@ -2265,12 +2265,14 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 /* --- Forma de ver la cartera: tarjetas ↔ agenda --- */
 .wallet-layout { display: flex; gap: 4px; justify-content: flex-end; margin: 0 0 var(--sp-3); }
 .wallet-layout__b {
+  position: relative;
   display: grid; place-items: center; width: 34px; height: 34px;
   border-radius: var(--r-md); border: 1px solid transparent;
   background: transparent; color: var(--text-2); cursor: pointer;
   transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
 .wallet-layout__b svg { width: 18px; height: 18px; }
+.wallet-layout__b::after { content: ''; position: absolute; inset: -5px; }  /* área táctil 44 (SISTEMA-UI §8.6) */
 .wallet-layout__b.is-on { color: var(--text-1); background: var(--glass-2); border-color: var(--line-2); }
 
 /* --- AGENDA DE PAGOS: filas densas, lo que vence primero arriba --- */
@@ -2294,8 +2296,8 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .agenda__monto { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-1); font-variant-numeric: tabular-nums; }
 /* El CUÁNDO es el dato que ordena la vista, así que es el que lleva el color. */
 .agenda__cuando { font-size: var(--fs-xs); color: var(--text-2); }
-.agenda__fila--ambar .agenda__cuando { color: var(--semaforo-ambar); }
-.agenda__fila--rojo .agenda__cuando { color: var(--semaforo-rojo); font-weight: var(--fw-bold); }
+.agenda__fila--ambar .agenda__cuando { color: var(--semaforo-ambar-text); }
+.agenda__fila--rojo .agenda__cuando { color: var(--semaforo-rojo-text); font-weight: var(--fw-bold); }
 .agenda__fila--rojo { border-color: var(--semaforo-rojo-line); }
 
 .agenda__total {
@@ -2409,7 +2411,7 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .skin-azul { --skin-edge: rgba(255,255,255,.1); --skin-text: #EAF1FF; --skin-text-dim: rgba(224,236,255,.56); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.1);
   --skin-bg: repeating-linear-gradient(82deg, rgba(255,255,255,0) 0 7px, rgba(255,255,255,.022) 7px 8px), radial-gradient(120% 120% at 14% 0%, rgba(133,183,235,.13), transparent 44%), linear-gradient(150deg,#173a82 0%,#102a63 52%,#0a1c47 100%);
   --skin-sheen: radial-gradient(130% 150% at 86% -14%, rgba(255,255,255,.1), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.05) 50%, transparent 74%); }
-.skin-olbo { --skin-edge: rgba(255,255,255,.22); --skin-text: #1b1140; --skin-text-dim: rgba(27,17,64,.56); --skin-band: rgba(255,255,255,.22); --skin-hairline: rgba(255,255,255,.28);
+.skin-olbo { --skin-edge: rgba(255,255,255,.22); --skin-text: #1b1140; --skin-text-dim: rgba(27,17,64,.9); --skin-band: rgba(255,255,255,.22); --skin-hairline: rgba(255,255,255,.28);
   --skin-bg: repeating-linear-gradient(135deg, rgba(255,255,255,0) 0 8px, rgba(255,255,255,.06) 8px 9px), radial-gradient(120% 120% at 14% 0%, rgba(255,255,255,.28), transparent 46%), linear-gradient(146deg,#A98CFF 0%,#7C5CFC 46%,#5B3FE0 100%);
   --skin-sheen: radial-gradient(130% 150% at 88% -14%, rgba(255,255,255,.22), transparent 52%), linear-gradient(112deg, transparent 26%, rgba(255,255,255,.12) 50%, transparent 74%); }
 .skin-gris { --skin-edge: rgba(255,255,255,.1); --skin-text: #F2F3F6; --skin-text-dim: rgba(235,235,245,.52); --skin-band: rgba(255,255,255,.06); --skin-hairline: rgba(255,255,255,.11);
