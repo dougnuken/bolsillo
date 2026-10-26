@@ -543,11 +543,15 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 }
 .scrim.is-open { opacity: 1; visibility: visible; transition: opacity var(--dur) var(--ease); }
 
-/* Sheet flotante: a 8px de los bordes, radio 38, vidrio fuerte al 95% */
+/* Sheet flotante: a 8px de los TRES bordes, radio 38, vidrio fuerte al 95%.
+   Abajo ya no se respeta el área segura (34px en iPhone con isla): el sheet se
+   veía «colgado», con más aire abajo que a los lados. Flota sobre el indicador
+   de inicio como los sheets de iOS; el padding inferior (24px) deja el contenido
+   por encima de él. */
 .sheet {
   position: absolute;
   left: var(--sp-2); right: var(--sp-2);
-  bottom: max(var(--sp-2), var(--safe-b));
+  bottom: var(--sp-2);
   z-index: var(--z-sheet);
   background: var(--grano-fino) 0 0 / 160px, rgba(255, 255, 255, 0.95);
   border: 1px solid var(--canto);
@@ -1362,7 +1366,7 @@ body.has-toast .fab {
   z-index: var(--z-sheet);
   background: var(--scrim);
   display: flex; align-items: flex-end; justify-content: center;
-  padding: 0 var(--sp-2) max(var(--sp-2), var(--safe-b));
+  padding: 0 var(--sp-2) var(--sp-2);   /* mismo aire abajo que a los lados (ver .sheet) */
   opacity: 0;
   transition: opacity var(--dur) var(--ease);
 }
