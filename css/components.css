@@ -339,13 +339,14 @@ body.nav-min .tab.is-active .tab__label,
   bottom: calc(var(--dock-b) - 26px);
   width: 104px; height: 104px;
   pointer-events: none;
-  filter: blur(16px) saturate(1.25);
-  opacity: 0.85;
+  opacity: 0.9;   /* blur en cada mancha, no aquí: WebKit no repinta hijos animados bajo un filter */
   transform: translateY(var(--dock-shift, 0px));
   transition: transform var(--dur) var(--ease-empuje) 60ms, opacity var(--dur-fast) var(--ease);
 }
 .fab-halo span {
   position: absolute; width: 58%; height: 58%; border-radius: 50%;
+  filter: blur(16px); -webkit-filter: blur(16px);
+  transform: translate3d(0, 0, 0);
   will-change: transform;
 }
 .fab-halo span:nth-child(1) { left: 6%;  top: 34%; background: var(--ola-1); animation: halo1 7s ease-in-out infinite; }
