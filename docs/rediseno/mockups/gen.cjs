@@ -407,7 +407,7 @@ const html = `<!doctype html>
 <main class="tablero">
   <header class="tablero__head">
     <div><img class="tablero__marca" src="${M}olbo-lockup-tinta.svg" alt="olbo"><h1 class="tablero__titulo">Sistema UI 2.0</h1></div>
-    <p class="tablero__meta">Papel perla, tinta negra y un solo punto lila. Bento a 6 px, losas de 30 px, vidrio claro sobre degradado suave.
+    <p class="tablero__meta">Papel perla, tinta negra y un solo punto lila. Bento a 6 px, losas de 30 px, aurora en la losa héroe, vidrio claro sobre degradado suave.
     Datos de demo neutros en COP. Fuente: docs/rediseno/SISTEMA-UI.md.</p>
   </header>
   <div class="tablero__fila">

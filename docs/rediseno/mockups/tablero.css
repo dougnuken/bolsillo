@@ -715,3 +715,53 @@ svg { display: block; }
   .vidrio, .vidrio-fuerte, .bcard, .ob2__art { background: var(--glass-solido); backdrop-filter: none; -webkit-backdrop-filter: none; }
   .tabbar.vidrio-fuerte { background: var(--tinta); }
 }
+
+/* =====================================================================
+   RONDA 3 · aurora en la losa héroe («Credit Factors» en clave olbo)
+   pico de saturación = --aurora-lila puro (#B49CFF): tinta 7,33:1 · --aurora-tinta-2 4,62:1
+   ===================================================================== */
+:root {
+  --aurora-lila: #B49CFF;
+  --aurora-lavanda: #D8CBFF;
+  --aurora-menta: #B5E3CD;
+  --aurora-frio: #B8C8DA;
+  --aurora-tinta-2: #3E3E45;   /* texto secundario sobre aurora (sustituye a tinta-2) */
+  --aurora:
+    radial-gradient(36% 46% at 88% 12%, var(--aurora-lila) 0%, rgba(180, 156, 255, 0) 72%),
+    radial-gradient(46% 44% at 50% 30%, var(--aurora-lavanda) 0%, rgba(216, 203, 255, 0) 74%),
+    radial-gradient(58% 64% at 6% 96%, var(--aurora-menta) 0%, rgba(181, 227, 205, 0) 76%),
+    radial-gradient(40% 46% at 36% 74%, rgba(181, 227, 205, 0.75) 0%, rgba(181, 227, 205, 0) 74%),
+    radial-gradient(50% 56% at 96% 92%, var(--aurora-frio) 0%, rgba(184, 200, 218, 0) 74%),
+    radial-gradient(34% 34% at 70% 62%, rgba(184, 200, 218, 0.8) 0%, rgba(184, 200, 218, 0) 72%);
+  --aurora-blur: 26px;
+  --aurora-velo: radial-gradient(70% 38% at 30% 54%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 78%);
+  --aurora-vidrio: linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 46%, rgba(255, 255, 255, 0.14) 100%);
+  --aurora-tenue: 0.62;        /* opacidad de la familia en el onboarding */
+}
+.bcard, .ob2__art {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--grano-fino) 0 0 / 160px, var(--aurora-vidrio), var(--aurora-velo), var(--perla);
+  box-shadow: inset 0 0 0 1px var(--canto), inset 0 1px 0 var(--glass-gloss);
+  border-color: transparent;
+}
+.bcard::before, .ob2__art::before {
+  content: ''; position: absolute; inset: -18%; z-index: -1; pointer-events: none;
+  background: var(--aurora);
+  filter: blur(var(--aurora-blur));
+  animation: aurora 26s ease-in-out infinite alternate;
+}
+.ob2__art::before { opacity: var(--aurora-tenue); }
+.bcard .lbl, .bcard .bcard__delta, .bcard .cifra__cur, .bcard .avance__ejes { color: var(--aurora-tinta-2); }
+.bcard .bcard__delta b { color: var(--tinta); }
+.bcard .icon-btn--hundido { background: rgba(255, 255, 255, 0.5); }
+.bcard .avance__t { background: rgba(29, 29, 31, 0.22); }
+.bcard .avance__t--ya { background: var(--tinta); opacity: 0.6; }
+.bcard .avance__t--hoy { background: var(--tinta); opacity: 1; }
+@keyframes aurora {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate(-4%, 3%) rotate(8deg) scale(1.06); }
+  100% { transform: translate(3%, -2%) rotate(-6deg) scale(1.03); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bcard::before, .ob2__art::before { filter: none; opacity: 0.35; }
+}
