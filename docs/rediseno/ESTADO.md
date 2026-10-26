@@ -11,7 +11,7 @@
 | 0b | Sistema UI + tablero (`SISTEMA-UI.md`, `mockups/`) | orquestador → agente Opus alto | ✅ hecho | plan F1–F7 en SISTEMA-UI §6 |
 | 0c | QA de diseño (`QA-diseno.md`) | agente Sonnet medio | ✅ hecho | 3 bloqueantes del plan → SISTEMA-UI §8 (obligatorio) |
 | 0d | Tablero ronda 2 (gradientes, grano, dock grafito, FAB esfera IA, motion) | agente Opus | ✅ hecho | `tablero.jpg`, `tablero-motion.webm` |
-| ⏸ | **Aprobación de Doug** de dirección + tablero | — | pendiente | sin esto no se toca código |
+| ✅ | **Aprobación de Doug** (26 oct) | — | aprobado | dirección + textos «Resumen/Análisis», saludo sin «¡Bienvenido!»/emoji; pidió aurora más intensa en la card héroe |
 | F1 | Tokens, fuentes, fondo | sesión nueva · ejecutor Sonnet medio + QA Sonnet | — | |
 | F2 | Shell (dock, FAB, sheets, botones) | ídem | — | |
 | F3 | Hoy | ídem (QA Opus si el bento falla 2 veces) | — | |
@@ -33,6 +33,8 @@
 ## Decisiones y riesgos abiertos
 
 - Degradado de fondo muy sutil (vidrio casi blanco): opción de subir lavanda `#E1DBF2` / menta `#D6EBE1` (SISTEMA-UI §7).
-- Copy: «Dashboard/Analytics» → «Resumen/Análisis»; saludo sin «¡Bienvenido!» ni emoji. Requiere aprobación de Doug.
+- Copy APROBADO: «Dashboard/Analytics» → «Resumen/Análisis»; saludo sin «¡Bienvenido!» ni emoji.
+- Aurora de la card héroe más intensa (APROBADO): tokens `--aurora-*` en SISTEMA-UI.
+- Cadena de sesiones S1–S5: ver `CADENA.md`.
 - Barra de estado iOS sobre perla: verificar en dispositivo (Doug).
 - Íconos de categoría monocromos (se pierde el color por categoría).
