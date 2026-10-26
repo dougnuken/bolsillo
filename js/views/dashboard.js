@@ -36,38 +36,43 @@ function esc(s) {
   ));
 }
 
+/* $ + espacio fino + cifra: así se lee en toda la vista ("$ 2.095.000"). */
+function cop(n) {
+  return formatCOP(n).replace('$', '$\u2009');
+}
+
 function pct(frac) {
   if (frac == null || !Number.isFinite(frac)) return '—';
   return Math.round(frac * 100) + '%';
 }
 
-/** Atenúa el símbolo $ (y el signo) para la jerarquía tipo fintech: el "$"
- *  va en gris y algo más pequeño, la cifra manda. "—" pasa igual. */
+/** Atenúa el símbolo $ para la jerarquía tipo fintech: el "$" va pequeño, en
+ *  tinta-2 y arriba (.cifra__cur), con un espacio fino antes de la cifra, que
+ *  manda. El signo (− U+2212) va ANTES del $ y no se atenúa. "—" pasa igual. */
 function conDivisa(str) {
   const s = String(str == null ? '' : str);
   const m = s.match(/^([−+-]?)\s*\$(.*)$/);
-  if (m) return `<span class="cifra-cur">${m[1]}$</span>${esc(m[2])}`;
+  if (m) {
+    const signo = m[1] ? `<span class="cifra__sig">${m[1] === '-' ? '−' : m[1]}</span>` : '';
+    return `${signo}<span class="cifra__cur">$</span>\u2009${esc(m[2])}`;
+  }
   return esc(s);
 }
 
 /* ---- Saludo + card de balance + tabs ---- */
 /* Iconos de las pestañas. Misma receta que el resto de la app: 24x24, trazo de
    1.6 y currentColor, para que se enciendan con el texto de su opción.
-   Dashboard = las losas del panel; Analytics = las barras de la comparativa. */
+   Resumen = las losas del panel; Análisis = las barras de la comparativa. */
 const ICON_TAB_PANEL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>';
 const ICON_TAB_BARRAS =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 20.5h17"/><path d="M7 20.5v-5.5"/><path d="M12 20.5V9"/><path d="M17 20.5v-8"/></svg>';
 
 const TABS = [
-  ['dashboard', 'Dashboard', ICON_TAB_PANEL],
-  ['analytics', 'Analytics', ICON_TAB_BARRAS],
+  ['dashboard', 'Resumen', ICON_TAB_PANEL],
+  ['analytics', 'Análisis', ICON_TAB_BARRAS],
 ];
 
-const ICON_TREND_UP =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 9.5 10.5l4 4L21 7"/><path d="M15 7h6v6"/></svg>';
-const ICON_TREND_DOWN =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7 9.5 13.5l4-4L21 17"/><path d="M15 17h6v-6"/></svg>';
 const ICON_ARROW_UR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
 const ICON_CHEV_IZQ =
@@ -81,23 +86,42 @@ const ICON_SEARCH =
    plata, rojo si se gastó, neutro si no hubo movimientos. */
 function metricaHoy(movimientos, hoy) {
   const hISO = hoyISO(hoy);
-  let gasto = 0, ingreso = 0;
+  let gasto = 0, ingreso = 0, n = 0;
   for (const m of (movimientos || [])) {
     if (!m || m.fecha !== hISO) continue;
-    if (m.tipo === 'ingreso') ingreso += m.monto || 0;
-    else if (m.tipo === 'gasto') gasto += m.monto || 0;
+    if (m.tipo === 'ingreso') { ingreso += m.monto || 0; n++; }
+    else if (m.tipo === 'gasto') { gasto += m.monto || 0; n++; }
   }
-  return { gasto, ingreso, neto: ingreso - gasto };
+  return { gasto, ingreso, neto: ingreso - gasto, n };
 }
+/* Sobre la aurora el delta va neutro (tinta): el signo ya dice si entró o salió
+   plata, y el verde/rojo del semáforo no se lee sobre el lila. */
 function deltaClaseHoy(m) {
   if (!m || (!m.gasto && !m.ingreso)) return 'bcard__delta--flat';
   return m.neto >= 0 ? 'bcard__delta--up' : 'bcard__delta--down';
 }
 function deltaInnerHoy(m) {
-  if (!m || (!m.gasto && !m.ingreso)) return 'Sin movimientos hoy';
-  const up = m.neto >= 0;
-  const signo = up ? '+' : '−';
-  return `${up ? ICON_TREND_UP : ICON_TREND_DOWN}<span class="num">${signo}${esc(formatCOP(Math.abs(m.neto)))}</span><span class="bcard__delta-lbl">hoy</span>`;
+  if (!m || !m.n) return 'Sin movimientos hoy';
+  const signo = m.neto >= 0 ? '+' : '−';
+  const cuenta = `${m.n} movimiento${m.n !== 1 ? 's' : ''}`;
+  const monto = formatCOP(Math.abs(m.neto)).replace('$', '$\u2009');
+  return `<b class="num">${signo}${esc(monto)}</b> hoy en ${cuenta}`;
+}
+
+/* Gasto VARIABLE de cada uno de los últimos `n` días (el de hoy al final), para
+   las minibarras de la losa negra. Solo decora: no entra al semáforo. */
+function gastoUltimosDias(movimientos, hoy, n) {
+  const dias = [];
+  for (let k = n - 1; k >= 0; k--) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - k);
+    dias.push(hoyISO(d));
+  }
+  const total = new Map(dias.map((f) => [f, 0]));
+  for (const m of (movimientos || [])) {
+    if (m && m.tipo === 'gasto' && m.esFijo === false && total.has(m.fecha)) total.set(m.fecha, total.get(m.fecha) + (m.monto || 0));
+  }
+  const valores = dias.map((f) => total.get(f));
+  return valores.some((v) => v > 0) ? valores : [];
 }
 
 /** Iniciales para el avatar: "Ana Pérez" → "AP". Vacío → ''. */
@@ -139,26 +163,28 @@ function animarSaldo(el, desde, hasta, dur = 820) {
 
 const ICON_BELL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
+/* El orbe del asesor es el símbolo de la marca (anillo + centro), no el
+   gradiente firma: el multicolor queda solo para la esfera del FAB. Los colores
+   salen de CSS (.orbe__aro / .orbe__centro) → cero hex y cero estilo inline. */
 const ICON_ORB =
-  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>';
+  '<svg class="orbe" viewBox="212 212 600 600" aria-hidden="true"><g transform="rotate(-28 512 512)" fill="none" stroke-width="96" stroke-linecap="round" class="orbe__aro"><path d="M295.9 417.3A230 230 0 0 1 728.1 417.3"/><path d="M728.1 606.7A230 230 0 0 1 295.9 606.7"/></g><circle class="orbe__centro" cx="512" cy="512" r="62"/></svg>';
 
-const EMOJI_SALUDO = '👋';
-
-/* "Hola, Ana 👋". Sin nombre configurado devuelve "Hola 👋", no "Hola, 👋":
-   una coma sin nada detrás se lee como un bug. Lo usan el render inicial y el
-   repintado en caliente cuando llega el nombre del onboarding, así que el
-   formato vive en un solo sitio. */
-function saludoTexto(nombre) {
+/* "Hola, Ana." en peso 500 y "Así va tu octubre" debajo en 300. Sin nombre
+   configurado queda "Hola.": una coma sin nada detrás se lee como un bug. Lo
+   usan el render inicial y el repintado en caliente cuando llega el nombre del
+   onboarding, así que el formato vive en un solo sitio. */
+function saludoHTML(nombre, hoy = new Date()) {
   const nom = String(nombre || '').trim();
-  return `${nom ? `Hola, ${nom}` : 'Hola'} ${EMOJI_SALUDO}`;
+  const mes = hoy.toLocaleDateString('es-CO', { month: 'long' });
+  return `<b class="hoy-greet__hola">${esc(nom ? `Hola, ${nom}.` : 'Hola.')}</b>`
+    + `<span class="hoy-greet__mes">Así va tu ${esc(mes)}</span>`;
 }
 
 function greetHTML(nombre) {
   return `
     <header class="hoy-greet">
       <div class="hoy-greet__txt">
-        <p class="hoy-greet__name" id="hoy-name">${esc(saludoTexto(nombre))}</p>
-        <p class="hoy-greet__hi">¡Bienvenido!</p>
+        <p class="hoy-greet__name" id="hoy-name">${saludoHTML(nombre)}</p>
       </div>
       <div class="hoy-greet__actions">
         <button type="button" class="icon-btn hoy-greet__orb" id="hoy-asesor" aria-label="Tu conciencia financiera">
@@ -174,20 +200,40 @@ function greetHTML(nombre) {
     </header>`;
 }
 
-function balanceCardHTML(saldo) {
+/* Regla del mes: un trazo por día. Los pasados quedan marcados, hoy es el alto
+   y el chip negro «hoy, N» cuelga bajo él. Los retrasos de la animación (--i) y
+   la posición del chip (--hoy-x) los escribe mount() por CSSOM: la CSP prohíbe
+   style="…" en el HTML generado. */
+function avanceHTML(hoy) {
+  const dias = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
+  const dia = hoy.getDate();
+  let trazos = '';
+  for (let d = 1; d <= dias; d++) {
+    trazos += `<i class="avance__t${d < dia ? ' avance__t--ya' : d === dia ? ' avance__t--hoy' : ''}"></i>`;
+  }
+  const mesCorto = hoy.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
+  const borde = dia <= 3 ? ' avance--ini' : dia >= dias - 2 ? ' avance--fin' : '';
+  return `
+      <div class="avance${borde}" role="img" aria-label="Día ${dia} de ${dias}" data-dia="${dia}" data-dias="${dias}">
+        <div class="avance__trazos" aria-hidden="true">${trazos}</div>
+        <div class="avance__ejes" aria-hidden="true"><span class="avance__ini">1 ${esc(mesCorto)}</span><span class="chip-valor avance__hoy">hoy, ${dia}</span><span class="avance__fin">${dias}</span></div>
+      </div>`;
+}
+
+function balanceCardHTML(saldo, hoy = new Date()) {
   // Semilla del render: si ya conocemos el saldo (re-render tras un movimiento),
   // lo pintamos de una para que NO haya parpadeo a "—" y el rodillo arranque
   // desde el número visible. Se muestra cualquier valor finito (incluido 0 o
   // negativo: "sin dinero disponible" / "te pasaste" son estados reales).
   const bal = (saldo != null && Number.isFinite(saldo)) ? conDivisa(formatCOP(saldo)) : '—';
   return `
-    <section class="bcard">
+    <section class="bcard" data-anim>
       <div class="bcard__top">
-        <span class="bcard__lbl">Tu dinero</span>
+        <span class="lbl">Tu dinero</span>
         <span class="bcard__arrow" aria-hidden="true">${ICON_ARROW_UR}</span>
       </div>
-      <p class="bcard__amt num" id="hoy-balance">${bal}</p>
-      <p class="bcard__delta bcard__delta--flat" id="hoy-daydelta">Sin movimientos hoy</p>
+      <p class="bcard__amt cifra cifra--hero" id="hoy-balance">${bal}</p>
+      <p class="bcard__delta bcard__delta--flat" id="hoy-daydelta">Sin movimientos hoy</p>${avanceHTML(hoy)}
     </section>`;
 }
 
@@ -262,20 +308,26 @@ function sinConfigHTML() {
 }
 
 /* ---- anillo + estado (configurado) ---- */
+/* "42" + "%" atenuado al 45 % (mismo gesto que el $ de las cifras). */
+function pctGauge(frac) {
+  if (frac == null || !Number.isFinite(frac)) return '—';
+  return `${Math.round(frac * 100)}<span class="gauge__unit">%</span>`;
+}
+
 function gaugeCardHTML(e) {
   const projClase = e.color === 'verde' ? '' : ` gauge-proj--${e.color}`;
   return `
-    <section class="card gauge-card">
+    <section class="card gauge-card" data-anim>
       <div class="gauge gauge--${e.color}" role="img"
         aria-label="Llevas ${pct(e.porcentajeIngreso)} de tu sueldo gastado. Estado: ${esc(e.etiqueta)}.">
         <svg class="gauge__svg" viewBox="0 0 100 100" aria-hidden="true">
           <circle class="gauge__track" cx="50" cy="50" r="42"></circle>
           <circle class="gauge__arc gauge__arc--fill" cx="50" cy="50" r="42"></circle>
-          <circle class="gauge__tick" cx="50" cy="8" r="3"></circle>
+          <circle class="gauge__tick" cx="50" cy="8" r="3.2"></circle>
         </svg>
         <div class="gauge__center">
           <span class="gauge__hint">Del sueldo</span>
-          <span class="gauge__value gauge__value--pct num">${pct(e.porcentajeIngreso)}</span>
+          <span class="gauge__value gauge__value--pct num">${pctGauge(e.porcentajeIngreso)}</span>
           <span class="gauge__caption">${esc(e.mensaje)}</span>
         </div>
       </div>
@@ -288,19 +340,29 @@ function gaugeCardHTML(e) {
     </section>`;
 }
 
-function statRowHTML(e) {
+/* Barras de los últimos 10 días de gasto variable, para la losa negra. La
+   altura (--h) la escribe aplicarMinibarras() por CSSOM. */
+function minibarrasHTML(dias) {
+  if (!Array.isArray(dias) || !dias.length) return '';
+  const max = Math.max(...dias, 1);
+  const barras = dias.map((v, i) => `<i${i === dias.length - 1 ? ' class="on"' : ''} data-v="${Math.round((v / max) * 100)}"></i>`).join('');
+  return `<div class="mini-barras" aria-hidden="true">${barras}</div>`;
+}
+
+function statRowHTML(e, dias10) {
   const disp = e.disponibleRestante;
   const dispClase = disp != null && disp < 0 ? ' stat__value--neg' : '';
   return `
     <div class="stat-row">
-      <div class="card stat">
-        <span class="stat__label">${ICON_DOWN} Disponible</span>
-        <span class="stat__value${dispClase} num">${conDivisa(formatCOP(disp))}</span>
-        <span class="stat__sub num">${formatCOP(e.disponiblePorDia)} por día</span>
+      <div class="stat losa-lila">
+        <div class="stat__top"><span class="lbl">Disponible</span><span class="stat__ic" aria-hidden="true">${ICON_DOWN}</span></div>
+        <span class="stat__value cifra cifra--tile${dispClase} num">${conDivisa(formatCOP(disp))}</span>
+        <span class="stat__sub num">${formatCOP(e.disponiblePorDia).replace('$', '$\u2009')} por día</span>
       </div>
-      <div class="card stat">
-        <span class="stat__label">${ICON_UP} Gastado</span>
-        <span class="stat__value num">${conDivisa(formatCOP(e.variableGastado))}</span>
+      <div class="stat losa-negra" data-anim>
+        <div class="stat__top"><span class="lbl">Gastado</span><span class="stat__ic" aria-hidden="true">${ICON_UP}</span></div>
+        ${minibarrasHTML(dias10)}
+        <span class="stat__value cifra cifra--tile num">${conDivisa(formatCOP(e.variableGastado))}</span>
         <span class="stat__sub">variable este mes</span>
       </div>
     </div>`;
@@ -308,7 +370,7 @@ function statRowHTML(e) {
 
 function fijosCardHTML(e) {
   const hint = e.fijosCreditos > 0
-    ? `Incluye <span class="num">${formatCOP(e.fijosCreditos)}</span> de créditos`
+    ? `Incluye <span class="num">${cop(e.fijosCreditos)}</span> de créditos`
     : 'No entran al ritmo variable';
   return `
     <div class="card fijos-card">
@@ -316,7 +378,7 @@ function fijosCardHTML(e) {
         <span class="fijos-card__label">Fijos del mes</span>
         <span class="fijos-card__hint">${hint}</span>
       </div>
-      <span class="fijos-card__val num">${formatCOP(e.fijosDelMes)}</span>
+      <span class="fijos-card__val num">${cop(e.fijosDelMes)}</span>
     </div>`;
 }
 
@@ -444,7 +506,7 @@ function flujoCardHTML(hist) {
   const yZero = padTop + (maxPos / range) * chartH;
   const n = datos.length;
   const slot = (W - 2 * padX) / n;
-  const barW = Math.min(slot * 0.56, 44);
+  const barW = 3; // línea fina (SISTEMA-UI §4: barras de 1,5–3 px)
 
   const bars = datos.map((d, i) => {
     const cx = padX + slot * i + slot / 2;
@@ -456,9 +518,12 @@ function flujoCardHTML(hist) {
     const barCls = 'ahorro__bar' + neg + (d.esActual ? ' ahorro__bar--now' : '');
     const valCls = 'ahorro__val' + (d.esActual ? ' ahorro__val--now' : '');
     const vy = d.neto >= 0 ? y - 5 : y + h + 12;
-    return `<rect class="${barCls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="4"></rect>`
+    return `<rect class="${barCls}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`
       + `<text class="${valCls}" x="${cx.toFixed(1)}" y="${vy.toFixed(1)}" text-anchor="middle">${esc(fmtCompacto(d.neto))}</text>`;
   }).join('');
+  const promMeses = datos.reduce((s, d) => s + d.neto, 0) / datos.length;
+  const yProm = yZero - (promMeses / range) * chartH;
+  const promLinea = `<line class="ahorro__prom" x1="${padX}" y1="${yProm.toFixed(1)}" x2="${W - padX}" y2="${yProm.toFixed(1)}"></line>`;
   const zero = `<line class="ahorro__zeroline" x1="${padX}" y1="${yZero.toFixed(1)}" x2="${W - padX}" y2="${yZero.toFixed(1)}"></line>`;
   const labels = datos.map((d) =>
     `<span class="ahorro__lbl${d.esActual ? ' is-now' : ''}">${esc(d.label)}</span>`).join('');
@@ -476,7 +541,7 @@ function flujoCardHTML(hist) {
       <p class="ahorro__insight">${insight}</p>
       ${nota}
       <svg class="ahorro__svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Flujo neto real por mes">
-        ${zero}${bars}
+        ${zero}${promLinea}${bars}
       </svg>
       <div class="ahorro__labels">${labels}</div>
     </div>`;
@@ -553,10 +618,10 @@ function categoriasMesHTML(cc) {
 }
 
 /* Contenido de cada pestaña del Hoy. */
-function panelHTML(tab, e, negocios, historial, recs, catComp) {
+function panelHTML(tab, e, negocios, historial, recs, catComp, dias10) {
   if (tab === 'analytics') return gaugeCardHTML(e) + flujoCardHTML(historial) + categoriasMesHTML(catComp);
   // dashboard: disponible/gastado + fijos + negocios + en qué se va (+ hormiga)
-  return statRowHTML(e) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
+  return statRowHTML(e, dias10) + fijosCardHTML(e) + negociosHTML(negocios) + categoriasHTML(e);
 }
 
 /* ---- animaciones (solo transform/opacity/stroke-dashoffset/width) ---- */
@@ -595,6 +660,45 @@ function aplicarBarras(body) {
   });
 }
 
+/* ---- líneas finas animadas ----
+   Todo lo ambiente (trazos del mes, minibarras, aurora, punta del anillo) es
+   transform/opacity. Aquí solo se escriben, por CSSOM, los valores calculados
+   (retraso por índice --i, posición del chip --hoy-x, altura --h) y se pausa
+   lo que no se ve: un IntersectionObserver marca .is-fuera y el CSS pone
+   animation-play-state: paused. Con reduced-motion el CSS lo apaga entero. */
+let vigia = null;
+
+function vigilarAnimaciones(root) {
+  if (vigia) vigia.disconnect();
+  if (typeof IntersectionObserver === 'undefined') return;
+  vigia = new IntersectionObserver((entradas) => {
+    for (const en of entradas) en.target.classList.toggle('is-fuera', !en.isIntersecting);
+  });
+  root.querySelectorAll('[data-anim]').forEach((el) => vigia.observe(el));
+}
+
+/* Retraso en cascada por índice: la entrada (900 ms) y la ola de respiración. */
+function indexar(nodos) {
+  nodos.forEach((el, i) => el.style.setProperty('--i', String(i)));
+}
+
+function armarAvance(root) {
+  const av = root.querySelector('.avance');
+  if (!av) return;
+  indexar(av.querySelectorAll('.avance__t'));
+  const dia = Number(av.dataset.dia);
+  const dias = Number(av.dataset.dias);
+  const x = dias > 1 ? (dia - 1) / (dias - 1) : 0;
+  const ejes = av.querySelector('.avance__ejes');
+  if (ejes) ejes.style.setProperty('--hoy-x', String(x));
+}
+
+function aplicarMinibarras(body) {
+  const barras = body.querySelectorAll('.mini-barras i');
+  indexar(barras);
+  barras.forEach((b) => b.style.setProperty('--h', `${Math.max(4, Math.round(Number(b.dataset.v || 0) * 0.34))}px`));
+}
+
 /* ---- carga + pintado (async, tolerante a cambios de ruta) ---- */
 
 /* Pinta el contenido de la pestaña activa en el sheet (sin recargar datos). */
@@ -608,11 +712,13 @@ function mostrarPanel(root, tab, datos, animar) {
     body.innerHTML = sinConfigHTML();
     const cta = body.querySelector('#cta-sueldo');
     if (cta) cta.addEventListener('click', () => abrirSueldo({ onSaved: () => pintar(root) }));
+    vigilarAnimaciones(root);
     return;
   }
-  body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs, datos.catComp);
+  body.innerHTML = panelHTML(tab, datos.estado, datos.negocios, datos.historial, datos.recs, datos.catComp, datos.dias10);
   if (tab === 'analytics') {
     animarAnillo(body, datos.estado);
+    indexar(body.querySelectorAll('.ahorro__bar'));
     /* Cambiar de mes solo recalcula la comparativa y repinta ESTA tarjeta: el
        resto del panel (el anillo, el flujo) habla del mes en curso y no debe
        moverse porque estés mirando atrás. Tampoco se vuelve a la base — los
@@ -630,6 +736,8 @@ function mostrarPanel(root, tab, datos, animar) {
     });
   }
   aplicarBarras(body);
+  aplicarMinibarras(body);
+  vigilarAnimaciones(root);
   const sc = root.closest('.view') || root;
   // Al cambiar de MES no se vuelve arriba: se está comparando, y saltar al tope
   // obliga a bajar otra vez para ver la misma tarjeta.
@@ -646,13 +754,13 @@ function productosCardHTML() {
              dentro "Mis productos" es solo uno de los tres segmentos. -->
         <span class="hoy-productos__title">Mi cartera</span>
         <span class="hoy-productos__go">Ver mis tarjetas
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
         </span>
       </span>
       <span class="hoy-productos__peek" aria-hidden="true">
-        <span class="wcard wcard--1 skin-platino"></span>
-        <span class="wcard wcard--2 skin-grafito"></span>
-        <span class="wcard wcard--3 skin-olbo"></span>
+        <span class="wcard wcard--1"></span>
+        <span class="wcard wcard--2"></span>
+        <span class="wcard wcard--3"></span>
       </span>
     </button>`;
 }
@@ -669,6 +777,7 @@ async function pintar(root) {
   let nombre = '';
   let metricaDia = null;
   let catComp = null;
+  let dias10 = [];
   try {
     const [ingresos, movimientos, recurrentes, creditos, config] = await Promise.all([
       getAll('ingresos'), getAll('movimientos'), getAll('recurrentes'), getAll('creditos'), getConfig(),
@@ -691,6 +800,7 @@ async function pintar(root) {
     catComp = gastoCategoriasComparado({ movimientos, hoy: finDeMes(mesVisto) || hoy, top: 6 });
     recs = recurrentes || [];
     metricaDia = metricaHoy(movimientos, hoy);
+    dias10 = gastoUltimosDias(movimientos, hoy, 10);
   } catch (err) {
     console.warn('[Bolsillo] no se pudo calcular el estado de Hoy:', err);
     body.innerHTML = '<p class="hoy-error">No se pudieron cargar tus datos. Reintenta.</p>';
@@ -726,9 +836,9 @@ async function pintar(root) {
 
   // Personalización: nombre real (del onboarding) en saludo + iniciales del avatar.
   const nameEl = root.querySelector('#hoy-name');
-  if (nameEl) nameEl.textContent = saludoTexto(nombre);
+  if (nameEl) nameEl.innerHTML = saludoHTML(nombre);
 
-  const datos = { estado, negocios, historial, recs, catComp };
+  const datos = { estado, negocios, historial, recs, catComp, dias10 };
   root.querySelectorAll('[data-hoy-tab]').forEach((b) => {
     b.addEventListener('click', () => mostrarPanel(root, b.dataset.hoyTab, datos, true));
   });
@@ -764,6 +874,7 @@ export default {
     if (orb) orb.addEventListener('click', () => { location.hash = '#/asesor'; });
     const prod = root.querySelector('#hoy-productos');
     if (prod) prod.addEventListener('click', () => { location.hash = '#/productos'; });
+    armarAvance(root);
     pintar(root); // async, no bloquea el primer render
   },
 };

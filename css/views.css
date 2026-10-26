@@ -73,32 +73,24 @@ body[data-route="hoy"] .app-header__title { display: none; }
 /* Padding superior menor (el saludo arranca bajo el notch); scroll normal. */
 .view[data-route="hoy"] {
   padding: calc(env(safe-area-inset-top) + var(--sp-4))
-           max(var(--sp-5), env(safe-area-inset-left))
+           max(var(--gutter), env(safe-area-inset-left))
            var(--view-b)
-           max(var(--sp-5), env(safe-area-inset-right));
+           max(var(--gutter), env(safe-area-inset-right));
 }
 
-/* --- Saludo: nombre + campana + avatar (a la derecha, tipo Finora) --- */
+/* --- Saludo: «Hola, Ana.» (500) y «Así va tu octubre» (300), acciones a la derecha --- */
 .hoy-greet {
   display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
-  /* Aire real entre el saludo y la primera card: con sp-4 el hero y "Tu dinero"
-     se leían como un solo bloque pegado. Este es el respiro que separa el
-     encabezado del contenido. */
-  margin-bottom: var(--sp-6);
+  padding: 10px 8px 18px;      /* 8 + el gutter de 12 de la vista = 20 de texto */
 }
 .hoy-greet__txt { min-width: 0; }
-/* El saludo manda y va primero; "¡Bienvenido!" queda debajo, en susurro. */
 .hoy-greet__name {
-  font-family: var(--font-display);
-  font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: -0.02em;
-  color: var(--text-1);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-display); font-size: 28px; line-height: 1.08; letter-spacing: -0.025em;
+  font-weight: var(--fw-light); color: var(--text-1);
 }
-.hoy-greet__hi {
-  font-size: 12px; color: var(--text-3); font-weight: var(--fw-medium);
-  margin-top: 2px;
-}
-.hoy-greet__actions { display: flex; align-items: center; gap: var(--sp-2); flex: 0 0 auto; }
+.hoy-greet__hola { display: block; font-weight: var(--fw-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hoy-greet__mes { display: block; }
+.hoy-greet__actions { display: flex; align-items: center; gap: var(--gap-bento); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }
 
 /* --- El viaje al header colapsado ---
@@ -158,41 +150,39 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 /* el contenido de cada vista va por encima del destello */
 .view-inner { position: relative; z-index: 1; }
 
-/* --- Card de balance (tipo Finora): label + flecha, cifra grande, métrica del día --- */
+/* --- Losa héroe «Tu dinero» (olbo 2.0) ---
+   Aurora intensa (--aurora-*) detrás de un velo lechoso y grano, cifra Urbanist
+   300 con el $ atenuado y la regla del mes con un trazo por día. El texto
+   secundario usa --aurora-tinta-2 (AA medido en el pico lila), nunca tinta-2. */
 .bcard {
-  position: relative;              /* ancla la ilustración wallet */
-  overflow: hidden;                /* la wallet sangra por la esquina y se recorta limpio */
-  background: var(--glass-1);      /* estilo unificado (como .settings-list de Perfil) */
-  border: 1px solid var(--line-1);
-  border-radius: var(--r-xl);
-  padding: var(--sp-5);
-  margin-bottom: var(--sp-3);
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--grano-fino) 0 0 / 160px, var(--aurora-vidrio), var(--aurora-velo), var(--perla);
+  box-shadow: inset 0 0 0 1px var(--canto), inset 0 1px 0 var(--glass-gloss);
+  border: 0;
+  border-radius: var(--r-losa);
+  padding: 18px 20px 16px;
 }
-/* Ilustración decorativa (empty-state wallet) asomando en la esquina derecha.
-   Puramente estética: aria-hidden, no captura toques, va por detrás del texto. */
-.bcard__deco {
-  position: absolute;
-  right: -18px;
-  bottom: -20px;
-  width: 132px;
-  height: auto;
-  opacity: 0.9;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+.bcard::before {
+  content: ''; position: absolute; inset: -18%; z-index: -1; pointer-events: none;
+  background: var(--aurora);
+  filter: blur(var(--aurora-blur));
+  animation: aurora 26s ease-in-out infinite alternate;
 }
-/* el contenido real queda siempre por encima de la ilustración */
-.bcard__top, .bcard__amt, .bcard__delta { position: relative; z-index: 1; }
+@keyframes aurora {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+  50%  { transform: translate(-4%, 3%) rotate(8deg) scale(1.06); }
+  100% { transform: translate(3%, -2%) rotate(-6deg) scale(1.03); }
+}
 .bcard__top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
-.bcard__lbl { font-size: var(--fs-sm); color: var(--text-2); font-weight: var(--fw-medium); }
-.bcard__arrow { color: var(--text-3); display: grid; place-items: center; flex: 0 0 auto; }
-.bcard__arrow svg { width: 20px; height: 20px; }
-.bcard__amt {
-  font-family: var(--font-num); font-variant-numeric: tabular-nums;
-  font-size: 40px; font-weight: var(--fw-bold); letter-spacing: -0.02em;
-  color: var(--text-1); line-height: 1.04; margin-top: var(--sp-2);
-  /* al soltar el tinte del rodillo, el color vuelve a blanco suavemente */
+.bcard .lbl, .bcard__delta, .bcard .cifra__cur, .bcard .avance__ejes { color: var(--aurora-tinta-2); }
+.bcard__arrow {
+  width: 34px; height: 34px; flex: 0 0 auto; border-radius: var(--r-full);
+  display: grid; place-items: center; color: var(--tinta);
+  background: rgba(255, 255, 255, 0.5);
+}
+.bcard__arrow svg { width: 18px; height: 18px; }
+.bcard__amt { margin: 14px 0 6px -2px; color: var(--text-1);
+  /* al soltar el tinte del rodillo, el color vuelve a tinta suavemente */
   transition: color var(--dur) var(--ease);
   will-change: transform;
 }
@@ -200,39 +190,68 @@ body[data-route="hoy"] .hoy-greet__orb:active {
    JS (animarSaldo); aquí va SOLO el gesto — un empuje vertical sutil + el tinte
    de dirección que refuerza el semáforo (rojo baja / verde sube). */
 .bcard__amt.is-rolling { animation: bcardRoll 0.82s var(--ease); }
-.bcard__amt.is-rolling--down { color: var(--semaforo-rojo); }
-.bcard__amt.is-rolling--up { color: var(--semaforo-verde); }
+.bcard__amt.is-rolling--down { color: var(--semaforo-rojo-text); }
+.bcard__amt.is-rolling--up { color: var(--semaforo-verde-text); }
 @keyframes bcardRoll {
   0%   { transform: translateY(-0.14em); }
   70%  { transform: translateY(0.02em); }
   100% { transform: translateY(0); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .bcard__amt { transition: none; }
-  .bcard__amt.is-rolling { animation: none; }
-}
-/* métrica del día: neto de hoy — verde si entró plata, rojo si se gastó */
-.bcard__delta {
-  display: inline-flex; align-items: center; gap: 5px;
-  margin-top: var(--sp-3);
-  font-size: var(--fs-sm); font-weight: var(--fw-semibold);
-}
-.bcard__delta svg { width: 17px; height: 17px; }
+/* métrica del día: «−$ 48.500 hoy en 2 movimientos». Neutra: el signo dice la dirección. */
+.bcard__delta { font-size: 14px; font-weight: var(--fw-medium); }
+.bcard__delta b { color: var(--text-1); font-weight: var(--fw-semibold); }
 .bcard__delta .num { font-variant-numeric: tabular-nums; }
-.bcard__delta-lbl { color: var(--text-3); font-weight: var(--fw-medium); }
-.bcard__delta--up { color: var(--semaforo-verde); }
-.bcard__delta--down { color: var(--semaforo-rojo); }
-.bcard__delta--flat { color: var(--text-3); font-weight: var(--fw-medium); }
 
-/* Símbolo $ atenuado (jerarquía tipo fintech): "$" en gris y más pequeño,
-   la cifra manda. Balance y stat cards. */
-.cifra-cur {
-  color: var(--text-3);
-  font-weight: var(--fw-semibold);
-  font-size: 0.66em;
-  margin-right: 0.05em;
-  letter-spacing: 0;
+/* ---- Cifra fina con $ atenuado (jerarquía fintech) ---- */
+.cifra {
+  font-family: var(--font-display); font-weight: var(--fw-light);
+  letter-spacing: -0.035em; line-height: 1; white-space: nowrap; display: block;
 }
+.cifra__cur {
+  font-size: 0.45em; font-weight: var(--fw-light); color: var(--text-2); letter-spacing: 0;
+  vertical-align: top; position: relative; top: 0.3em; margin-right: 0.02em;
+}
+.cifra__sig { margin-right: 0.08em; }
+.losa-negra .cifra__cur { color: var(--sobre-negro-2); }
+.losa-lila .cifra__cur { color: var(--tinta); opacity: 0.62; }
+.cifra--hero { font-size: var(--fs-hero); letter-spacing: -0.03em; }
+.cifra--tile { font-size: 31px; letter-spacing: -0.02em; }
+
+.lbl { font-size: 13px; font-weight: var(--fw-medium); color: var(--text-2); letter-spacing: 0.01em; }
+.losa-negra .lbl { color: var(--sobre-negro-2); }
+.losa-lila .lbl { color: var(--tinta); }
+
+/* ---- Regla del mes: un trazo de 1,5 px por día + chip negro «hoy, N» ---- */
+.avance { margin-top: 18px; }
+.avance__trazos { position: relative; display: flex; justify-content: space-between; align-items: flex-end; height: 26px; }
+.avance__t { width: 1.5px; height: 14px; border-radius: 1px; background: rgba(29, 29, 31, 0.22); }
+.avance__t--ya { background: color-mix(in srgb, var(--tinta) 60%, transparent); }
+.avance__t--hoy { height: 26px; width: 2px; background: var(--tinta); }
+.avance__ejes {
+  position: relative; display: flex; justify-content: space-between; align-items: center;
+  margin-top: 8px; font-size: var(--fs-axis); font-weight: var(--fw-medium); letter-spacing: 0.02em;
+}
+.avance__hoy {
+  position: absolute; left: clamp(36px, calc(var(--hoy-x, 0) * 100%), calc(100% - 36px)); transform: translateX(-50%);
+}
+.avance--ini .avance__ini, .avance--fin .avance__fin { opacity: 0; }
+.chip-valor {
+  display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: var(--r-full);
+  background: var(--tinta); color: var(--text-inverse); font-size: 12px; font-weight: var(--fw-semibold);
+  letter-spacing: 0; white-space: nowrap;
+}
+
+/* Entrada en cascada (scaleY 0→1, 900 ms) y respiración en ola (4,2 s, 110 ms de
+   desfase por índice). SOLO transform/opacity. --i lo escribe dashboard.js. */
+.avance__t, .mini-barras i {
+  transform-origin: 50% 100%;
+  animation: entra 900ms var(--ease) both, respira var(--dur-respira) ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 16ms), calc(900ms + var(--i, 0) * 110ms);
+}
+.avance__t--hoy { animation: pulso 2.4s ease-in-out infinite; animation-delay: 0s; }
+@keyframes entra { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes respira { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.72); } }
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 
 /* Dashboard/Analytics usan el control segmentado .seg + .seg--dock, igual que
    la cartera (components.css + js/segmented.js) */
@@ -357,34 +376,42 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 .legend__dot--ambar { background: var(--semaforo-ambar); }
 .legend__dot--rojo  { background: var(--semaforo-rojo); }
 
-/* ---- mini-stats fila ---- */
-.stat-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);            /* bento apretado: losas contiguas */
-  margin-top: var(--sp-4);
-}
+/* ---- Disponible (losa lila) y Gastado (losa negra) ----
+   Material de §3: grano + brillo + gradiente radial; las dos llevan blur (son
+   las losas de contraste). Una de cada por pantalla. */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-bento); }
 .stat {
-  padding: var(--sp-4);
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+  height: 170px; padding: 16px 16px 16px 18px; border-radius: var(--r-losa);
 }
-.stat__label {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-xs);
-  color: var(--text-3);
-  font-weight: var(--fw-medium);
+.losa-lila, .losa-negra {
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(160%);
+  backdrop-filter: blur(var(--blur)) saturate(160%);
 }
-.stat__value {
-  font-family: var(--font-num);
-  font-variant-numeric: tabular-nums;
-  font-weight: var(--fw-semibold);
-  font-size: var(--fs-h2);
-  color: var(--text-2);
-  margin-top: var(--sp-2);
-  letter-spacing: -0.01em;
+.losa-lila {
+  background: var(--grano) 0 0 / 160px, var(--brillo-vidrio), var(--losa-lila);
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-color), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  color: var(--tinta);
 }
-.stat__value--empty { color: var(--text-3); }
+.losa-negra {
+  background: var(--grano) 0 0 / 160px, linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 40%), var(--losa-negra);
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-oscuro), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: var(--text-inverse);
+}
+.stat__top { display: flex; justify-content: space-between; align-items: center; }
+.stat__ic { width: 32px; height: 32px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--sobre-lila-1); }
+.stat__ic svg { width: 18px; height: 18px; }
+.losa-negra .stat__ic { background: var(--sobre-negro-3); }
+.stat__value { display: block; margin-top: auto; }
+.stat__sub { font-size: 13px; font-weight: var(--fw-medium); margin-top: 6px; }
+.losa-lila .stat__sub { color: var(--tinta); }
+.losa-negra .stat__sub { color: var(--sobre-negro-2); }
+/* minibarras de los últimos 10 días (altura --h por CSSOM; la última, en papel) */
+.mini-barras { position: absolute; right: 16px; top: 58px; display: flex; gap: 4px; align-items: flex-end; height: 34px; }
+.mini-barras i { display: block; width: 1.5px; height: var(--h, 8px); border-radius: 1px; background: var(--sobre-negro-3); }
+.mini-barras i.on { background: var(--papel); }
 
 /* ============================================================
    Listas (movimientos / créditos)
@@ -569,14 +596,15 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 /* ============================================================
    HOY · estado funcional (semáforo con datos reales)
    ============================================================ */
-.hoy-body { display: flex; flex-direction: column; }
+.hoy-body { display: flex; flex-direction: column; gap: var(--gap-bento); }
+.hoy-body > * { margin: 0; }
 
 /* skeleton mientras carga (opacity/transform only) */
 .hoy-skeleton {
   height: 320px;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-losa);
   background: var(--glass-1);
-  border: 1px solid var(--line-1);
+  border: 1px solid var(--canto);
   animation: hoyPulse 1.4s var(--ease-in-out) infinite;
 }
 @keyframes hoyPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
@@ -625,9 +653,6 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 .gauge-proj--ambar strong { color: var(--semaforo-ambar); }
 .gauge-proj--rojo strong { color: var(--semaforo-rojo); }
 
-/* sub-línea en las mini-stats */
-.stat__sub { font-size: var(--fs-xs); color: var(--text-3); margin-top: 2px; }
-.stat__value--neg { color: var(--semaforo-rojo); }
 
 /* bloque de fijos comprometidos */
 .fijos-card {
@@ -814,14 +839,11 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 /* ============================================================
    Asesor — cuarto de conciencia (D): chat a pantalla completa
    ============================================================ */
-/* Spark de entrada en el header de Hoy: gradiente firma = "esto es IA". */
-.hoy-greet__orb {
-  background: var(--grad-cta);
-  color: var(--tinta);
-  border: 1px solid var(--glass-gloss);
-  box-shadow: var(--sh-ia);
-}
-.hoy-greet__orb svg { width: 19px; height: 19px; }
+/* Orbe del asesor: el símbolo de la marca (anillo + centro lila) sobre vidrio.
+   Es un icon-btn más; nada de gradiente firma (ese es solo del FAB). */
+.orbe { width: 24px; height: 24px; display: block; }
+.orbe__aro { stroke: var(--tinta); }
+.orbe__centro { fill: var(--lila); }
 .hoy-greet__orb:active { transform: scale(0.9); }
 
 /* La vista de asesor se come el padding y NO scrollea (el scroller es
@@ -2392,52 +2414,26 @@ body[data-route="productos"] .view { padding-top: var(--sp-4); }
 .wallet-detalle-top { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); }
 /* el "Editar" es la acción de cabecera del DS: .btn.btn--ghost.btn--head */
 
-/* --- card "Mi cartera" en Hoy (glass + peek de tarjetas en abanico) --- */
+/* --- losa «Mi cartera» en Hoy: vidrio claro + tres tarjetas planas --- */
 .hoy-productos {
-  position: relative; overflow: hidden; display: block; width: 100%; text-align: left;
-  /* Al irse el eyebrow y el conteo, la card ya no necesita 176px: se ajusta a
-     lo que queda (título + botón) y deja de ocupar media pantalla. */
-  border-radius: 26px; padding: 18px 20px 20px; min-height: 128px; margin-bottom: var(--sp-4); cursor: pointer;
-  background:
-    radial-gradient(120% 130% at 2% -8%, rgba(139,108,255,.20), transparent 52%),
-    radial-gradient(120% 130% at 100% 116%, rgba(91,63,224,.20), transparent 55%),
-    linear-gradient(162deg, rgba(255,255,255,.07), rgba(255,255,255,.028));
-  border: 1px solid var(--line-2);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 24px 50px -30px rgba(0,0,0,.82);
-  -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+  position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between;
+  width: 100%; height: 76px; padding: 0 8px 0 20px; text-align: left; cursor: pointer;
+  border-radius: var(--r-losa);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-2);
+  box-shadow: inset 0 0 0 1px var(--canto);
+  border: 0;
   -webkit-tap-highlight-color: transparent; transition: transform var(--dur-fast) var(--ease);
 }
-.hoy-productos:active { transform: scale(.99); }
-.hoy-productos__content { position: relative; z-index: 3; display: block; max-width: 208px; }
-/* 800 pesaba más que el propio saldo del mes y desequilibraba la jerarquía de
-   Hoy. Con --fw-bold el título sigue mandando en su card sin gritar. */
-.hoy-productos__title { display: block; font-size: 23px; font-weight: var(--fw-bold); letter-spacing: -.02em; }
-.hoy-productos__go { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; padding: 9px 15px; border-radius: 999px; font-size: 12.5px; font-weight: var(--fw-bold); color: #EFEBFF; background: linear-gradient(180deg, rgba(139,108,255,.28), rgba(139,108,255,.13)); border: 1px solid rgba(139,108,255,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.16); }
-.hoy-productos__go svg { width: 14px; height: 14px; }
-.hoy-productos__peek { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-/* Más pequeñas y más juntas, para caber en la card ya recortada sin que el
-   abanico se salga por abajo. */
-.wcard { position: absolute; width: 122px; aspect-ratio: 2.05 / 1; border-radius: 12px; overflow: hidden;
-  background: var(--skin-bg); box-shadow: 0 12px 24px -12px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.07);
-  /* Entrada del abanico: cada tarjeta cae a su sitio con un desfase. Animar
-     solo transform/opacity, y `both` para que arranquen ya en su estado
-     inicial y no den un parpadeo en el primer frame. */
-  animation: wcardEntra .52s var(--ease) both; }
-.wcard::before { content: ""; position: absolute; inset: 0 0 auto; height: 40%; background: var(--skin-band); border-bottom: 1px solid var(--skin-hairline); }
-.wcard--1 { top: 2px; right: -26px; transform: rotate(-10deg); z-index: 1; filter: brightness(.95); animation-delay: .04s; }
-.wcard--2 { top: 27px; right: -14px; transform: rotate(-3deg); z-index: 2; animation-delay: .12s; }
-/* La última manda: con la card en 128px, su base + la rotación tienen que caber
-   o el abanico se corta contra el borde inferior. */
-.wcard--3 { top: 52px; right: -2px; transform: rotate(6deg); z-index: 3; animation-delay: .20s; }
-
-/* El `to` no fija transform: así cada tarjeta aterriza en la rotación que le
-   toca por su clase, sin repetirla aquí. */
-@keyframes wcardEntra {
-  from { opacity: 0; transform: translate(14px, -10px) rotate(0deg) scale(.94); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .wcard { animation: none; }
-}
+.hoy-productos:active { transform: scale(0.99); }
+.hoy-productos__title { display: block; font-family: var(--font-display); font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -0.01em; color: var(--text-1); }
+.hoy-productos__go { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 13px; font-weight: var(--fw-medium); color: var(--text-2); }
+.hoy-productos__go svg { width: 16px; height: 16px; }
+.hoy-productos__peek { position: relative; width: 132px; height: 60px; flex: 0 0 auto; pointer-events: none; }
+.wcard { position: absolute; top: 7px; width: 74px; height: 46px; border-radius: 10px; }
+.wcard--1 { right: 64px; background: var(--papel); border: 1px solid var(--line-2); transform: rotate(-8deg); }
+.wcard--2 { right: 34px; background: var(--perla); border: 1px solid var(--line-2); transform: rotate(-2deg); }
+.wcard--3 { right: 6px; background: var(--trazo); transform: rotate(5deg); }
+.wcard--3::after { content: ''; position: absolute; left: 10px; bottom: 9px; width: 18px; height: 3px; border-radius: 2px; background: var(--sobre-negro-3); }
 
 /* Acceso a préstamos desde Personas (el dato vive en Mi cartera). */
 .prestamos-link { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); width: 100%; text-align: left;
@@ -2812,7 +2808,7 @@ select.field__input::-ms-expand { display: none; }
 .composer, .chat-bar, .chat-msg--ia, .susurro,
 .persona-card, .prestamo-card, .bonus-card,
 .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
-.settings-list, .cfg-list, .bcard, .hoy-productos, .pcard, .vf-card,
+.settings-list, .cfg-list, .pcard, .vf-card,
 .cred-summary, .ob__resumen {
   border-color: var(--canto);   /* 2.0: canto blanco de 1px (el borde vivo ya no pinta nada) */
 }
@@ -2840,7 +2836,7 @@ select.field__input::-ms-expand { display: none; }
 .persona-card::before, .prestamo-card::before, .bonus-card::before,
 .hormiga-note::before,
 .cat-preview::before, .empty__art::before, .hoy-skeleton::before,
-.settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
+.settings-list::before, .cfg-list::before,
 .pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
   content: '';
   position: absolute;
@@ -2865,7 +2861,7 @@ select.field__input::-ms-expand { display: none; }
    El borde vivo se queda donde sí luce: cards y containers. */
 
 /* Los de overflow hidden: el anillo por dentro, si no se lo comen al recortar */
-.settings-list::before, .cfg-list::before, .bcard::before, .hoy-productos::before,
+.settings-list::before, .cfg-list::before,
 .pcard::before, .vf-card::before, .cred-summary::before, .ob__resumen::before {
   inset: 0;
 }
@@ -2910,4 +2906,109 @@ select.field__input::-ms-expand { display: none; }
   font-weight: var(--fw-bold);
   color: var(--text-1);
   letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   olbo 2.0 · F3 Hoy — losas de vidrio, anillo, Análisis y motion ambiente
+   (va al final: manda sobre los bloques de Hoy de más arriba)
+   ============================================================ */
+
+/* Vidrio claro N1: grano fino + glass-2, SIN blur (SISTEMA-UI §8.7). */
+.hoy-body .card, .hoy-body .cat-break, .hoy-body .catmes, .hoy-body .ahorro {
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-2);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--canto);
+  border-radius: var(--r-losa);
+}
+.hoy-body .card::before { content: none; }
+.hoy-body .cat-break, .hoy-body .catmes, .hoy-body .ahorro { padding: 18px 20px 20px; margin: 0; }
+.hoy-body .section-head { margin: 0 0 var(--sp-3); }
+.hoy-body .section-head__title { font-size: 20px; font-weight: var(--fw-medium); letter-spacing: -0.01em; }
+.hoy-body .negocios { margin: 0; }
+.hoy-body .negocios .section-head { margin: var(--sp-3) var(--sp-2) var(--sp-3); }
+.negocio-list { gap: var(--gap-bento); }
+.fijos-card { margin-top: 0; padding: 16px 20px; }
+.fijos-card__label { font-size: 15px; }
+.fijos-card__hint { font-size: 13px; color: var(--text-2); font-weight: var(--fw-medium); margin-top: 2px; }
+.fijos-card__val { font-size: 17px; font-weight: var(--fw-medium); }
+
+/* Pestañas Resumen / Análisis: el control segmentado ya es el de F2; aquí solo
+   su aire dentro del bento. */
+.hoy-greet + .bcard { margin-top: 0; }
+.view[data-route="hoy"] > .bcard, .view[data-route="hoy"] > .hoy-productos, .view[data-route="hoy"] > .seg { margin-bottom: var(--gap-bento); }
+.view[data-route="hoy"] > .seg { margin-top: 0; }
+
+/* Anillo del semáforo (Análisis): pista punteada, arco fino con extremo
+   redondo, punta con pulso y cifra Urbanist 300 con % atenuado. */
+.gauge-card { padding: var(--sp-7) var(--sp-5) var(--sp-6); gap: var(--sp-4); }
+.gauge { width: min(66vw, 240px); }
+.gauge::before { display: none; }
+.gauge__track { stroke: var(--trazo); stroke-width: 5; stroke-linecap: butt; stroke-dasharray: 0.9 3.5; }
+.gauge__arc { stroke-width: 2.6; stroke-linecap: round; }
+.gauge__arc--fill { opacity: 1; }
+.gauge__tick { fill: var(--papel); stroke: var(--tinta); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: pulso 2.4s ease-in-out infinite; }
+.gauge__value { font-family: var(--font-display); font-weight: var(--fw-light); font-size: 54px; letter-spacing: -0.03em; color: var(--text-1); }
+.gauge__unit { font-size: 0.45em; color: var(--text-2); letter-spacing: 0; vertical-align: top; position: relative; top: 0.3em; margin-left: 0.04em; }
+.gauge--verde .gauge__value--pct, .gauge--ambar .gauge__value--pct, .gauge--rojo .gauge__value--pct { color: var(--text-1); }
+.gauge__hint { color: var(--text-2); }
+.gauge__caption { font-size: 13px; color: var(--text-2); }
+.legend__item { color: var(--text-2); }
+
+/* Flujo mes a mes = la losa negra del Análisis: barras finas, la del mes en lila. */
+.hoy-body .ahorro {
+  background: var(--grano) 0 0 / 160px, linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 40%), var(--losa-negra);
+  background-blend-mode: soft-light, normal, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-oscuro), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(160%);
+  backdrop-filter: blur(var(--blur)) saturate(160%);
+  color: var(--text-inverse);
+}
+.ahorro .section-head__title { color: var(--text-inverse); }
+.ahorro__insight { color: var(--sobre-negro-2); }
+.ahorro__insight strong { color: var(--text-inverse); }
+.ahorro__sub { color: var(--sobre-negro-2); }
+.ahorro__bar { fill: var(--sobre-negro-2); transform-box: fill-box; transform-origin: 50% 100%; animation: entra 900ms var(--ease) both; animation-delay: calc(var(--i, 0) * 80ms); }
+.ahorro__bar--now { fill: var(--lila); }
+.ahorro__bar--neg { fill: var(--semaforo-rojo); transform-origin: 50% 0; }
+.ahorro__bar--neg.ahorro__bar--now { fill: var(--semaforo-rojo); }
+.ahorro__zeroline { stroke: var(--sobre-negro-3); }
+.ahorro__prom { stroke: var(--sobre-negro-2); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.7; }
+.ahorro__val { fill: var(--sobre-negro-2); }
+.ahorro__val--now { fill: var(--text-inverse); }
+.ahorro__lbl { color: var(--sobre-negro-2); }
+.ahorro__lbl.is-now { color: var(--text-inverse); }
+
+/* «En qué se va»: íconos monocromos en círculo papel, pistas de 2 px. */
+.catbar-list { gap: var(--sp-3); }
+.catbar__ic, .catmes__ic { width: 42px; height: 42px; border-radius: var(--r-full); background: var(--papel); color: var(--tinta); }
+.catbar__label, .catmes__label { font-weight: var(--fw-semibold); }
+.catbar__track, .catmes__track { height: 2px; background: var(--trazo); }
+.catbar__fill, .catmes__fill { background: var(--tinta); opacity: 1; }
+.catbar__amt, .catmes__amt { color: var(--text-1); font-weight: var(--fw-medium); }
+.catbar__pct { color: var(--text-2); }
+.catbar__fig { min-width: 92px; }
+.cat-break__proj { margin: 0 0 var(--sp-4); }
+.catmes__sub { color: var(--text-2); }
+.hormiga-note { background: var(--glass-hundido); border: 0; border-radius: var(--r-hija); }
+.hormiga-note::before { content: none; }
+.hormiga-note__ic { color: var(--tinta); }
+
+/* Navegador de meses: pill de vidrio, flechas de 44 px. */
+.mesnav { background: var(--glass-1); border: 1px solid var(--canto); padding: 2px; }
+.mesnav__b { width: 44px; height: 44px; color: var(--text-2); }
+.mesnav__b:active { background: var(--glass-hundido); color: var(--text-1); }
+
+/* Motion ambiente: se pausa fuera de vista (dashboard.js marca .is-fuera con un
+   IntersectionObserver) y con reduced-motion queda solo el estado final. */
+.is-fuera, .is-fuera *, .is-fuera::before, .is-fuera *::before, .is-fuera::after, .is-fuera *::after {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bcard::before, .avance__t, .avance__t--hoy, .mini-barras i, .gauge__tick, .ahorro__bar { animation: none; }
+  .bcard__amt, .hoy-productos { transition: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bcard::before { filter: none; opacity: 0.35; }
+  .losa-lila, .losa-negra, .hoy-body .ahorro { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .hoy-productos, .hoy-body .card, .hoy-body .cat-break, .hoy-body .catmes { background: var(--glass-solido); }
 }

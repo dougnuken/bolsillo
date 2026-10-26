@@ -12,7 +12,7 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=152" />
+  <link rel="manifest" href="./manifest.webmanifest?v=154" />
   <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
        isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
@@ -69,11 +69,11 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=152" />
-  <link rel="stylesheet" href="./css/base.css?v=152" />
-  <link rel="stylesheet" href="./css/components.css?v=152" />
-  <link rel="stylesheet" href="./css/views.css?v=152" />
-  <link rel="stylesheet" href="./css/splash.css?v=152" />
+  <link rel="stylesheet" href="./css/tokens.css?v=154" />
+  <link rel="stylesheet" href="./css/base.css?v=154" />
+  <link rel="stylesheet" href="./css/components.css?v=154" />
+  <link rel="stylesheet" href="./css/views.css?v=154" />
+  <link rel="stylesheet" href="./css/splash.css?v=154" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
@@ -141,7 +141,7 @@
       <!-- Solo en Hoy: al colapsarse el hero, su orbe sube aquí. Es la acción
            distintiva de la app, así que es la que se queda a la vista. -->
       <button class="icon-btn hdr-hoy" id="hdr-orbe" type="button" aria-label="Tu conciencia financiera">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>
+        <svg class="orbe" viewBox="212 212 600 600" aria-hidden="true"><g transform="rotate(-28 512 512)" fill="none" stroke-width="96" stroke-linecap="round" class="orbe__aro"><path d="M295.9 417.3A230 230 0 0 1 728.1 417.3"/><path d="M728.1 606.7A230 230 0 0 1 295.9 606.7"/></g><circle class="orbe__centro" cx="512" cy="512" r="62"/></svg>
       </button>
       <!-- Solo en Hoy: buscar y notificaciones se pliegan aquí. Hereda el badge
            para no perder el aviso al esconder la campana. -->
@@ -207,6 +207,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=152"></script>
+  <script type="module" src="./js/app.js?v=154"></script>
 </body>
 </html>

@@ -416,6 +416,11 @@ function detallesHTML() {
     </div>` : ''}`;
 }
 
+/* «Hoy, 26 de octubre · Débito» bajo el monto: fecha y cuenta de un vistazo. */
+function metaTexto() {
+  return [etiquetaFecha(STATE.fecha), STATE.cuenta].filter(Boolean).join(' · ');
+}
+
 function renderForm() {
   const monto = montoActual();
   const ingreso = esIngreso();
@@ -458,7 +463,9 @@ function renderForm() {
     <button type="button" class="amt amt--${ingreso ? 'in' : 'out'}${STATE.keypad ? ' is-active' : ''}" data-act="amt-toggle" aria-label="Monto">
       <span class="amt__cur">${ingreso ? '+$' : '$'}</span>
       <span class="amt__value num" id="reg-amt">${monto ? formatCOP(monto).replace('$', '') : '0'}</span>
+      <span class="amt__caret" aria-hidden="true"></span>
     </button>
+    <p class="amt__meta">${IC.cal}<span id="reg-meta">${esc(metaTexto())}</span></p>
     ${STATE.keypad ? keypadHTML() : ''}
     ${seccion}
     ${detalleHTML()}
@@ -610,6 +617,8 @@ function cambiarTipo(t) {
 function syncFecha() {
   const val = sheetRef.querySelector('#reg-fecha-val');
   if (val) val.textContent = etiquetaFecha(STATE.fecha);
+  const meta = sheetRef.querySelector('#reg-meta');
+  if (meta) meta.textContent = metaTexto();
 }
 
 function bind() {
@@ -681,6 +690,13 @@ function bind() {
 
   // teclado numérico
   sheetRef.querySelectorAll('[data-key]').forEach((k) => {
+    /* La respuesta visual va en pointerdown (no espera al click): la tecla se
+       hunde en cuanto el dedo la toca y se suelta al levantar o salirse. */
+    const soltar = () => k.classList.remove('is-press');
+    k.addEventListener('pointerdown', () => k.classList.add('is-press'));
+    k.addEventListener('pointerup', soltar);
+    k.addEventListener('pointercancel', soltar);
+    k.addEventListener('pointerleave', soltar);
     k.addEventListener('click', () => {
       const key = k.dataset.key;
       if (key === 'del') STATE.montoStr = STATE.montoStr.slice(0, -1);
