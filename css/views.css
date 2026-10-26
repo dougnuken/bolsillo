@@ -206,8 +206,16 @@ body[data-route="hoy"] .hoy-greet__orb:active {
   font-size: 0.45em; font-weight: var(--fw-light); color: var(--text-2); letter-spacing: 0;
   vertical-align: top; position: relative; top: 0.3em; margin-right: 0.02em;
 }
-.cifra__sig { margin-right: 0.08em; }
+/* Signo negativo: en Urbanist 300 a tamaño héroe el «−» se leía como una raya
+   larga y suelta («— $ 5.606.362»). Ahora va pegado al $, a su misma escala y
+   altura, pero en tinta plena y peso 500: el número negativo se lee como
+   «−$5.606.362» sin que el signo se pierda. */
+.cifra__sig {
+  font-size: 0.45em; font-weight: var(--fw-medium); color: var(--text-1); letter-spacing: 0;
+  vertical-align: top; position: relative; top: 0.3em; margin-right: 0.01em;
+}
 .losa-negra .cifra__cur { color: var(--sobre-negro-2); }
+.losa-negra .cifra__sig { color: inherit; }   /* sobre negro el signo hereda el blanco de la cifra */
 .losa-lila .cifra__cur { color: var(--tinta); opacity: 0.8; }
 .cifra--hero { font-size: var(--fs-hero); letter-spacing: -0.03em; }
 .cifra--tile { font-size: clamp(24px, 7.4vw, 31px); letter-spacing: -0.02em; }
@@ -771,6 +779,7 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 body[data-route="asesor"] .app-header,
 body[data-route="asesor"] .tabbar,
 body[data-route="asesor"] .fab,
+body[data-route="asesor"] .fab-halo,
 body[data-route="asesor"] .fab-bubble,
 body[data-route="asesor"] .fab-veil,
 body[data-route="asesor"] .nav-blur {

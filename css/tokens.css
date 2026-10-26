@@ -136,10 +136,8 @@
     radial-gradient(38% 38% at 26% 72%, var(--fab-rojo) 0%, rgba(255, 90, 78, 0) 100%),
     radial-gradient(34% 34% at 78% 30%, var(--fab-morado) 0%, rgba(192, 96, 216, 0) 100%),
     radial-gradient(40% 40% at 74% 80%, var(--fab-azul) 0%, rgba(79, 123, 255, 0) 100%);
-  --sh-fab-color:
-    -10px 14px 26px -12px rgba(255, 122, 56, 0.7),
-    10px 16px 28px -12px rgba(79, 123, 255, 0.7),
-    0 4px 10px -4px rgba(29, 29, 31, 0.25);
+  --sh-fab-color:                      /* el color de la elevación lo pone .fab-halo (vivo); aquí solo el contacto */
+    0 6px 14px -6px rgba(29, 29, 31, 0.28);
   --fab-rim: rgba(255, 255, 255, 0.8);
   --fab-hi: rgba(255, 255, 255, 0.95);
 

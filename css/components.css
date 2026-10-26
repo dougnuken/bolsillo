@@ -327,6 +327,39 @@ body.nav-min .tab.is-active .tab__label,
               filter var(--dur-fast) var(--ease-suave);
 }
 
+/* ---- Halo del FAB: la elevación es la misma ola de la conciencia ----
+   En vez de una sombra fija, tres manchas (--ola-*) desenfocadas derivan bajo la
+   esfera: la elevación se siente viva. Va como hermano del botón (el .fab tiene
+   overflow:hidden), en la misma posición y con el mismo --dock-shift. El blur es
+   estático en el contenedor; solo se animan transform/opacity de las manchas. */
+.fab-halo {
+  position: fixed;
+  z-index: calc(var(--z-fab) - 1);
+  right: calc(var(--dock-x) - 22px);
+  bottom: calc(var(--dock-b) - 26px);
+  width: 104px; height: 104px;
+  pointer-events: none;
+  filter: blur(16px) saturate(1.25);
+  opacity: 0.85;
+  transform: translateY(var(--dock-shift, 0px));
+  transition: transform var(--dur) var(--ease-empuje) 60ms, opacity var(--dur-fast) var(--ease);
+}
+.fab-halo span {
+  position: absolute; width: 58%; height: 58%; border-radius: 50%;
+  will-change: transform;
+}
+.fab-halo span:nth-child(1) { left: 6%;  top: 34%; background: var(--ola-1); animation: halo1 7s ease-in-out infinite; }
+.fab-halo span:nth-child(2) { left: 36%; top: 40%; background: var(--ola-3); animation: halo2 8.5s ease-in-out infinite; }
+.fab-halo span:nth-child(3) { left: 30%; top: 22%; background: var(--ola-4); animation: halo3 9.5s ease-in-out infinite; }
+@keyframes halo1 { 0%,100% { transform: translate(0, 0) scale(1); }      50% { transform: translate(14%, 8%) scale(1.12); } }
+@keyframes halo2 { 0%,100% { transform: translate(0, 0) scale(1.05); }   50% { transform: translate(-16%, -6%) scale(0.9); } }
+@keyframes halo3 { 0%,100% { transform: translate(0, 4%) scale(0.95); }  50% { transform: translate(8%, 14%) scale(1.15); } }
+/* menú abierto: la esfera «se enciende» un poco más */
+body[data-fab="open"] .fab-halo { opacity: 1; }
+body[data-fab="open"] .fab-halo span { animation-duration: 3.4s; }
+body.has-toast .fab-halo { transition-delay: 60ms, 0s; }
+@media (prefers-reduced-motion: reduce) { .fab-halo span { animation: none; } }
+
 /* ---- FAB: esfera de IA (única pieza multicolor) ---- */
 .fab {
   position: fixed;
