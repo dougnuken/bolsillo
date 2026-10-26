@@ -2870,52 +2870,88 @@ select.field__input::-ms-expand { display: none; }
 .notif-fila--ambar::before { background: var(--semaforo-ambar); }
 .notif-fila__detalle, .notif-tarea__sub { color: var(--text-2); }
 
-/* ---- Asesor: «Tu conciencia» (pantalla-asesor.png) ---- */
-.asesor-top { padding: calc(env(safe-area-inset-top) + var(--sp-3)) var(--sp-4) var(--sp-2); }
-.asesor-top__title { font-family: var(--font-display); font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
-.asesor-hello { gap: var(--sp-4); margin: var(--sp-5) 0 var(--sp-2); }
-.asesor-orb-big { width: 112px; height: 112px; border-radius: 0; background: none; box-shadow: none; }
-.asesor-orb-big .orbe { width: 112px; height: 112px; animation: orbeFlota 6s ease-in-out infinite; }
-@keyframes orbeFlota { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+/* ---- Asesor: «Tu conciencia» (pantalla-asesor.png) ----
+   Diagramación v167: la pantalla se leía gritada (intro a 30px, orbe de 112px,
+   chips a 16px). Ahora el orbe y la intro viven en el tercio superior a escala
+   de lectura, los chips son pills compactas y la barra flota sobre la ola. */
+.asesor-room { position: relative; isolation: isolate; }
+.asesor-top { padding: calc(env(safe-area-inset-top) + var(--sp-2)) var(--sp-4) var(--sp-1); }
+.asesor-top__title { font-family: var(--font-ui); font-size: 16px; font-weight: var(--fw-semibold); letter-spacing: -0.005em; }
+.asesor-hello { gap: var(--sp-4); margin: auto 0; padding: var(--sp-4) var(--sp-3) var(--sp-6); }   /* centrado en el aire libre */
+.asesor-orb-big { width: 64px; height: 64px; border-radius: 0; background: none; box-shadow: none; }
+.asesor-orb-big .orbe { width: 64px; height: 64px; animation: orbeFlota 6s ease-in-out infinite; }
+@keyframes orbeFlota { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .asesor-intro {
-  font-family: var(--font-display); font-size: 1.875rem; font-weight: 300; line-height: 1.12;
-  letter-spacing: -0.03em; color: var(--text-1); max-width: 14em; text-wrap: balance;
+  font-family: var(--font-display); font-size: 22px; font-weight: 300; line-height: 1.25;
+  letter-spacing: -0.012em; color: var(--text-1); max-width: 17em; text-wrap: balance;
 }
-.chat-scroll { padding: var(--sp-2) var(--sp-3) var(--sp-3); }
-.chat-suggest { align-items: flex-start; }
+.chat-scroll { padding: var(--sp-2) var(--sp-4) var(--sp-3); position: relative; z-index: 1; }
+.chat-suggest { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 6px; margin-top: 0; }
 .chat-chip {
   position: relative; min-height: 44px; display: inline-flex; align-items: center;
   padding: 0 var(--sp-4); border-radius: var(--r-full); border: 0;
-  background: var(--grano-fino) 0 0 / 160px, var(--glass-1);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-2);
   box-shadow: inset 0 0 0 1px var(--canto);
-  font-size: 16px; font-weight: var(--fw-medium); color: var(--text-1);
+  font-size: 14px; font-weight: var(--fw-medium); letter-spacing: -0.005em; color: var(--text-1);
 }
-.chat-chip:hover { background: var(--grano-fino) 0 0 / 160px, var(--glass-2); }
+.chat-chip:hover { background: var(--grano-fino) 0 0 / 160px, var(--glass-3); }
 .chat-ask__chips { align-items: flex-start; }
-.chat-msg { padding: var(--sp-4) var(--sp-5); border-radius: var(--r-losa); font-size: 17px; line-height: 1.45; }
-.chat-msg--yo { background: var(--tinta); color: var(--text-inverse); border-bottom-right-radius: 10px; }
+.chat-msg { padding: 12px 16px; border-radius: 22px; font-size: 15px; line-height: 1.45; }
+.chat-msg--yo { background: var(--tinta); color: var(--text-inverse); border-bottom-right-radius: 8px; }
 .chat-msg--ia {
   background: var(--grano-fino) 0 0 / 160px, var(--glass-2); border: 0;
-  box-shadow: inset 0 0 0 1px var(--canto); border-bottom-left-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--canto); border-bottom-left-radius: 8px;
 }
 .chat-msg--wait span { background: var(--tinta-2); }
 .chat-bar {
-  flex-direction: column; margin: 0 var(--sp-3) max(var(--sp-2), env(safe-area-inset-bottom));
-  padding: var(--sp-2); border-radius: 34px; border: 0;
+  position: relative; z-index: 2;
+  flex-direction: column; margin: 0 var(--sp-3) max(var(--sp-3), env(safe-area-inset-bottom));
+  padding: 6px; border-radius: 30px; border: 0;
   background: var(--grano-fino) 0 0 / 160px, var(--glass-3);
   box-shadow: inset 0 0 0 1px var(--canto), var(--sh-md);
+  -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
+  backdrop-filter: blur(var(--blur-strong)) saturate(1.6);
 }
-.chat-bar__row { gap: var(--sp-2); }
+.chat-bar__row { gap: var(--sp-1); }
 .chat-attach { width: 44px; height: 44px; background: var(--glass-hundido); color: var(--text-1); }
-.chat-input {
-  font-family: var(--font-ui); height: 44px; font-size: 17px; }
+.chat-attach svg { width: 19px; height: 19px; }
+.chat-input { font-family: var(--font-ui); height: 44px; font-size: 16px; }   /* 16px: iOS no hace zoom al enfocar */
 .chat-input::placeholder { color: var(--text-2); }
-.chat-send { width: 48px; height: 48px; background: var(--tinta); color: var(--text-inverse); }
-.chat-send svg { width: 22px; height: 22px; }
+.chat-send { width: 44px; height: 44px; background: var(--tinta); color: var(--text-inverse); }
+.chat-send svg { width: 20px; height: 20px; }
 .chat-adjunto { background: var(--glass-hundido); border: 0; }
 .chat-adjunto__ic { color: var(--text-1); }
 .chat-adjunto__x { color: var(--text-2); width: 44px; height: 44px; }
-@media (prefers-reduced-motion: reduce) { .asesor-orb-big .orbe { animation: none; } }
+
+/* Ola de la conciencia: manchas de color desenfocadas que derivan detrás de la
+   barra, estilo Siri. El blur es estático en el contenedor; solo se animan
+   transform y opacity de cada mancha. La máscara la funde hacia arriba y la
+   base perla tapa lo que hubiera debajo del área segura. */
+.asesor-ola {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 0;
+  height: calc(var(--ola-alto) + env(safe-area-inset-bottom));
+  pointer-events: none; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, #000 45%, transparent 100%);
+  filter: blur(var(--ola-blur)) saturate(1.2);
+}
+.asesor-ola span {
+  position: absolute; bottom: -30%; width: 70%; height: 90%; border-radius: 50%;
+  opacity: 0.9; will-change: transform;
+}
+.asesor-ola span:nth-child(1) { left: -12%; background: var(--ola-1); animation: ola1 9s ease-in-out infinite; }
+.asesor-ola span:nth-child(2) { left: 18%;  background: var(--ola-2); animation: ola2 11s ease-in-out infinite; }
+.asesor-ola span:nth-child(3) { left: 42%;  background: var(--ola-3); animation: ola3 10s ease-in-out infinite; }
+.asesor-ola span:nth-child(4) { left: 62%;  background: var(--ola-4); animation: ola4 12s ease-in-out infinite; }
+@keyframes ola1 { 0%,100% { transform: translate(0, 8%) scale(1); }    50% { transform: translate(14%, -10%) scale(1.15); } }
+@keyframes ola2 { 0%,100% { transform: translate(0, -6%) scale(1.1); } 50% { transform: translate(-12%, 10%) scale(0.92); } }
+@keyframes ola3 { 0%,100% { transform: translate(0, 4%) scale(0.95); } 50% { transform: translate(10%, -14%) scale(1.18); } }
+@keyframes ola4 { 0%,100% { transform: translate(0, -4%) scale(1.05); } 50% { transform: translate(-16%, 8%) scale(0.9); } }
+/* Mientras la conciencia piensa, la ola respira más rápido y sube un poco. */
+.asesor-room.is-pensando .asesor-ola span { animation-duration: 3.2s; }
+.asesor-room.is-pensando .asesor-ola { transform: translateY(-12px); transition: transform var(--dur-slow) var(--ease); }
+.asesor-ola { transition: transform var(--dur-slow) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .asesor-orb-big .orbe, .asesor-ola span { animation: none; } }
 
 /* ============================================================
    Onboarding · intro (4 láminas) — pantalla-onboarding.png

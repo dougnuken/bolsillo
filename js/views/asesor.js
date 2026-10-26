@@ -84,6 +84,7 @@ export default {
           </div>
           <div class="chat-suggest" id="chat-suggest">${chips}</div>
         </div>
+        <div class="asesor-ola" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
         <form class="chat-bar" id="chat-form">
           <div class="chat-adjunto" id="chat-adjunto" hidden>
             <span class="chat-adjunto__ic">${CLIP}</span>
@@ -309,6 +310,7 @@ export default {
       const q = String(texto || '').trim();
       if ((!q && !adjunto) || ocupado) return;
       ocupado = true;
+      root.querySelector('.asesor-room')?.classList.add('is-pensando');
       input.value = '';
       const doc = adjunto;
       limpiarAdjunto();
@@ -364,6 +366,7 @@ export default {
         if (doc) { adjunto = doc; pintarAdjunto(); }
       }
       ocupado = false;
+      root.querySelector('.asesor-room')?.classList.remove('is-pensando');
       input.focus();
     }
 

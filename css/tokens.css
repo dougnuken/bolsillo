@@ -99,6 +99,17 @@
 
   /* ---- Gradiente firma → SOLO base de la esfera FAB ----
      (--grad-cta ya no se usa como relleno de CTAs ni del orbe). */
+  /* ---- Ola de la conciencia (asesor) ----
+     Segunda y última pieza multicolor: el momento IA. Misma familia que la
+     esfera del FAB (naranja → magenta → violeta → azul), en manchas que derivan
+     detrás de la barra de chat, estilo Siri. */
+  --ola-1: rgba(255, 122, 56, 0.55);    /* naranja */
+  --ola-2: rgba(214, 86, 196, 0.50);    /* magenta */
+  --ola-3: rgba(124, 92, 252, 0.55);    /* violeta */
+  --ola-4: rgba(79, 123, 255, 0.50);    /* azul */
+  --ola-blur: 38px;
+  --ola-alto: 230px;
+
   --grad-cta:
     radial-gradient(120% 130% at 0% 55%, #FF7A38 0%, rgba(255, 122, 56, 0) 42%),
     radial-gradient(90% 120% at 22% 115%, #C060D8 0%, rgba(192, 96, 216, 0) 46%),

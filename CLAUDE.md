@@ -92,7 +92,8 @@ Fuente de verdad: `docs/rediseno/MARCA.md` (marca) y `docs/rediseno/SISTEMA-UI.m
 - **Color:** tinta `#1D1D1F`; acento **lila** `--lila #B49CFF` (rellenos, siempre con contenido en tinta) y
   `--lila-tinta #5B3FE0` cuando el acento es texto o trazo sobre claro. Todo el color vive en `css/tokens.css`.
 - **Tipografía:** **Urbanist** (títulos, cifras finas) + **Manrope** (UI y cuerpo).
-- **Multicolor que se conserva:** `--grad-cta` (naranja→morado→azul) **solo en el FAB** (esfera IA); el resto de
+- **Multicolor que se conserva:** solo en los momentos IA: `--grad-cta` (naranja→morado→azul) en el FAB (esfera IA) y
+  la **ola de la conciencia** (`--ola-*`, manchas que derivan detrás de la barra del asesor, estilo Siri). El resto de
   CTAs son tinta. **Semáforo** verde/ámbar/rojo (`--semaforo-*`) SOLO en anillo/estado.
 - **Marca:** símbolo **«Anillo y centro»** (`icons/icon.svg` + PNG 192/512/maskable/apple-touch/favicon, generados
   desde `docs/rediseno/marca/olbo-icono-app-1024.svg`). Wordmark «olbo» en minúsculas. Splash perla en dos tiempos
