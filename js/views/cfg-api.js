@@ -192,7 +192,7 @@ export async function abrirApiKey({ onSaved } = {}) {
     async function borrarClave() {
       const ok = await confirmar({
         title: '¿Eliminar la clave?',
-        text: 'Bolsillo dejará de poder leer fotos de recibos y extractos hasta que pegues otra.',
+        text: 'olbo dejará de poder leer fotos de recibos y extractos hasta que pegues otra.',
         okText: 'Eliminar', danger: true,
       });
       if (!ok) return;

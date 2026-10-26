@@ -48,7 +48,7 @@ export function veredicto({ standalone, deficit, ganancia = 0, restante = defici
       titulo: 'Estás en el navegador',
       tipo: 'warn',
       texto: 'Lo que sobra abajo es la barra de Safari, no un problema de la app. '
-        + 'Para medir de verdad, abre Bolsillo desde el ícono de la pantalla de inicio.',
+        + 'Para medir de verdad, abre olbo desde el ícono de la pantalla de inicio.',
     };
   }
   if (deficit <= 0) {

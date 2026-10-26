@@ -12,7 +12,7 @@
   <meta name="description" content="olbo — tus finanzas personales, claras y en calma. Local-first." />
 
   <!-- PWA / iOS -->
-  <link rel="manifest" href="./manifest.webmanifest?v=155" />
+  <link rel="manifest" href="./manifest.webmanifest?v=157" />
   <!-- ⚠️ v101 — NO subir este color para intentar "continuar" el morado bajo la
        isla dinámica. Probado en un 16 Pro Max: NO funciona.
 
@@ -69,52 +69,28 @@
        600) y la app instalada hereda el CSS que Safari ya tenía; una URL nueva
        (?v=N) fuerza fetch fresco sin depender de limpiar caché. Sube N en cada
        cambio de CSS junto con CACHE del sw.js. -->
-  <link rel="stylesheet" href="./css/tokens.css?v=155" />
-  <link rel="stylesheet" href="./css/base.css?v=155" />
-  <link rel="stylesheet" href="./css/components.css?v=155" />
-  <link rel="stylesheet" href="./css/views.css?v=155" />
-  <link rel="stylesheet" href="./css/splash.css?v=155" />
+  <link rel="stylesheet" href="./css/tokens.css?v=157" />
+  <link rel="stylesheet" href="./css/base.css?v=157" />
+  <link rel="stylesheet" href="./css/components.css?v=157" />
+  <link rel="stylesheet" href="./css/views.css?v=157" />
+  <link rel="stylesheet" href="./css/splash.css?v=157" />
 </head>
 <body>
   <!-- Splash de bienvenida: logo animado que se funde solo en el cold start. Ver css/splash.css -->
   <div id="splash" aria-hidden="true">
-    <!-- Seis losas anidadas que entran en cascada por la diagonal. Van vacías a
-         propósito: tamaño, color y tiempo viven en css/splash.css. -->
-    <div class="splash__losas"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="splash__grain"></div>
+    <!-- Splash en perla, dos tiempos (~900 ms): el símbolo entra solo y grande;
+         luego se desliza a su sitio y se revela el wordmark. Lockup oficial de
+         docs/rediseno/marca/olbo-lockup-tinta.svg, sin <style> (CSP): el color
+         y el tiempo viven en css/splash.css. -->
     <div class="splash__lock">
-      <!-- LOCKUP EN DOS TIEMPOS
-           El símbolo entra grande y solo, y cuando "lbo" se revela se encoge a
-           talla de letra y cede el centro. No aparece una segunda "o": el
-           símbolo ES la primera letra de la palabra, así que el logotipo no
-           acompaña a la marca, la completa.
-
-           Los dos grupos viven en el mismo viewBox, así que el kerning entre el
-           símbolo y la "l" es una distancia dibujada y no una suma de anchos en
-           px. El símbolo va a escala 0.3811: iguala su extensión real —anillo
-           más el deslizamiento de los arcos, 600 u— con la "o" del wordmark más
-           un 3% de overshoot óptico, que es lo que una curva necesita para
-           pesar igual que un asta recta.
-
-           Espaciado: b|o 24 < o|l 40 < l|b 48. Dos curvas se acercan más que
-           curva y recta, y estas más que dos astas. Las astas cierran en −23
-           porque su cap redondo de radio 23 lleva la tinta justo a la línea
-           base; son las "o" las que la rebasan 6 u. -->
-      <svg class="splash__lockup" viewBox="-32 -349 898 384" role="img" aria-label="olbo">
-        <g class="lk-o">
-          <g transform="translate(105.1,-105) scale(0.3811) translate(-512,-512)">
-            <g transform="rotate(-28 512 512)" fill="none" stroke="currentColor" stroke-width="108" stroke-linecap="round">
-              <path d="M295.9 417.3 A 230 230 0 0 1 728.1 417.3" />
-              <path d="M728.1 606.7 A 230 230 0 0 1 295.9 606.7" />
-            </g>
+      <svg class="splash__lockup" viewBox="-1680 -1500 5375 1526" role="img" aria-label="olbo">
+        <g class="lk-sim">
+          <g transform="translate(-1679.6 -1362.7) scale(2.0855) translate(-212 -212)">
+            <g transform="rotate(-28 512 512)" class="lk-aro" stroke-width="96" stroke-linecap="round"><path d="M295.9 417.3A230 230 0 0 1 728.1 417.3"/><path d="M728.1 606.7A230 230 0 0 1 295.9 606.7"/></g>
+            <circle class="lk-centro" cx="512" cy="512" r="62"/>
           </g>
         </g>
-        <g class="lk-rest" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round">
-          <path d="M279 -300 V -23" />
-          <path d="M373 -300 V -23" />
-          <circle cx="484" cy="-105" r="88" />
-          <path d="M811.6 -138 A 88 88 0 1 1 763 -186.6" />
-        </g>
+        <path class="lk-word" d="M560 26Q422 26 308.5 -45.0Q195 -116 127.5 -235.5Q60 -355 60 -500Q60 -610 99.0 -705.5Q138 -801 206.5 -873.5Q275 -946 366.0 -987.0Q457 -1028 560 -1028Q698 -1028 811.5 -957.0Q925 -886 992.5 -766.0Q1060 -646 1060 -500Q1060 -391 1021.0 -296.0Q982 -201 913.5 -128.5Q845 -56 754.5 -15.0Q664 26 560 26ZM560.0 -107.5986328125Q663.7603759765625 -107.5986328125 746.70068359375 -161.97882080078125Q829.6409912109375 -216.3590087890625 878.0211791992188 -305.79931640625Q926.4013671875 -395.2396240234375 926.4013671875 -500.0Q926.4013671875 -606.6803588867188 877.5611877441406 -696.6206665039062Q828.7210083007812 -786.5609741210938 745.7807006835938 -840.4811706542969Q662.8403930664062 -894.4013671875 560.0 -894.4013671875Q456.15960693359375 -894.4013671875 373.21929931640625 -840.0211791992188Q290.27899169921875 -785.6409912109375 241.93881225585938 -696.1606750488281Q193.5986328125 -606.6803588867188 193.5986328125 -500.0Q193.5986328125 -390.2396240234375 243.47882080078125 -301.29931640625Q293.3590087890625 -212.3590087890625 376.79931640625 -159.97882080078125Q460.2396240234375 -107.5986328125 560.0 -107.5986328125ZM1220.0 0V-1500H1353.5986328125V0.0ZM2067.759521484375 -1028.0Q2213.6795043945312 -1028.0 2333.1795043945312 -957.0Q2452.6795043945312 -886.0 2523.6795043945312 -766.4599914550781Q2594.6795043945312 -646.9199829101562 2594.6795043945312 -500.91998291015625Q2594.6795043945312 -391.91998291015625 2553.6795043945312 -296.4599914550781Q2512.6795043945312 -201.0 2440.1795043945312 -128.5Q2367.6795043945312 -56.0 2272.219512939453 -15.0Q2176.759521484375 26.0 2067.759521484375 26.0Q1942.0791625976562 26.0 1850.9189147949219 -34.000213623046875Q1759.7586669921875 -94.00042724609375 1707.5986328125 -190.76080322265625V0.0H1574.0V-1500H1707.5986328125V-811.2391967773438Q1759.7586669921875 -907.9995727539062 1850.9189147949219 -967.9997863769531Q1942.0791625976562 -1028.0 2067.759521484375 -1028.0ZM2066.8395385742188 -104.83868408203125Q2175.5999145507812 -104.83868408203125 2264.1202392578125 -158.17886352539062Q2352.6405639648438 -211.51904296875 2405.480743408203 -301.87933349609375Q2458.3209228515625 -392.2396240234375 2458.3209228515625 -500.91998291015625Q2458.3209228515625 -612.6803588867188 2404.4007263183594 -702.5806579589844Q2350.4805297851562 -792.48095703125 2261.500213623047 -845.2811279296875Q2172.5198974609375 -898.081298828125 2066.8395385742188 -898.081298828125Q1958.9991455078125 -898.081298828125 1880.4589233398438 -844.2411193847656Q1801.918701171875 -790.4009399414062 1759.9786071777344 -700.0006408691406Q1718.0385131835938 -609.600341796875 1718.0385131835938 -500.91998291015625Q1718.0385131835938 -390.2396240234375 1760.5186157226562 -300.37933349609375Q1802.9987182617188 -210.51904296875 1881.5389404296875 -157.67886352539062Q1960.0791625976562 -104.83868408203125 2066.8395385742188 -104.83868408203125ZM3195.0 26Q3057.0 26 2943.5 -45.0Q2830.0 -116 2762.5 -235.5Q2695.0 -355 2695.0 -500Q2695.0 -610 2734.0 -705.5Q2773.0 -801 2841.5 -873.5Q2910.0 -946 3001.0 -987.0Q3092.0 -1028 3195.0 -1028Q3333.0 -1028 3446.5 -957.0Q3560.0 -886 3627.5 -766.0Q3695.0 -646 3695.0 -500Q3695.0 -391 3656.0 -296.0Q3617.0 -201 3548.5 -128.5Q3480.0 -56 3389.5 -15.0Q3299.0 26 3195.0 26ZM3195.0 -107.5986328125Q3298.7603759765625 -107.5986328125 3381.70068359375 -161.97882080078125Q3464.6409912109375 -216.3590087890625 3513.0211791992188 -305.79931640625Q3561.4013671875 -395.2396240234375 3561.4013671875 -500.0Q3561.4013671875 -606.6803588867188 3512.5611877441406 -696.6206665039062Q3463.7210083007812 -786.5609741210938 3380.7807006835938 -840.4811706542969Q3297.8403930664062 -894.4013671875 3195.0 -894.4013671875Q3091.1596069335938 -894.4013671875 3008.2192993164062 -840.0211791992188Q2925.2789916992188 -785.6409912109375 2876.9388122558594 -696.1606750488281Q2828.5986328125 -606.6803588867188 2828.5986328125 -500.0Q2828.5986328125 -390.2396240234375 2878.4788208007812 -301.29931640625Q2928.3590087890625 -212.3590087890625 3011.79931640625 -159.97882080078125Q3095.2396240234375 -107.5986328125 3195.0 -107.5986328125Z"/>
       </svg>
       <div class="splash__tag">Tu riqueza en calma</div>
     </div>
@@ -207,6 +183,6 @@
 
   </div>
 
-  <script type="module" src="./js/app.js?v=155"></script>
+  <script type="module" src="./js/app.js?v=157"></script>
 </body>
 </html>

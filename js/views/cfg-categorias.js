@@ -122,7 +122,7 @@ export async function abrirCategorias({ onSaved } = {}) {
 
       const html = `
         ${cabecera('Categorías')}
-        ${notaCfg('Renombra las que trae Bolsillo o crea las tuyas (personas, propósitos…). Cambia su ícono y color, reordénalas u ocúltalas. Al renombrar, tus movimientos anteriores conservan su historia.')}
+        ${notaCfg('Renombra las que trae olbo o crea las tuyas (personas, propósitos…). Cambia su ícono y color, reordénalas u ocúltalas. Al renombrar, tus movimientos anteriores conservan su historia.')}
         <div class="cfg-list cat-list">${filas}</div>
         ${alta}`;
 

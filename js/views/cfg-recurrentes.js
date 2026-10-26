@@ -119,7 +119,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
                 aria-selected="${esVar}" data-var="1">Valor variable</button>
             </div>
             <span class="sueldo-hint" id="rec-tipo-hint">${esVar
-    ? 'Su monto cambia cada mes (luz, agua, gasolina…). Bolsillo te preguntará el valor real cada mes.'
+    ? 'Su monto cambia cada mes (luz, agua, gasolina…). olbo te preguntará el valor real cada mes.'
     : 'Su monto es siempre el mismo (arriendo, colegio, seguros…).'}</span>
           </div>
           <div class="field field--split">
@@ -194,7 +194,7 @@ export async function abrirRecurrentes({ onSaved } = {}) {
             const inp = panel.querySelector('#rec-monto');
             inp.placeholder = esVariable ? 'Opcional' : '1.800.000';
             panel.querySelector('#rec-tipo-hint').textContent = esVariable
-              ? 'Su monto cambia cada mes (luz, agua, gasolina…). Bolsillo te preguntará el valor real cada mes.'
+              ? 'Su monto cambia cada mes (luz, agua, gasolina…). olbo te preguntará el valor real cada mes.'
               : 'Su monto es siempre el mismo (arriendo, colegio, seguros…).';
             // El modo "auto/preguntar" no aplica a los variables (siempre preguntan).
             const modoWrap = panel.querySelector('#rec-modo-wrap');

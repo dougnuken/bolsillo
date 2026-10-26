@@ -72,7 +72,7 @@ await page.waitForTimeout(1500);
 for (const [nombre, hash] of VISTAS) {
   await page.goto(`http://localhost:${puerto}/${hash}`);
   await page.reload();
-  await page.waitForTimeout(2200); // splash + entrada
+  await page.waitForTimeout(3000); // splash + entrada
   await page.screenshot({ path: join(out, `${nombre}.png`) });
 }
 // Registrar: el FAB abre el sheet

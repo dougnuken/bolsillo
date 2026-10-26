@@ -1,102 +1,28 @@
 /* ============================================================
-   olbo · Splash de bienvenida (cold start) — textura "Halo"
-   Overlay que dibuja la marca y se funde hacia la app. CSS-ONLY
+   olbo 2.0 · Splash de bienvenida (cold start)
+   Overlay perla que dibuja la marca y se funde hacia la app. CSS-ONLY
    (la CSP es style-src/script-src 'self' → sin inline ni JS).
-   Se muestra en cada carga completa (reabrir tras cerrar el proceso);
-   si la app queda en segundo plano y vuelve, no recarga → no aparece.
-   Respeta prefers-reduced-motion. Depende de tokens.css (cargar después).
+   Se muestra en cada carga completa; si la app queda en segundo plano y
+   vuelve, no recarga → no aparece. Depende de tokens.css (cargar después).
 
-   La atmósfera son seis losas anidadas que entran en cascada por la
-   diagonal, con relleno degradado y canto luminoso. Heredan el ángulo
-   del símbolo (−28°), así que la pantalla entera es la marca en
-   movimiento y no un patrón de fondo pegado detrás.
-
-   Todo el color vive en tokens.css. Aquí solo hay geometría y tiempo.
+   Secuencia en DOS TIEMPOS, ~900 ms:
+     1) el símbolo entra solo, grande y centrado (0–0,45 s);
+     2) se desliza a su sitio, el wordmark se revela a su derecha y entra el
+        lema (0,45–0,9 s). Luego el overlay se funde (0,2 s).
+   Solo transform / opacity / clip-path.
    ============================================================ */
 
 #splash {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  overflow: hidden; /* las losas desbordan a propósito; el recorte lo hace la pantalla */
+  overflow: hidden;
   background: var(--splash-bg);
   /* se funde solo hacia la app; forwards deja el estado final (invisible/no-click) */
-  animation: splashOut 0.6s var(--ease) 2.15s forwards;
+  animation: splashOut 0.22s var(--ease) 1s forwards;
 }
 @keyframes splashOut { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 
-/* ---- Losas: la cascada diagonal ----
-   Tamaño y posición en vmin para que la composición se conserve en
-   cualquier pantalla. Van de casi negra y grande (fuera) a lavanda y
-   pequeña (dentro); esa progresión es la que da la profundidad. */
-.splash__losas { position: absolute; inset: 0; }
-.splash__losas i {
-  position: absolute;
-  display: block;
-  border-radius: 17%;
-  border: 1.6px solid;
-  opacity: 0;
-  transform: rotate(var(--splash-angulo));
-  animation: losaIn 0.72s var(--ease) both;
-}
-.splash__losas i:nth-child(1) {
-  width: 260vmin; height: 260vmin; right: -140vmin; bottom: -130vmin;
-  background: var(--losa-1); border-color: var(--canto-1);
-  box-shadow: 0 0 44px var(--halo-1);
-  animation-delay: 0s;
-}
-.splash__losas i:nth-child(2) {
-  width: 218vmin; height: 218vmin; right: -119vmin; bottom: -107vmin;
-  background: var(--losa-2); border-color: var(--canto-2);
-  box-shadow: 0 0 40px var(--halo-2);
-  animation-delay: 0.07s;
-}
-.splash__losas i:nth-child(3) {
-  width: 176vmin; height: 176vmin; right: -98vmin; bottom: -85vmin;
-  background: var(--losa-3); border-color: var(--canto-3);
-  box-shadow: 0 0 36px var(--halo-3);
-  animation-delay: 0.14s;
-}
-.splash__losas i:nth-child(4) {
-  width: 134vmin; height: 134vmin; right: -78vmin; bottom: -62vmin;
-  background: var(--losa-4); border-color: var(--canto-4);
-  box-shadow: 0 0 32px var(--halo-4);
-  animation-delay: 0.21s;
-}
-.splash__losas i:nth-child(5) {
-  width: 96vmin; height: 96vmin; right: -58vmin; bottom: -40vmin;
-  background: var(--losa-5); border-color: var(--canto-5);
-  box-shadow: 0 0 28px var(--halo-5);
-  animation-delay: 0.28s;
-}
-.splash__losas i:nth-child(6) {
-  width: 56vmin; height: 56vmin; right: -40vmin; bottom: -18vmin;
-  background: var(--losa-6); border-color: var(--canto-6);
-  box-shadow: 0 0 26px var(--halo-6);
-  animation-delay: 0.35s;
-}
-@keyframes losaIn {
-  from { opacity: 0; transform: rotate(var(--splash-angulo)) translate3d(9%, 10%, 0); }
-  to   { opacity: 1; transform: rotate(var(--splash-angulo)) translate3d(0, 0, 0); }
-}
-
-/* ---- Dither ----
-   Un degradado oscuro en 8 bits salta de un valor al siguiente y el ojo
-   lee el escalón como una franja. Este ruido de ±1 nivel lo disuelve.
-   Es un asset, no un filtro en vivo: calcular turbulencia a pantalla
-   completa cuesta cientos de ms y un splash no tiene ese presupuesto. */
-.splash__grain {
-  position: absolute;
-  inset: 0;
-  background-image: url("../img/tex/dither.png");
-  background-repeat: repeat;
-  background-size: 64px 64px;
-  opacity: 0.085;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
-
-/* ---- Marca ---- */
 .splash__lock {
   position: absolute;
   inset: 0;
@@ -107,63 +33,44 @@
   gap: var(--sp-5);
 }
 
-/* ---- Lockup en dos tiempos ----
-   El símbolo entra grande y solo —es el protagonista del primer medio
-   segundo— y al revelarse "lbo" se encoge a talla de letra y cede el
-   centro. El desplazamiento de 311.9 es la distancia entre el centro
-   del lienzo y el sitio que la "o" ocupa dentro de la palabra.
-
-   Solo transform / opacity / clip-path: todo se resuelve en el
-   compositor y nada dispara layout.
-
-   overflow visible es obligatorio: el símbolo a escala 2.35 necesita
-   537 u de alto y el viewBox tiene 384, así que sin esto el SVG lo
-   recorta por arriba y por abajo. El recorte lo hace #splash. */
+/* El lockup oficial (símbolo + wordmark) en un solo viewBox. overflow visible:
+   el símbolo del primer tiempo crece por encima de su caja. */
 .splash__lockup {
-  width: 260px;
+  width: min(78vw, 300px);
   height: auto;
   overflow: visible;
   color: var(--splash-marca);
 }
-.lk-o,
-.lk-rest { transform-box: view-box; }
-.lk-o {
-  transform-origin: 105.1px -105px;
-  animation: lkO 1.25s var(--ease) 0.15s both;
-}
-.lk-rest {
-  transform-origin: 256px -105px;
-  animation: lkRest 0.55s var(--ease) 0.85s both;
-}
-@keyframes lkO {
-  0%   { opacity: 0; transform: translate(311.9px, 0) scale(2.35); }
-  12%  { opacity: 1; }
-  52%  { opacity: 1; transform: translate(311.9px, 0) scale(2.35); }
+.splash__lockup .lk-aro { fill: none; stroke: var(--splash-marca); }
+.splash__lockup .lk-centro { fill: var(--lila); }
+.splash__lockup .lk-word { fill: var(--splash-marca); }
+.lk-sim, .lk-word { transform-box: fill-box; }
+.lk-sim { transform-origin: 50% 50%; animation: lkSim 0.85s var(--ease) 0.04s both; }
+.lk-word { animation: lkWord 0.45s var(--ease) 0.42s both; }
+/* 2061.5 = distancia (en unidades del viewBox) del centro del símbolo al centro del lienzo */
+@keyframes lkSim {
+  0%   { opacity: 0; transform: translate(2061.5px, 0) scale(1.1); }
+  22%  { opacity: 1; transform: translate(2061.5px, 0) scale(1.5); }
+  50%  { opacity: 1; transform: translate(2061.5px, 0) scale(1.5); }
   100% { opacity: 1; transform: translate(0, 0) scale(1); }
 }
-@keyframes lkRest {
-  0%   { opacity: 0; clip-path: inset(-30% 100% -30% 0); transform: translate(-26px, 0); }
-  20%  { opacity: 1; }
-  100% { opacity: 1; clip-path: inset(-30% -4% -30% 0); transform: translate(0, 0); }
+@keyframes lkWord {
+  0%   { opacity: 0; clip-path: inset(-10% 100% -10% 0); transform: translate(-60px, 0); }
+  30%  { opacity: 1; }
+  100% { opacity: 1; clip-path: inset(-10% -2% -10% 0); transform: translate(0, 0); }
 }
 
 .splash__tag {
   font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
   opacity: 0;
-  animation: splashFade 0.6s var(--ease) 1.45s both;
+  animation: splashFade 0.3s var(--ease) 0.62s both;
 }
 @keyframes splashFade { to { opacity: 1; } }
 
+/* Menos movimiento: la marca aparece ya compuesta y el overlay solo se funde (200 ms). */
 @media (prefers-reduced-motion: reduce) {
-  .splash__losas i, .lk-o, .lk-rest, .splash__tag {
-    animation-duration: 0.01s;
-    animation-delay: 0s;
-  }
-  /* losas y lockup nacen ocultos y solo la animación los revela: sin
-     reponerlos aquí, quien pida menos movimiento ve la pantalla vacía */
-  .splash__losas i { opacity: 1; transform: rotate(var(--splash-angulo)); }
-  .lk-o   { opacity: 1; transform: none; }
-  .lk-rest { opacity: 1; transform: none; clip-path: none; }
-  .splash__tag { opacity: 1; }
+  #splash { animation-duration: 0.2s; animation-delay: 0.6s; }
+  .lk-sim, .lk-word, .splash__tag { animation: none; opacity: 1; transform: none; clip-path: none; }
 }

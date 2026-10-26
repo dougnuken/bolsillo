@@ -16,7 +16,7 @@ import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
 const CUENTAS_SUGERIDAS = ['Efectivo', 'Nequi', 'Bancolombia'];
-const INTRO_TOTAL = 4;      // 4 slides de venta (split: hero 3D a sangre + copy)
+const INTRO_TOTAL = 4;      // 4 láminas de venta (titular + losa de vidrio con aurora + CTA negro)
 const TOTAL_PASOS = 5;      // nombre → sueldo → cuentas → fijos → listo
 
 // Confeti del cierre (paso "listo"): 22 piezas cuya posición/color/tiempo viven
@@ -53,11 +53,6 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
     return;
   }
   if (!forzado && !debeMostrarse(config, ingresos)) return;
-
-  // Precarga la moneda de la pantalla final "¡Listo!": el onboarding tiene
-  // varios pasos antes, así que para cuando se llega ya está en caché y aparece
-  // sin esperar el fetch (era la imagen que cargaba lento en el primer arranque).
-  try { new Image().src = './img/empty-states/coin-check.png'; } catch { /* noop */ }
 
   // Estado local del flujo (se persiste paso a paso, no al final).
   const st = {
@@ -120,29 +115,85 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
      ("Empezar") continúa a la configuración real (pasoNombre).
      ============================================================ */
 
-  // Slides de venta: hero 3D a sangre completa + copy (título con <b> de énfasis).
-  // Cada imagen calza con su funcionalidad; el arco vende control en tiempo real y
-  // "que no se te escape ni un peso": cerdo (control) → captura → claridad → semáforo.
-  // Renders v3 (set oscuro, alto contraste, barridos de luz) en img/brand-3d/.
+  // Láminas de venta: titular fino + una losa de vidrio con aurora que MUESTRA
+  // el producto (gauge, captura, categorías, semáforo). Todo es marcado + CSS
+  // externo: cero imágenes y cero estilo inline (CSP).
   const SLIDES = [
-    { img: '10-piggy', title: 'Que no se te <b>escape</b> ni un peso.',
-      text: 'olbo te da el control de tu plata en tiempo real. Cada gasto queda registrado antes de que se te olvide.' },
-    { img: '15-coins', title: '<b>Captura</b> el gasto en 3 segundos.',
+    { art: 'gauge', title: 'Que no se te <b>escape</b> ni un peso.',
+      text: 'olbo te muestra tu plata en tiempo real. Cada gasto queda anotado antes de que se te olvide.' },
+    { art: 'captura', title: '<b>Captura</b> el gasto en 3 segundos.',
       text: 'Háblale o tómale una foto al recibo y olbo lo anota por ti. Ni una compra se te vuelve a escapar.' },
-    { img: '16-coin-spiral', title: 'Mira <b>en qué se va</b> tu mes.',
+    { art: 'categorias', title: 'Mira <b>en qué se va</b> tu mes.',
       text: 'Cada gasto ordenado por categoría y cuenta. En segundos ves a dónde se va tu plata de verdad.' },
-    { img: '13-gauge', title: 'Tu ritmo del mes, <b>en vivo.</b>',
-      text: 'Un semáforo en tiempo real —verde, ámbar o rojo— te dice al instante cuánto puedes gastar sin tocar lo que viene.' },
+    { art: 'semaforo', title: 'Tu ritmo del mes, <b>en vivo.</b>',
+      text: 'Un semáforo en tiempo real te dice al instante cuánto puedes gastar sin tocar lo que viene.' },
   ];
 
-  // Precarga los renders del hero: al deslizar no se ve el fondo un instante.
-  SLIDES.forEach((s) => { const im = new Image(); im.src = `./img/brand-3d/${s.img}.jpg`; });
+  const ART_ICONO = {
+    taza: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3v2M12 3v2"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>',
+    foto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3v11H4V8Z"/><circle cx="12" cy="13.5" r="3.2"/></svg>',
+    sms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10H9l-5 4V6Z"/></svg>',
+  };
 
-  // Arte 3D a sangre completa del hero (render con su propio fondo de estudio,
-  // object-fit: cover). Imagen decorativa → alt="" (el título + texto comunican el
-  // significado). draggable=false: el swipe no debe iniciar un arrastre nativo.
+  // Arte de cada lámina. El arco del gauge usa pathLength=100, así 62 = 62 %.
   function artHTML(slide) {
-    return `<img class="ob2__img" src="./img/brand-3d/${slide.img}.jpg" alt="" draggable="false" />`;
+    if (slide.art === 'gauge') {
+      return `
+        <div class="ob2a">
+          <div class="ob2g">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <g transform="rotate(-90 50 50)">
+                <circle class="ob2g__pista" cx="50" cy="50" r="46"/>
+                <circle class="ob2g__arco" cx="50" cy="50" r="40" pathLength="100" stroke-dasharray="62 100"/>
+              </g>
+              <circle class="ob2g__punta" cx="22.7" cy="79.2" r="3.2"/>
+            </svg>
+            <div class="ob2g__centro"><span class="ob2g__val num">62<small>%</small></span><span class="ob2a__cap">del sueldo</span></div>
+          </div>
+          <span class="ob2a__pill ob2a__pill--verde">Vas bien</span>
+        </div>
+        <div class="ob2a__fila" aria-hidden="true">
+          <span class="ob2a__fila-ic">${ART_ICONO.taza}</span>
+          <span class="ob2a__fila-tx">Café<span>Restaurantes · Débito</span></span>
+          <span class="ob2a__fila-mt">−$ 15.800</span>
+        </div>`;
+    }
+    if (slide.art === 'captura') {
+      return `
+        <div class="ob2a">
+          <span class="ob2a__cap">Nuevo gasto</span>
+          <div class="ob2a__monto num"><span class="cifra__cur">$</span>\u2009 15.800</div>
+          <span class="ob2a__pill ob2a__pill--verde">Restaurantes</span>
+          <div class="ob2a__vias" aria-hidden="true">
+            <span class="ob2a__via">${ART_ICONO.mic}Voz</span>
+            <span class="ob2a__via">${ART_ICONO.foto}Foto</span>
+            <span class="ob2a__via">${ART_ICONO.sms}SMS</span>
+          </div>
+        </div>`;
+    }
+    if (slide.art === 'categorias') {
+      const fila = (n, v, w) => `<div class="ob2a__cat"><span>${n}</span><span>${v}</span><div class="ob2a__riel"><i class="${w}"></i></div></div>`;
+      return `
+        <div class="ob2a">
+          <span class="ob2a__cap">Este mes se fue en…</span>
+          <div class="ob2a__cats" aria-hidden="true">
+            ${fila('Mercado', '$ 1.240.000', 'w1')}
+            ${fila('Restaurantes', '$ 830.000', 'w2')}
+            ${fila('Transporte', '$ 540.000', 'w3')}
+            ${fila('Ocio', '$ 290.000', 'w4')}
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="ob2a">
+        <span class="ob2a__cap">Así te avisa</span>
+        <div class="ob2a__estados" aria-hidden="true">
+          <div class="ob2a__estado"><span class="ob2a__pill ob2a__pill--verde">Vas bien</span><span>vas a tu ritmo</span></div>
+          <div class="ob2a__estado"><span class="ob2a__pill ob2a__pill--ambar">Ojo</span><span>vas un poco rápido</span></div>
+          <div class="ob2a__estado"><span class="ob2a__pill ob2a__pill--rojo">Frena</span><span>te estás pasando</span></div>
+        </div>
+      </div>`;
   }
 
   // Cambia de slide dentro de [0, INTRO_TOTAL-1]; re-pinta (con anim de entrada).
@@ -184,19 +235,23 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
 
     raiz.innerHTML = `
       <div class="ob2">
-        <div class="ob2__hero">
-          <button type="button" class="ob2__skip" data-act="saltar">Saltar</button>
-          <div class="ob2__art">${artHTML(slide)}</div>
-        </div>
-        <div class="ob2__sheet">
+        <div class="ob2__top">
           <div class="ob2__dots" role="progressbar" aria-valuenow="${idx + 1}" aria-valuemin="1"
             aria-valuemax="${INTRO_TOTAL}" aria-label="Paso ${idx + 1} de ${INTRO_TOTAL}">${dots}</div>
+          <button type="button" class="ob2__skip" data-act="saltar">Saltar</button>
+        </div>
+        <div class="ob2__copy">
           <h2 class="ob2__title">${slide.title}</h2>
           <p class="ob2__text">${slide.text}</p>
-          <button type="button" class="ob2__cta" data-act="${esUltima ? 'intro-empezar' : 'intro-next'}">
-            <span>${esUltima ? 'Empezar' : 'Continuar'}</span>${IC.flecha}
-          </button>
         </div>
+        <div class="ob2__slab${slide.art === 'gauge' ? '' : ' ob2__slab--centro'}">${artHTML(slide)}</div>
+        <button type="button" class="ob2__cta" data-act="${esUltima ? 'intro-empezar' : 'intro-next'}">
+          <span class="ob2__cta-tx">
+            <span class="ob2__cta-tit">${esUltima ? 'Empezar' : 'Continuar'}</span>
+            <span class="ob2__cta-sub">${esUltima ? 'Listo · configúralo en 2 minutos' : `Paso ${idx + 1} de ${INTRO_TOTAL} · toma 2 minutos`}</span>
+          </span>
+          <span class="ob2__cta-go">${IC.flecha}</span>
+        </button>
       </div>`;
 
     raiz.querySelectorAll('[data-act="saltar"]').forEach((b) => b.addEventListener('click', terminar));
@@ -444,8 +499,7 @@ export async function abrirOnboarding({ onDone, forzado = false } = {}) {
           <div class="ob__celebra">
             <span class="ob__confeti" aria-hidden="true">${CONFETI}</span>
             <span class="ob__celebra-ring" aria-hidden="true"></span>
-            <img class="ob__celebra-coin" src="./img/empty-states/coin-check.png" alt="" aria-hidden="true"
-              width="152" height="152" decoding="async" />
+            <svg class="ob__celebra-coin" viewBox="212 212 600 600" aria-hidden="true"><g transform="rotate(-28 512 512)" fill="none" stroke-width="96" stroke-linecap="round" class="orbe__aro"><path d="M295.9 417.3A230 230 0 0 1 728.1 417.3"/><path d="M728.1 606.7A230 230 0 0 1 295.9 606.7"/></g><circle class="orbe__centro" cx="512" cy="512" r="62"/></svg>
           </div>
           <h1 class="ob__title">¡Listo${st.nombre ? ', ' + esc(st.nombre) : ''}! Ya puedes empezar</h1>
           <p class="ob__text">Con esto el semáforo ya sabe calcular tu ritmo del mes.</p>

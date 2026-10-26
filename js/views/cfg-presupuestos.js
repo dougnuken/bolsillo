@@ -42,7 +42,7 @@ export async function abrirPresupuestos({ onSaved } = {}) {
 
     const html = `
       ${cabecera('Presupuestos por categoría')}
-      ${notaCfg('Opcional. Si le pones tope a una categoría, Bolsillo te avisa cuando te acercas. Déjalo vacío para no ponerle límite.')}
+      ${notaCfg('Opcional. Si le pones tope a una categoría, olbo te avisa cuando te acercas. Déjalo vacío para no ponerle límite.')}
       <div class="cfg-presu-list">${filas}</div>
       <button type="button" class="btn btn--primary btn--block btn--save" data-act="guardar">Guardar presupuestos</button>`;
 

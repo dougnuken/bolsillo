@@ -32,7 +32,7 @@ export async function abrirUmbrales({ onSaved } = {}) {
 
   return hojaNav((api) => {
     const html = `
-      ${cabecera('Umbrales', { sub: 'Los dos números que definen cómo te avisa Bolsillo.' })}
+      ${cabecera('Umbrales', { sub: 'Los dos números que definen cómo te avisa olbo.' })}
 
       <label class="field">
         <span class="field__label">Gasto hormiga</span>

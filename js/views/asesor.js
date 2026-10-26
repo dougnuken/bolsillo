@@ -30,19 +30,19 @@ import { confirmar } from '../overlay.js';
 import { toast } from '../toast.js';
 import { esc } from '../html.js';
 
-/* Spark de IA (dos destellos: uno grande, uno chico). */
-const SPARK =
-  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2.5l1.7 4.6a4 4 0 0 0 2.4 2.4l4.6 1.7-4.6 1.7a4 4 0 0 0-2.4 2.4L13 20.5l-1.7-4.6a4 4 0 0 0-2.4-2.4L4.3 11.8l4.6-1.7a4 4 0 0 0 2.4-2.4L13 2.5Z"/><path d="M5.5 3.2l.6 1.6a2 2 0 0 0 1.1 1.1l1.6.6-1.6.6a2 2 0 0 0-1.1 1.1l-.6 1.6-.6-1.6A2 2 0 0 0 3.8 8.1l-1.6-.6 1.6-.6a2 2 0 0 0 1.1-1.1l.6-1.6Z"/></svg>';
 const ICON_BACK =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>';
 const SEND =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5L4 12Z"/></svg>';
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+/* El orbe de la conciencia ES el símbolo de la marca (anillo partido + punto lila). */
+const ORBE =
+  '<svg class="orbe" viewBox="212 212 600 600" aria-hidden="true"><g transform="rotate(-28 512 512)" fill="none" stroke-width="96" stroke-linecap="round" class="orbe__aro"><path d="M295.9 417.3A230 230 0 0 1 728.1 417.3"/><path d="M728.1 606.7A230 230 0 0 1 295.9 606.7"/></g><circle class="orbe__centro" cx="512" cy="512" r="62"/></svg>';
 const CLIP =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L10 16.9a1.6 1.6 0 0 1-2.3-2.3l7.8-7.8"/></svg>';
 
 const SUGERENCIAS = [
-  '¿Cuánto puedo gastar hoy sin cagarla?',
-  '¿Me alcanza para pagar los créditos este mes?',
+  '¿Cuánto puedo gastar hoy sin pasarme?',
+  '¿Me alcanza para los créditos?',
   'Dime la verdad de mi mes',
 ];
 
@@ -74,13 +74,13 @@ export default {
       <section class="asesor-room">
         <header class="asesor-top">
           <button type="button" class="btn btn--ghost btn--head btn--back" id="asesor-back" aria-label="Volver a Hoy">${ICON_BACK}</button>
-          <span class="asesor-top__title"><span class="asesor-top__spark">${SPARK}</span>Tu conciencia</span>
+          <span class="asesor-top__title">Tu conciencia</span>
           <span class="btn btn--ghost btn--head btn--back asesor-top__pad" aria-hidden="true">${ICON_BACK}</span>
         </header>
         <div class="chat-scroll" id="chat-scroll">
           <div class="asesor-hello">
-            <div class="asesor-orb-big">${SPARK}</div>
-            <p class="asesor-intro">Sin filtro. Te digo la verdad cruda de tus números — para que reacciones, no para que te sientas bien.</p>
+            <div class="asesor-orb-big">${ORBE}</div>
+            <p class="asesor-intro">Sin filtro. Te digo la verdad de tus números para que reacciones.</p>
           </div>
           <div class="chat-suggest" id="chat-suggest">${chips}</div>
         </div>

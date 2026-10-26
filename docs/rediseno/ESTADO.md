@@ -16,8 +16,8 @@
 | F2 | Shell (dock, FAB, sheets, botones) | S1 · Sonnet + QA Sonnet | ✅ | `2497f37` — dock grafito (activo pill papel, `role=tab`+`aria-selected`), FAB esfera a la derecha, burbujas papel, sheet flotante r38, botones/seg/switch/toast. QA sin bloqueantes |
 | F3 | Hoy | S2 · Sonnet + QA Sonnet | ✅ | aurora en «Tu dinero», regla del mes, losas lila/negra, orbe-símbolo, Resumen/Análisis, saludo sin emoji. SW v155 |
 | F4 | Registrar + keypad | S2 · Sonnet + QA Sonnet | ✅ | monto Urbanist 300 + caret + meta fecha·cuenta, keypad hundido (pointerdown), pills de categoría (lila), Guardar sticky |
-| F5 | Movimientos, Personas, Perfil/cfg | ídem | — | |
-| F6 | Asesor, onboarding, splash | ídem | — | |
+| F5 | Movimientos, Personas, Perfil/cfg | S3 · Sonnet + QA Sonnet | ✅ | losa de mes con trazos por día, una losa por día, íconos monocromos, Perfil/cfg en losas (cfg dentro de sheet = hundido), susurro/vínculo en grafito, `--text-3` fuera de todo texto. SW v157 |
+| F6 | Asesor, onboarding, splash | S3 · Sonnet + QA Sonnet | ✅ | orbe = símbolo, burbujas tinta/vidrio, onboarding con gauge/captura/categorías/semáforo en losa aurora tenue + CTA negro (sin brand-3d), splash perla en dos tiempos ~900 ms |
 | F7 | Íconos, manifest, limpieza | ídem | — | |
 | QA | Verificación final (tests, CSP, AA, 390 px, capturas antes/después) | Sonnet medio | — | |
 | M1 | Capturas 3x con `tools/capturas.mjs --scale 3` + SHOTLIST | Sonnet medio, skill `portfolio-mockups` | — | |
@@ -53,3 +53,11 @@
 - Minibarras de Gastado = gasto variable de los últimos 10 días (vacías si no hay). Anillo y «Flujo» (losa negra de Análisis) restilados.
 - QA: sin bloqueantes. Corregidos: «Te pasaste» (Disponible negativo sin rojo, no da AA sobre lila), solape del chip «hoy» (ini ≤6, fin ≥ dias−4), cifra tile con clamp, `$` lila a .8, velo del botón Guardar.
 - Pendiente menor: rodillo del saldo con rojo/verde-text sobre aurora (transitorio, 2,5:1); tokenizar rgba literales; `.susurro__spark` sigue con `--grad-cta` (S3).
+
+## Notas de S3 (F5+F6)
+
+- La «marca de agua olbo» de Perfil era el splash desvaneciéndose en las capturas (no existía como elemento); `tools/capturas.mjs` ahora espera 3 s.
+- Copy del asesor alineado al mockup («sin pasarme», «¿Me alcanza para los créditos?»); «Bolsillo» → «olbo» en textos visibles de cfg/Perfil.
+- `--grad-cta` ya solo vive en el FAB. Tokens del splash viejo (`--losa-1…6`, `--canto-1…6`, `--halo-1…6`) eliminados.
+- Pendiente menor (F7): reglas muertas en views.css (`.hormiga-dot`, `.asesor-top__spark`…), `img/tex/dither.png`, `img/brand-3d`, `img/empty-states`; tokenizar `rgba(255,255,255,.55/.16)` en `.ob2a__via`/`.ob2__cta`.
+- Movimientos: las barras usan raíz cuadrada del gasto diario (un arriendo no aplasta el resto).

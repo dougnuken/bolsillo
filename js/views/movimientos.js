@@ -126,7 +126,7 @@ function chipsFiltro(movs) {
     : '';
   const grupoCat = catsUsadas.map((id) => {
     const c = categoriaPorId(id);
-    return chip('categoria', id, `<span class="mfilter__dot ${c.cls}"></span>${esc(c.label)}`, '', filtros.categoria === id);
+    return chip('categoria', id, esc(c.label), '', filtros.categoria === id);
   }).join('');
   const grupoCuenta = cuentasUsadas.map((c) => chip('cuenta', c, esc(c), '', filtros.cuenta === c)).join('');
   const grupoFuente = fuentesUsadas.map((f) => chip('fuente', f, esc(FUENTE_LABEL[f] || f), '', filtros.fuente === f)).join('');
@@ -151,7 +151,7 @@ function filaMov(m) {
   const metas = detalle ? [esc(c.label), esc(m.cuenta)] : [esc(m.cuenta)];
   const badge = FUENTE_LABEL[m.fuente] && m.fuente !== 'manual'
     ? `<span class="src-badge">${esc(FUENTE_LABEL[m.fuente])}</span>` : '';
-  const hormiga = m.esHormiga ? '<span class="hormiga-dot" title="Gasto hormiga"></span>' : '';
+  const hormiga = m.esHormiga ? '<span class="tag-hormiga">hormiga</span>' : '';
   // Ingreso: +$ verde. Gasto y pago: −$ (salen de la cuenta).
   const esIn = m.tipo === 'ingreso';
   return `
@@ -168,6 +168,32 @@ function filaMov(m) {
     </div>`;
 }
 
+/* Losa de mes: nombre, total con $ atenuado y un trazo por día (altura = gasto
+   del día). Las alturas se escriben por CSSOM en decorarBarras() (CSP). */
+function mesHTML(ym, total, porDia) {
+  const [a, m] = ym.split('-').map(Number);
+  const dias = new Date(a, m, 0).getDate();
+  let max = 0;
+  for (let d = 1; d <= dias; d++) max = Math.max(max, porDia[`${ym}-${String(d).padStart(2, '0')}`] || 0);
+  let trazos = '';
+  for (let d = 1; d <= dias; d++) {
+    const v = porDia[`${ym}-${String(d).padStart(2, '0')}`] || 0;
+    trazos += `<i class="mov-bar${v === max && max > 0 ? ' mov-bar--max' : ''}${v ? '' : ' mov-bar--vacio'}" data-v="${max ? Math.sqrt(v / max).toFixed(3) : 0}"></i>`;
+  }
+  const chip = max > 0 ? `<span class="chip-valor mov-month__chip">${esc(formatCOP(max))}</span>` : '';
+  const nombre = MESES[m - 1] ? MESES[m - 1][0].toUpperCase() + MESES[m - 1].slice(1) : ym;
+  const montoTxt = formatCOP(total).replace(/^\$\s?/, '');
+  return `
+    <div class="mov-month" data-ym="${esc(ym)}">
+      <div class="mov-month__top">
+        <span class="mov-month__label">${esc(nombre)} <span class="mov-month__anio">${a}</span></span>
+      </div>
+      <div class="mov-month__total cifra num"><span class="cifra__cur">$</span>\u2009${esc(montoTxt)}</div>
+      ${chip}
+      <div class="mov-bars" aria-hidden="true">${trazos}</div>
+    </div>`;
+}
+
 function listaHTML(movs) {
   const grupos = new Map();
   for (const m of movs) {
@@ -175,24 +201,25 @@ function listaHTML(movs) {
     if (!grupos.has(dia)) grupos.set(dia, []);
     grupos.get(dia).push(m);
   }
-  // Total de GASTOS por mes (para el encabezado). Los ingresos no restan.
+  // Total de GASTOS por mes y gasto por día (para las barras de la losa de mes).
+  // Los ingresos no restan.
   const totalMes = {};
+  const porDia = {};
   for (const m of movs) {
+    if (m.tipo === 'ingreso') continue;
     const ym = (m.fecha || '').slice(0, 7);
-    totalMes[ym] = (totalMes[ym] || 0) + (m.tipo === 'ingreso' ? 0 : m.monto);
+    totalMes[ym] = (totalMes[ym] || 0) + m.monto;
+    const d = (m.fecha || '').slice(0, 10);
+    porDia[d] = (porDia[d] || 0) + m.monto;
   }
   let out = '';
   let mesActual = null;
   for (const [dia, items] of grupos) {
     const ym = dia.slice(0, 7);
-    // Encabezado de mes al cambiar de mes: separa julio de agosto sin filtrar.
+    // Losa de mes al cambiar de mes: total en cifra fina + un trazo por día.
     if (ym !== mesActual) {
       mesActual = ym;
-      out += `
-        <div class="mov-month">
-          <span class="mov-month__label">${esc(etiquetaMes(ym))}</span>
-          <span class="mov-month__total num">${formatCOP(totalMes[ym] || 0)}</span>
-        </div>`;
+      out += mesHTML(ym, totalMes[ym] || 0, porDia);
     }
     const total = items.reduce((s, x) => s + (x.tipo === 'ingreso' ? 0 : x.monto), 0);
     out += `
@@ -213,7 +240,6 @@ export default {
   render() {
     return `
       <header class="view-greet">
-        <p class="view-greet__eyebrow">Historial</p>
         <h1 class="view-greet__title">Movimientos</h1>
       </header>
       <div class="mov-search" hidden>
@@ -301,7 +327,24 @@ export default {
       pintar(cfgActual);
     });
 
+    /* Alturas e índices de cascada de los trazos del mes (CSSOM, no style=""). */
+    function decorarBarras() {
+      cont.querySelectorAll('.mov-bars').forEach((bars) => {
+        bars.querySelectorAll('.mov-bar').forEach((b, i) => {
+          b.style.setProperty('--i', String(i));
+          b.style.setProperty('--h', `${Math.max(3, Math.round(Number(b.dataset.v || 0) * 40))}px`);
+        });
+        const mx = bars.querySelector('.mov-bar--max');
+        const chip = bars.parentElement.querySelector('.mov-month__chip');
+        if (mx && chip) {
+          const idx = [...bars.children].indexOf(mx);
+          chip.style.setProperty('--x', String(idx / Math.max(1, bars.children.length - 1)));
+        }
+      });
+    }
+
     function wire(cfg) {
+      decorarBarras();
       cont.querySelectorAll('.mfilter').forEach((b) => {
         b.addEventListener('click', () => {
           const { dim, val } = b.dataset;

@@ -18,7 +18,7 @@ export default {
       <div class="empty">
         <div class="empty__art">${ART}</div>
         <h2 class="empty__title">Sin créditos registrados</h2>
-        <p class="empty__text">Agrega tus créditos, tarjetas o cuotas y Bolsillo te avisará antes de cada fecha de pago.</p>
+        <p class="empty__text">Agrega tus créditos, tarjetas o cuotas y olbo te avisará antes de cada fecha de pago.</p>
         <button class="btn btn--primary" id="cred-add" type="button">
           ${ICON_PLUS}
           Agregar crédito

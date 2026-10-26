@@ -577,7 +577,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   gap: var(--sp-2);
   justify-content: center;
   font-size: var(--fs-xs);
-  color: var(--text-3);
+  color: var(--text-2);
 }
 
 /* ============================================================
@@ -647,7 +647,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   font-weight: var(--fw-bold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-3);
+  color: var(--text-2);
   background: var(--glass-2);
   border: 1px solid var(--line-2);
   border-radius: var(--r-full);
@@ -1173,9 +1173,11 @@ body.has-toast .fab {
   display: flex; align-items: center; gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-2) var(--sp-3) var(--sp-3);
   border-radius: var(--r-lg);
-  /* más translúcido: el ambiente cálido se cuela por detrás (más glass) */
-  background: rgba(19, 19, 22, 0.5);
-  border: 1px solid var(--glass-nav-line);
+  /* vidrio grafito (como el dock): texto papel encima */
+  background: var(--grano) 0 0 / 160px, var(--glass-tinta);
+  background-blend-mode: soft-light, normal;
+  box-shadow: inset 0 0 0 1px var(--canto-oscuro);
+  border: 0;
   box-shadow: var(--sh-md);
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
@@ -1190,19 +1192,19 @@ body.has-toast .fab {
 .susurro__spark {
   flex: none; width: 32px; height: 32px;
   display: grid; place-items: center;
-  border-radius: var(--r-md);
-  background: var(--grad-cta); color: var(--tinta);
+  border-radius: var(--r-full);
+  background: var(--sobre-negro-3); color: var(--text-inverse);
   box-shadow: none;
 }
 .susurro__spark svg { width: 18px; height: 18px; }
-.susurro__txt { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); line-height: 1.4; color: var(--text-1); font-weight: var(--fw-medium); }
+.susurro__txt { flex: 1 1 auto; min-width: 0; font-size: var(--fs-sm); line-height: 1.4; color: var(--text-inverse); font-weight: var(--fw-medium); }
 .susurro__x {
   flex: none; width: 30px; height: 30px;
   display: grid; place-items: center;
   border-radius: var(--r-full);
-  color: var(--text-3); font-size: 22px; line-height: 1;
+  color: var(--sobre-negro-2); font-size: 22px; line-height: 1;
 }
-.susurro__x:active { color: var(--text-1); }
+.susurro__x:active { color: var(--text-inverse); }
 @media (prefers-reduced-motion: reduce) {
   .susurro, .susurro.is-leaving { animation-duration: 0.01ms; }
 }
@@ -1225,12 +1227,13 @@ body.has-toast .fab {
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
   border-radius: var(--r-lg);
-  background: rgba(19, 19, 22, 0.6);
-  border: 1px solid var(--line-2);
-  box-shadow: var(--sh-md);
+  background: var(--grano) 0 0 / 160px, var(--glass-tinta);
+  background-blend-mode: soft-light, normal;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--canto-oscuro), var(--sh-md);
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
-  color: var(--text-1);
+  color: var(--text-inverse);
   animation: vinculoIn 0.4s var(--ease) both;
   will-change: transform, opacity;
 }
@@ -1241,18 +1244,19 @@ body.has-toast .fab {
   flex: none; width: 30px; height: 30px;
   display: grid; place-items: center;
   border-radius: var(--r-full);
-  background: var(--accent-soft); color: var(--accent);
+  background: var(--sobre-negro-3); color: var(--text-inverse);
 }
 .vinculo-chip__ic svg { width: 18px; height: 18px; }
 .vinculo-chip__txt {
   flex: 1 1 auto; min-width: 0; margin: 0;
-  font-size: var(--fs-sm); line-height: 1.3; color: var(--text-2);
+  font-size: var(--fs-sm); line-height: 1.3; color: var(--sobre-negro-2);
 }
-.vinculo-chip__txt strong { color: var(--text-1); font-weight: var(--fw-semibold); }
+.vinculo-chip__txt strong { color: var(--text-inverse); font-weight: var(--fw-semibold); }
 .vinculo-chip__act {
-  flex: none; height: 34px; padding: 0 var(--sp-3);
-  border: 1px solid var(--fab-rim); border-radius: var(--r-md);
-  background: var(--fab-grad); color: var(--text-inverse);
+  position: relative;
+  flex: none; height: 36px; padding: 0 var(--sp-4);
+  border: 0; border-radius: var(--r-full);
+  background: var(--papel); color: var(--tinta);
   font-size: var(--fs-xs); font-weight: var(--fw-bold); cursor: pointer;
   transition: transform var(--dur-fast) var(--ease);
 }
@@ -1261,10 +1265,11 @@ body.has-toast .fab {
   flex: none; width: 28px; height: 28px;
   display: grid; place-items: center;
   border: none; background: transparent;
-  color: var(--text-3); font-size: 20px; line-height: 1; cursor: pointer;
+  color: var(--sobre-negro-2); font-size: 20px; line-height: 1; cursor: pointer;
   border-radius: var(--r-full);
 }
-.vinculo-chip__x:active { color: var(--text-1); }
+.vinculo-chip__act::after { content: ''; position: absolute; inset: -4px 0; }
+.vinculo-chip__x:active { color: var(--text-inverse); }
 @media (prefers-reduced-motion: reduce) {
   .vinculo-chip, .vinculo-chip.is-leaving { animation-duration: 0.01ms; }
 }
@@ -1301,7 +1306,7 @@ body.has-toast .fab {
 .ov-scrim.is-open .ov-panel { transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) { .ov-panel { transition: transform var(--dur-fast) linear; } }
 .ov-grip { width: 36px; height: 5px; border-radius: var(--r-full); background: var(--trazo); margin: var(--sp-1) auto var(--sp-4); }
-.ov-close { position: absolute; top: var(--sp-3); right: max(var(--sp-3), env(safe-area-inset-right)); color: var(--text-3); }
+.ov-close { position: absolute; top: var(--sp-3); right: max(var(--sp-3), env(safe-area-inset-right)); color: var(--text-2); }
 .ov-title { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: var(--fw-medium); color: var(--text-1); letter-spacing: -0.01em; }
 .ov-title--menu { margin-bottom: var(--sp-3); padding-right: var(--sp-8); }
 .ov-text { font-size: var(--fs-sm); color: var(--text-2); margin-top: var(--sp-2); line-height: 1.45; }
@@ -1325,7 +1330,7 @@ body.has-toast .fab {
 /* ---- Hoja de fecha (fecha-sheet) ---- */
 .date-opt { justify-content: flex-start; }
 .date-opt__title { flex: 0 0 auto; font-weight: var(--fw-semibold); }
-.date-opt__sub { margin-left: auto; color: var(--text-3); font-size: var(--fs-sm); }
+.date-opt__sub { margin-left: auto; color: var(--text-2); font-size: var(--fs-sm); }
 .date-opt__check {
   flex: 0 0 auto;
   width: 22px; height: 22px;
@@ -1346,7 +1351,7 @@ body.has-toast .fab {
    ENCIMA: tocar la fila abre la rueda nativa de iOS. */
 .date-otra { position: relative; }
 .date-otra .ov-item__label { flex: 1 1 auto; }
-.date-otra__val { color: var(--text-3); font-size: var(--fs-sm); }
+.date-otra__val { color: var(--text-2); font-size: var(--fs-sm); }
 .date-otra__input {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
@@ -1359,52 +1364,59 @@ body.has-toast .fab {
   margin-top: var(--sp-3);
   text-align: center;
   font-size: var(--fs-sm);
-  color: var(--text-3);
+  color: var(--text-2);
 }
 .date-actual::first-letter { text-transform: uppercase; }
 
 /* ============================================================
-   Movimientos — búsqueda + filtros + lista agrupada
+   Movimientos — búsqueda + filtros + lista agrupada (olbo 2.0 · F5)
+   Una losa de vidrio por mes (cifra fina + un trazo por día) y una losa por
+   día con filas de 66 px. Íconos monocromos: tinta sobre círculo papel.
    ============================================================ */
-/* Campo de búsqueda libre (concepto, monto, categoría, cuenta). */
 .mov-search {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  min-height: 46px;
+  min-height: 48px;
   padding: 0 var(--sp-2) 0 var(--sp-4);
-  margin-bottom: var(--sp-4);
-  border-radius: var(--r-md);
-  background: var(--glass-1);
-  border: 1px solid transparent;   /* el hairline lo pinta el borde vivo */
-  transition: border-color var(--dur-fast) var(--ease);
+  margin-bottom: var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-1);
+  box-shadow: inset 0 0 0 1px var(--canto);
+  border: 0;
 }
 .mov-search[hidden] { display: none; }
-/* sin realce de borde al enfocar (el auto-focus no debe "marcar" el campo) */
-.mov-search__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-3); }
-.mov-search__ic svg { width: 18px; height: 18px; }
+.mov-search:focus-within { outline: 2px solid var(--lila-tinta); outline-offset: 2px; }
+.mov-search__ic { flex: 0 0 auto; display: grid; place-items: center; color: var(--text-2); }
+.mov-search__ic svg { width: 20px; height: 20px; }
 .mov-search__input {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 44px;
   border: none;
   background: none;
   outline: none;
   color: var(--text-1);
   font-family: var(--font-ui);
   font-size: var(--fs-input); /* >=16px: evita zoom iOS */
+  font-weight: var(--fw-medium);
 }
-.mov-search__input::placeholder { color: var(--text-3); }
+.mov-search__input::placeholder { color: var(--text-2); font-weight: var(--fw-regular, 400); }
 .mov-search__clear {
+  position: relative;
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--r-full);
-  color: var(--text-3);
-  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  color: var(--text-2);
+  background: var(--glass-hundido);
+  transition: color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.mov-search__clear:hover { color: var(--text-1); background: var(--glass-2); }
+.mov-search__clear::after { content: ''; position: absolute; inset: -4px; border-radius: inherit; }
+.mov-search__clear:hover { color: var(--text-1); }
+.mov-search__clear:active { transform: scale(0.94); }
 .mov-search__clear[hidden] { display: none; }
 .mov-search__clear svg { width: 15px; height: 15px; }
 
@@ -1416,7 +1428,7 @@ body.has-toast .fab {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--sp-2);
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-2);
   /* edge-to-edge: rompe el padding lateral de .view para scrollear hasta el
      borde de la pantalla (los chips ya no se cortan antes). */
   margin-left: calc(-1 * max(var(--sp-5), env(safe-area-inset-left)));
@@ -1426,96 +1438,129 @@ body.has-toast .fab {
 }
 .mov-filters::-webkit-scrollbar { display: none; }
 .mfilter {
+  position: relative;
   flex: 0 0 auto;
   display: inline-flex; align-items: center; gap: var(--sp-2);
-  min-height: 36px;
-  padding: 0 var(--sp-3);
+  min-height: 40px;
+  padding: 0 var(--sp-4);
   border-radius: var(--r-full);
-  background: var(--glass-1);
-  border: 1px solid var(--line-2);
-  color: var(--text-2);
-  font-size: var(--fs-xs);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-1);
+  box-shadow: inset 0 0 0 1px var(--canto);
+  border: 0;
+  color: var(--text-1);
+  font-size: 14px;
   font-weight: var(--fw-semibold);
   white-space: nowrap;
-  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
+.mfilter::after { content: ''; position: absolute; inset: -2px 0; }   /* área táctil 44 */
 .mfilter:active { transform: scale(0.97); }
-.mfilter.is-sel { background: var(--text-1); border-color: transparent; color: var(--text-inverse); }
-.mfilter--hormiga.is-sel { background: var(--semaforo-ambar-bg); border-color: var(--semaforo-ambar-line); color: var(--semaforo-ambar); }
-.mfilter__dot { width: 8px; height: 8px; border-radius: var(--r-full); background: var(--tint); }
+/* el filtro activo es la aparición lila de la pantalla; tinta encima */
+.mfilter.is-sel, .mfilter--hormiga.is-sel { background: var(--lila); box-shadow: none; color: var(--tinta); }
 .mfilter-sep { flex: 0 0 auto; width: 1px; height: 20px; background: var(--line-2); margin: 0 2px; }
-.mfilter--mes { font-weight: var(--fw-bold); }
+.mfilter--mes { font-weight: var(--fw-semibold); }
 
-.mov-list { display: flex; flex-direction: column; gap: var(--sp-5); }
-/* Encabezado de mes: separa Julio de Agosto al scrollear el historial. */
+.mov-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+/* Losa de mes: cifra fina + un trazo por día (altura = gasto del día). */
 .mov-month {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: var(--sp-3);
-  margin: var(--sp-4) var(--sp-1) 0;
-  padding-bottom: var(--sp-2);
-  border-bottom: 1px solid var(--line-2);
+  position: relative;
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: 18px 20px 14px;
+  border-radius: var(--r-losa);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-2);
+  box-shadow: inset 0 0 0 1px var(--canto), inset 0 1px 0 var(--glass-gloss);
 }
 .mov-list > .mov-month:first-child { margin-top: 0; }
-.mov-month__label {
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  font-weight: var(--fw-bold);
-  letter-spacing: -0.015em;
-  color: var(--text-1);
+.mov-list > .mov-month ~ .mov-month { margin-top: var(--sp-6); }
+.mov-month__top { display: flex; align-items: center; justify-content: space-between; }
+.mov-month__label { font-size: 15px; font-weight: var(--fw-semibold); color: var(--text-1); letter-spacing: -0.01em; }
+.mov-month__anio { font-weight: var(--fw-regular, 400); color: var(--text-2); }
+.mov-month__total { font-size: 48px; margin: 10px 0 0 -2px; color: var(--text-1); }
+.mov-bars {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  height: 40px; margin-top: 30px;
+  background: linear-gradient(to top, transparent 5px, var(--line-1) 5px, var(--line-1) 6px, transparent 6px);
 }
-.mov-month__total { font-size: var(--fs-sm); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.mov-bar {
+  width: 1.5px; height: var(--h, 3px); border-radius: 1px;
+  background: var(--trazo);
+  transform-origin: 50% 100%;
+  animation: entra 900ms var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 16ms);
+}
+.mov-bar--vacio { height: 3px; }
+.mov-bar--max { width: 2px; background: var(--tinta); }
+.mov-month__chip {
+  position: absolute;
+  left: clamp(64px, calc(20px + (100% - 40px) * var(--x, 0)), calc(100% - 64px));
+  bottom: 54px;
+  transform: translateX(-50%);
+  height: 24px;
+}
+.mov-day { margin-top: var(--sp-2); }
 .mov-day__head {
   display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: var(--sp-2); padding: 0 var(--sp-1);
+  margin-bottom: var(--sp-2); padding: 0 var(--sp-2);
 }
-.mov-day__label { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--text-1); letter-spacing: -0.01em; }
-.mov-day__total { font-size: var(--fs-xs); color: var(--text-3); font-variant-numeric: tabular-nums; }
-.mov-day__list { display: flex; flex-direction: column; gap: 2px; }
-.mov-row { display: flex; align-items: stretch; gap: var(--sp-1); }
+.mov-day__label { font-size: 14px; font-weight: var(--fw-semibold); color: var(--text-1); }
+.mov-day__total { font-size: 14px; font-weight: var(--fw-medium); color: var(--text-2); font-variant-numeric: tabular-nums; }
+/* una losa por día; los divisores arrancan bajo el texto (64 px) */
+.mov-day__list {
+  display: flex; flex-direction: column;
+  border-radius: var(--r-losa);
+  background: var(--grano-fino) 0 0 / 160px, var(--glass-2);
+  box-shadow: inset 0 0 0 1px var(--canto);
+  padding: 2px 0;
+}
+.mov-row { display: flex; align-items: center; gap: 0; position: relative; padding: 0 4px 0 0; }
+.mov-row + .mov-row::before {
+  content: ''; position: absolute; top: 0; left: 64px; right: 12px; height: 1px; background: var(--line-2);
+}
 .mov-row__main {
   flex: 1 1 auto; min-width: 0;
   display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
+  min-height: 66px;
+  padding: 0 var(--sp-2) 0 var(--sp-3);
   text-align: left;
 }
 .mov-row__icon {
   width: 42px; height: 42px; flex: 0 0 auto;
   display: grid; place-items: center;
-  border-radius: var(--r-sm);
-  /* Tinte MUY sutil de la categoría (--tint lo aporta .cat--*): fondo al 12%
-     y glifo en un tono apagado. Un toque de color sin gritar. */
-  background: color-mix(in srgb, var(--tint, var(--text-3)) 18%, transparent);
-  color: color-mix(in srgb, var(--tint, var(--text-1)) 74%, var(--text-1));
+  border-radius: var(--r-full);
+  background: var(--papel);
+  color: var(--tinta);
 }
-.mov-row__icon svg { width: 21px; height: 21px; }
+.mov-row__icon svg { width: 20px; height: 20px; }
 .mov-row__body { flex: 1 1 auto; min-width: 0; }
 .mov-row__title {
   display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--text-1);
+  font-size: 16px; font-weight: var(--fw-semibold); color: var(--text-1);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.mov-row__meta { font-size: var(--fs-xs); color: var(--text-3); margin-top: 1px; display: flex; align-items: center; gap: var(--sp-2); }
+.mov-row__meta { font-size: 13px; font-weight: var(--fw-medium); color: var(--text-2); margin-top: 1px; display: flex; align-items: center; gap: var(--sp-2); }
 .mov-row__amount {
   flex: 0 0 auto;
   font-family: var(--font-num); font-variant-numeric: tabular-nums;
-  font-weight: var(--fw-semibold); font-size: var(--fs-body); color: var(--text-1);
+  font-weight: var(--fw-medium); font-size: 16px; color: var(--text-1);
 }
-.mov-row__amount.is-in { color: var(--semaforo-verde); }
-/* 3-dots sin contenedor: solo el ícono (visual más liviano) */
-.mov-row__more { width: 40px; flex: 0 0 auto; color: var(--text-3); align-self: center; background: none; }
-.mov-row__more:hover { background: none; color: var(--text-2); }
-.mov-row__more:active { background: none; }
-.src-badge {
-  font-size: 9.5px; font-weight: var(--fw-bold); letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--text-3); background: var(--glass-2); border: 1px solid var(--line-1);
-  border-radius: var(--r-full); padding: 1px 6px;
+.mov-row__amount.is-in { color: var(--text-1); }
+/* tres puntos: círculo táctil de 44, solo el ícono a la vista */
+.mov-row__more { width: 44px; height: 44px; flex: 0 0 auto; color: var(--text-2); align-self: center; background: none; border: 0; }
+.mov-row__more:hover { background: none; color: var(--text-1); }
+.mov-row__more:active { background: var(--glass-hundido); }
+.src-badge, .tag-hormiga {
+  flex: 0 0 auto;
+  font-size: 12px; font-weight: var(--fw-semibold); letter-spacing: 0; text-transform: none;
+  color: var(--text-2); background: var(--glass-hundido);
+  border-radius: var(--r-full); padding: 2px 9px;
 }
-.hormiga-dot { width: 7px; height: 7px; border-radius: var(--r-full); background: var(--semaforo-ambar); flex: 0 0 auto; }
+.hormiga-dot { width: 7px; height: 7px; border-radius: var(--r-full); background: var(--tinta); flex: 0 0 auto; }
 
-.mov-nores { text-align: center; padding: var(--sp-7) var(--sp-4); color: var(--text-3); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+.mov-nores { text-align: center; padding: var(--sp-7) var(--sp-4); color: var(--text-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
 .mov-nores p { font-size: var(--fs-sm); }
-.mov-error { padding: var(--sp-6); color: var(--semaforo-rojo); font-size: var(--fs-sm); text-align: center; }
+.mov-error { padding: var(--sp-6); color: var(--semaforo-rojo-text); font-size: var(--fs-sm); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .mov-bar { animation: none; } }
 
 /* ============================================================
    Registrar — segmented Gasto/Ingreso + modo Ingreso

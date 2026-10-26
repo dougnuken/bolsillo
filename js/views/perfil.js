@@ -296,7 +296,7 @@ export default {
         </section>
 
         <p class="app-foot">
-          Bolsillo · <span class="app-foot__ver num">v${APP_VERSION}</span><br />
+          olbo · <span class="app-foot__ver num">v${APP_VERSION}</span><br />
           Local-first · tus datos no salen de tu iPhone
         </p>`;
 
@@ -339,7 +339,7 @@ async function abrirPrivacidad() {
   const { hojaNav, cabecera, bindCabecera, notaCfg } = await import('./cfg-sheet.js');
   hojaNav((api) => {
     const html = `
-      ${cabecera('Privacidad', { sub: 'Cómo trata Bolsillo tu información.' })}
+      ${cabecera('Privacidad', { sub: 'Cómo trata olbo tu información.' })}
       ${notaCfg('Todo lo que registras se guarda en <strong>este dispositivo</strong> (IndexedDB del navegador). No hay servidor, no hay cuenta, no hay analítica.')}
       ${notaCfg('El respaldo lo generas tú, cuando tú quieras, y decides dónde queda.')}
       ${notaCfg('La clave de Anthropic se usa solo para hablar directo con la API cuando lees una foto o un PDF. Nunca sale en los respaldos.')}
