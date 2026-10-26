@@ -1,251 +1,250 @@
 /* ============================================================
-   Bolsillo · Design tokens
-   Dirección: DARK fintech premium, identidad morada "olbo".
-   Canvas casi negro, containers bento translúcidos (glassmorphism),
-   un acento MORADO (acciones/estado activo). El gradiente firma
-   multicolor (--grad-cta, naranja→blanco→azul-violeta) SE MANTIENE.
-   El color de semáforo SOLO significa estado financiero (verde=suma,
-   rojo=resta). Todo el color/espaciado/motion vive aquí. Cero hex
-   fuera de este archivo (los .svg de assets son la única excepción).
+   olbo 2.0 · Design tokens
+   Dirección: CLARO. Papel perla + tinta casi negra + UN acento lila.
+   Losas bento contiguas de vidrio claro; contraste por bloques (una
+   losa negra, como mucho una lila). La única pieza multicolor es la
+   esfera del FAB (--fab-esfera). Semáforo = solo estado financiero.
+   Todo el color/espaciado/motion vive aquí. Cero hex fuera de este
+   archivo (los .svg de assets son la única excepción).
+   Referencia: docs/rediseno/SISTEMA-UI.md §2 y MARCA.md.
    ============================================================ */
 
 :root {
-  /* ---- Superficies (canvas casi negro; la luz la dan las tarjetas) ---- */
-  --bg-0: #0A0519;              /* canvas base (Ontop: casi-negro violeta) */
-  /* CLAVE iOS: el safe-area del home-indicator lo pinta el background-COLOR
-     sólido de <html> (la capa fija con gradiente NO llega ahí).
-     IGUAL a --bg-0, a propósito. De la v20 a la v25 este token fue #41241A: el
-     valor exacto de wash-bottom(0.22) compuesto sobre el canvas, para que la
-     banda "igualara" el ambiente. La costura sí cerraba, pero el color con que
-     cerraba era café claro sobre una app casi negra: se leía como una losa
-     marrón grande, que es peor que la costura que evitaba.
-     Ahora el borde inferior de la app se resuelve a casi-negro (ver
-     --wash-bottom) y la banda usa ese mismo casi-negro. Dos valores oscuros que
-     difieran un poco son indistinguibles —la discriminación de contraste se
-     desploma en sombra profunda—, así que el empalme no depende de acertarle al
-     píxel, y sobre todo NO hay marrón que mirar. */
-  --bg-root: #0A0519;
-  --bg-1: #0A0519;              /* fondo de página */
-  --bg-2: #17171A;             /* superficie / tarjetas (losa base, sin borde: se define por su fill) */
-  --bg-3: #23232A;             /* losa anidada (icono de fila, tecla, celda) */
-  --scrim: rgba(0, 0, 0, 0.62); /* overlay de sheets/modales (negro sobre negro pide más) */
+  /* ---- Primitivos de marca ---- */
+  --perla: #F0EFF2;
+  --papel: #FFFFFF;
+  --tinta: #1D1D1F;
+  --tinta-2: #64646C;
+  --tinta-3: #8E8E96;          /* solo ejes/divisores; nunca texto de lectura */
+  --trazo: #C9C9CF;
+  --lila: #B49CFF;             /* el acento: relleno, nunca texto sobre claro */
+  --lila-tinta: #5B3FE0;       /* el acento cuando es texto/trazo/foco sobre claro */
+  --sobre-negro-2: #B4B4BB;    /* texto secundario dentro de losa negra (≥4,5:1 en el grafito) */
+  --sobre-negro-3: rgba(255, 255, 255, 0.16);
+  --sobre-lila-1: rgba(29, 29, 31, 0.08);
+  --lila-leche: #F7F3FF;
+  --lila-lavanda: #D8CBFF;
+  --lila-hondo: #9677FF;
+  --grafito: #3A3A42;
 
-  /* ---- Washes de ambiente (Liquid Glass oscuro) ----
-     Tinte MUY sutil sobre el canvas para que el vidrio flotante
-     (barra + FAB) refracte algo. Aditivo: el fondo sigue casi negro. */
-  --wash-coral: rgba(124, 92, 252, 0.10);    /* glow morado superior (bajo la isla dinámica) */
-  --wash-mint:  rgba(110, 123, 242, 0.07);   /* violeta: eco del gradiente firma */
-  --wash-top:   rgba(124, 92, 252, 0.06);    /* tinte del borde superior (status/Dynamic Island) */
-  --wash-bottom: rgba(124, 92, 252, 0.14);   /* glow morado inferior: HALO detrás del dock, no lavado que sangra por el borde (ver --bg-app) */
+  /* ---- Superficies ----
+     CLAVE iOS: el safe-area inferior lo pinta el background-COLOR sólido de
+     <html> (--bg-root = último stop del fondo, sin costura). */
+  --bg-root: #E2E7EC;
+  --bg-0: var(--perla);
+  --bg-1: var(--perla);
+  --bg-2: var(--papel);
+  --bg-3: rgba(29, 29, 31, 0.05);
+  --scrim: rgba(29, 29, 31, 0.26);
   --bg-app:
-    /* Fondo base estilo Ontop: radial índigo/morado desde ARRIBA-CENTRO (pico
-       #2B2169) que se funde a casi-negro violeta #0A0519. Colores muestreados
-       exactos de la referencia; body::before lo pinta fijo cubriendo safe-areas. */
-    radial-gradient(135% 95% at 50% 6%,
-      #2B2169 0%, #23195D 10%, #1B1150 19%, #151043 28%,
-      #140A36 36%, #120C2B 45%, #0D0921 55%, #0A0519 70%),
-    var(--bg-0);
+    radial-gradient(110% 70% at 12% 0%, #FAF9FB 0%, rgba(250, 249, 251, 0) 62%),
+    radial-gradient(80% 60% at 100% 30%, #E7E3F3 0%, rgba(231, 227, 243, 0) 64%),
+    radial-gradient(90% 65% at 0% 100%, #DDEDE6 0%, rgba(221, 237, 230, 0) 60%),
+    linear-gradient(180deg, #F0EFF2 0%, #E9EBEF 55%, #E2E7EC 100%);
 
-  /* ---- Glass → rellenos translúcidos claros sobre oscuro (compat: mismos nombres) ----
-     glass-1 = superficie base de campos/tarjetas
-     glass-2 = hover sutil
-     glass-3 = pressed / pista más marcada */
-  --glass-1: rgba(255, 255, 255, 0.05);
-  --glass-2: rgba(255, 255, 255, 0.08);
-  --glass-3: rgba(255, 255, 255, 0.12);
-  --glass-tag: rgba(255, 255, 255, 0.06);    /* superficie translúcida de tags/chips (estado NO seleccionado) */
-  --glass-nav: rgba(19, 19, 22, 0.72);       /* barra inferior: vidrio flotante oscuro */
-  /* Velo que HUNDE en el canvas en vez de posarse encima: es --bg-0 con alpha
-     baja, así oscurece en el mismo tono violeta del fondo y no como una capa
-     negra ajena. Para controles que deben leerse dentro del lienzo (el
-     segmentado de la cartera), no flotando sobre él como el dock. */
-  --glass-hundido: rgba(10, 5, 25, 0.30);
-  /* Segmento OPACO, para cuando el control va sobre una superficie que YA es
-     translúcida (la barra de la cartera). Vidrio sobre vidrio deja leer el
-     contenido a través de las etiquetas —se vieron las tarjetas pasando por
-     debajo del control en dispositivo—, y un control tiene que ser una
-     superficie, no una ventana. Sin canal alfa a propósito: es el violeta del
-     lienzo en su zona alta, ya resuelto, para que no se lea como una caja
-     ajena posada encima. */
-  --seg-solido: #191033;
-  --glass-nav-line: rgba(255, 255, 255, 0.10); /* borde del vidrio flotante */
-  /* Velo del header. Estaba en .78 —tan opaco que tapaba el contenido y se leía
-     como una banda negra, no como vidrio—. A .38 el fondo se sigue viendo por
-     detrás y es el BLUR el que hace el esmerilado, que es de lo que va el
-     glassmorfismo: dejar ver, pero desenfocado. */
-  --glass-header: rgba(11, 11, 13, 0.38);
-  --glass-header-medio: rgba(11, 11, 13, 0.26);   /* mitad de la caída */
-  --glass-gloss: rgba(255, 255, 255, 0.08);  /* brillo especular sutil (sustituye los inset blancos .55/.7 del light) */
-  --switch-knob: #EDEDF0;       /* perilla del toggle: near-white opaca (visible sobre track oscuro) */
-  --blur: 16px;                 /* backdrop-filter discreto */
-  --blur-strong: 22px;
-  --blur-nav: 28px;             /* esmerilado de la barra flotante */
+  /* ---- Vidrio ---- */
+  --glass-hundido: rgba(29, 29, 31, 0.05);   /* N0: teclas, inputs, ícono de acción dentro de vidrio */
+  --glass-1: rgba(255, 255, 255, 0.46);      /* chips/botones sobre el fondo */
+  --glass-2: rgba(255, 255, 255, 0.62);      /* N1: losas */
+  --glass-3: rgba(255, 255, 255, 0.82);      /* N2: vidrio fuerte */
+  --glass-tag: var(--glass-1);
+  --glass-nav: rgba(255, 255, 255, 0.82);
+  --glass-solido: #F5F4F9;                   /* prefers-reduced-transparency */
+  --glass-tinta: rgba(29, 29, 31, 0.8);      /* dock grafito */
+  --glass-header: rgba(240, 239, 242, 0.78);
+  --glass-header-medio: rgba(240, 239, 242, 0.4);
+  --glass-gloss: rgba(255, 255, 255, 0.95);
+  --glass-nav-line: rgba(255, 255, 255, 0.75);
+  --canto: rgba(255, 255, 255, 0.75);
+  --canto-oscuro: rgba(255, 255, 255, 0.12);
+  --canto-color: rgba(255, 255, 255, 0.55);
+  --sobre-tinta-icono: rgba(255, 255, 255, 0.86);
+  --seg-solido: var(--tinta);                /* pastilla del segmentado */
+  --switch-knob: var(--papel);
+  --blur: 24px;
+  --blur-strong: 32px;
+  --blur-nav: 32px;
 
-  /* ---- Bordes hairline (blanco-alpha: definen la forma en dark) ---- */
-  --line-1: rgba(255, 255, 255, 0.06);       /* soft line */
-  --line-2: rgba(255, 255, 255, 0.09);       /* hairline */
-  --line-3: rgba(255, 255, 255, 0.14);       /* borde fuerte / grip */
-  --line-accent: rgba(139, 108, 255, 0.55);   /* foco/seleccionado = morado */
+  /* ---- Materiales: grano y brillo ---- */
+  --grano: url('../img/grano.svg');
+  --grano-fino: url('../img/grano-fino.svg');
+  --brillo-vidrio: linear-gradient(180deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0) 42%);
+
+  /* ---- Losas de contraste ---- */
+  --losa-lila:
+    radial-gradient(130% 110% at 100% 100%, var(--lila-hondo) 0%, rgba(150, 119, 255, 0) 58%),
+    radial-gradient(120% 100% at 0% 0%, var(--lila-leche) 0%, rgba(247, 243, 255, 0) 55%),
+    linear-gradient(150deg, var(--lila-lavanda) 0%, var(--lila) 60%);
+  --losa-negra:
+    radial-gradient(90% 80% at 100% 100%, rgba(180, 156, 255, 0.34) 0%, rgba(180, 156, 255, 0) 60%),
+    radial-gradient(80% 70% at 0% 0%, var(--grafito) 0%, rgba(58, 58, 66, 0) 62%),
+    radial-gradient(60% 50% at 30% 110%, rgba(140, 170, 255, 0.14) 0%, rgba(140, 170, 255, 0) 70%),
+    linear-gradient(160deg, #26262B 0%, #1D1D1F 55%, #141416 100%);
+
+  /* ---- Aurora de la losa héroe ---- */
+  --aurora-lila: #B49CFF;
+  --aurora-lavanda: #D8CBFF;
+  --aurora-menta: #B5E3CD;
+  --aurora-frio: #B8C8DA;
+  --aurora-tinta-2: #3E3E45;   /* texto secundario sobre aurora (4,62:1 en el pico) */
+  --aurora:
+    radial-gradient(36% 46% at 88% 12%, var(--aurora-lila) 0%, rgba(180, 156, 255, 0) 72%),
+    radial-gradient(46% 44% at 50% 30%, var(--aurora-lavanda) 0%, rgba(216, 203, 255, 0) 74%),
+    radial-gradient(58% 64% at 6% 96%, var(--aurora-menta) 0%, rgba(181, 227, 205, 0) 76%),
+    radial-gradient(40% 46% at 36% 74%, rgba(181, 227, 205, 0.75) 0%, rgba(181, 227, 205, 0) 74%),
+    radial-gradient(50% 56% at 96% 92%, var(--aurora-frio) 0%, rgba(184, 200, 218, 0) 74%),
+    radial-gradient(34% 34% at 70% 62%, rgba(184, 200, 218, 0.8) 0%, rgba(184, 200, 218, 0) 72%);
+  --aurora-blur: 26px;
+  --aurora-velo: radial-gradient(70% 38% at 30% 54%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 78%);
+  --aurora-vidrio: linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 46%, rgba(255, 255, 255, 0.14) 100%);
+  --aurora-tenue: 0.62;
+
+  /* ---- Gradiente firma → SOLO base de la esfera FAB ----
+     (--grad-cta ya no se usa como relleno de CTAs ni del orbe). */
+  --grad-cta:
+    radial-gradient(120% 130% at 0% 55%, #FF7A38 0%, rgba(255, 122, 56, 0) 42%),
+    radial-gradient(90% 120% at 22% 115%, #C060D8 0%, rgba(192, 96, 216, 0) 46%),
+    radial-gradient(120% 130% at 100% 48%, #4F7BFF 0%, rgba(79, 123, 255, 0) 44%),
+    radial-gradient(85% 120% at 82% -12%, #8A7CF0 0%, rgba(138, 124, 240, 0) 50%),
+    linear-gradient(98deg, #FFCBA0 0%, #FCEFE4 36%, #ECF0FF 62%, #BFCEFF 100%);
+
+  /* ---- Esfera FAB (única pieza multicolor) ---- */
+  --fab-naranja: #FF7A38;
+  --fab-rojo: #FF5A4E;
+  --fab-morado: #C060D8;
+  --fab-azul: #4F7BFF;
+  --fab-violeta: #8A7CF0;
+  --fab-crema: #FFE3CC;
+  --fab-leche: #FDF8F4;
+  --fab-hielo: #DCE4FF;
+  --fab-esfera:
+    radial-gradient(60% 55% at 32% 26%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(70% 80% at 0% 70%, var(--fab-naranja) 0%, rgba(255, 122, 56, 0) 60%),
+    radial-gradient(60% 60% at 100% 62%, var(--fab-azul) 0%, rgba(79, 123, 255, 0) 64%),
+    radial-gradient(70% 60% at 50% 110%, var(--fab-violeta) 0%, rgba(138, 124, 240, 0) 70%),
+    linear-gradient(120deg, var(--fab-crema) 0%, var(--fab-leche) 45%, var(--fab-hielo) 100%);
+  --fab-blobs:
+    radial-gradient(38% 38% at 26% 72%, var(--fab-rojo) 0%, rgba(255, 90, 78, 0) 100%),
+    radial-gradient(34% 34% at 78% 30%, var(--fab-morado) 0%, rgba(192, 96, 216, 0) 100%),
+    radial-gradient(40% 40% at 74% 80%, var(--fab-azul) 0%, rgba(79, 123, 255, 0) 100%);
+  --sh-fab-color:
+    -10px 14px 26px -12px rgba(255, 122, 56, 0.7),
+    10px 16px 28px -12px rgba(79, 123, 255, 0.7),
+    0 4px 10px -4px rgba(29, 29, 31, 0.25);
+  --fab-rim: rgba(255, 255, 255, 0.8);
+  --fab-hi: rgba(255, 255, 255, 0.95);
+
+  /* ---- Líneas ---- */
+  --line-1: rgba(29, 29, 31, 0.06);
+  --line-2: rgba(29, 29, 31, 0.09);
+  --line-3: rgba(29, 29, 31, 0.16);
+  --line-accent: var(--lila-tinta);
 
   /* ---- Texto ---- */
-  --text-1: #F5F5F7;            /* ink principal */
-  --text-2: rgba(235, 235, 245, 0.64);       /* muted secundario (AA sobre canvas) */
-  --text-3: rgba(235, 235, 245, 0.44);       /* terciario / hints */
-  --text-inverse: #17140F;      /* AHORA OSCURO: va sobre gradiente firma, pills claras y thumbs de color */
+  --text-1: var(--tinta);
+  --text-2: var(--tinta-2);
+  --text-3: var(--tinta-3);
+  --text-inverse: var(--papel);   /* texto sobre negro (cambia de sentido en 2.0) */
 
-  /* ---- Acento de marca: MORADO (solo acciones / estado activo) ---- */
-  --accent: #8B6CFF;            /* lifted para AA sobre casi negro */
-  --accent-strong: #7C5CFC;
-  --accent-deep: #5B3FE0;       /* press */
-  --accent-light: #A98CFF;      /* brillo del FAB (highlight superior) */
-  --accent-soft: rgba(139, 108, 255, 0.14);
-  --accent-glow: rgba(124, 92, 252, 0.40);
+  /* ---- Acento ---- */
+  --accent: var(--lila);
+  --accent-deep: var(--lila-tinta);
 
-  /* ---- Gradiente firma IA: MESH orgánico naranja cálido → morado → azul ----
-     No es un linear plano: 4 blobs radiales apilados sobre un colchón cálido→claro→azul.
-     Extremos saturados (naranja cálido a la izq, azul frío a la der), con un toque
-     morado en la transición baja y un naranja claro. Se lee orgánico (no franja diagonal).
-     ESCASO por regla: solo CTA primario, FAB, CTA onboarding y orbe del asesor.
-     Texto encima = --text-inverse (oscuro). */
-  --grad-cta:
-    radial-gradient(120% 130% at 0% 55%, #FF7A38 0%, rgba(255, 122, 56, 0) 42%),    /* naranja fuerte · extremo cálido */
-    radial-gradient(90% 120% at 22% 115%, #C060D8 0%, rgba(192, 96, 216, 0) 46%),   /* toque morado · transición baja */
-    radial-gradient(120% 130% at 100% 48%, #4F7BFF 0%, rgba(79, 123, 255, 0) 44%),  /* azul fuerte · extremo frío */
-    radial-gradient(85% 120% at 82% -12%, #8A7CF0 0%, rgba(138, 124, 240, 0) 50%),  /* azul-violeta · brillo superior */
-    linear-gradient(98deg, #FFCBA0 0%, #FCEFE4 36%, #ECF0FF 62%, #BFCEFF 100%);      /* colchón cálido→claro→azul */
-  --grad-cta-border: linear-gradient(140deg, #FF9A6B, #6E7BF2); /* borde/glow de tarjeta destacada (asesor) */
-  --sh-ia: 0 12px 30px -10px rgba(110, 123, 242, 0.45), 0 8px 24px -12px rgba(255, 122, 82, 0.35);
+  /* ---- OBSOLETOS: neutros para no romper nada; se borran en F7 ---- */
+  --accent-strong: var(--lila-tinta);
+  --accent-light: var(--lila);
+  --accent-soft: var(--glass-hundido);
+  --accent-glow: transparent;
+  --accent-grad: var(--tinta);
+  --grad-cta-border: var(--tinta);
+  --grad-edge: linear-gradient(transparent, transparent);
+  --fab-grad: var(--tinta);
+  --fab-glow-calido: transparent;
+  --fab-glow-frio: transparent;
+  --hero-mesh: none;
+  --hoy-glow: none;
+  --wash-coral: transparent;
+  --wash-mint: transparent;
+  --wash-top: transparent;
+  --wash-bottom: transparent;
+  --verde-light: var(--papel);
+  --verde-deep: var(--papel);
+  --verde-grad: var(--papel);
+  --verde-rim: var(--line-2);
+  --verde-glow: transparent;
+  --rojo-light: var(--papel);
+  --rojo-deep: var(--papel);
+  --rojo-grad: var(--papel);
+  --rojo-rim: var(--line-2);
+  --rojo-glow: transparent;
+  --bar-coral: var(--trazo);
+  --bar-ink: var(--tinta);
+  --grad-gauge: var(--semaforo-verde);
+  --sh-ia: none;
+  --sh-chip-sel-verde: none;
 
-  /* ---- Borde vivo (hairline que nace en una esquina y se DESVANECE) ----
-     Foco radial anclado fuera de la esquina superior izquierda: ahí el hairline
-     entra encendido en morado, se degrada a un neutro y llega a alpha 0 — el
-     borde deja de existir, no se queda en un gris tenue. Por eso la línea no
-     cierra el contorno: el lado opuesto al foco simplemente no está.
-     El punto clave es el último stop en 0: con cualquier alpha residual el
-     stroke se lee completo alrededor de toda la caja.
-     Se pinta con un ::before enmascarado (ver el bloque "Borde vivo" al final
-     de views.css, que va ahí por orden de cascada). */
-  --grad-edge: radial-gradient(135% 115% at 4% -20%,
-      rgba(169, 140, 255, 0.55) 0%,
-      rgba(169, 140, 255, 0.20) 17%,
-      rgba(255, 255, 255, 0.085) 33%,
-      rgba(255, 255, 255, 0.025) 50%,
-      rgba(255, 255, 255, 0) 64%);
+  /* ---- Semáforo (claro): solo estado ---- */
+  --semaforo-verde: #25935A;
+  --semaforo-verde-text: #1B7442;
+  --semaforo-verde-bg: #D5F0DE;
+  --semaforo-verde-line: rgba(37, 147, 90, 0.35);
 
-  /* Hubo aquí una variante "cerrada" del borde vivo para controles pequeños.
-     Se retiró: el problema en los botones nunca fue el final del trazo, sino
-     que su borde izquierdo se alinea con el del control de abajo y los dos
-     juntos se leen como una línea vertical suelta. Los controles pequeños usan
-     hairline plano (--line-2) y el borde vivo se queda en cards y containers. */
+  --semaforo-ambar: #B87206;
+  --semaforo-ambar-text: #875806;
+  --semaforo-ambar-bg: #FBEBC4;
+  --semaforo-ambar-line: rgba(184, 114, 6, 0.35);
 
-  /* El orbe del asesor toma el gradiente firma (momento IA) */
-  --accent-grad: var(--grad-cta);
+  --semaforo-rojo: #D64545;
+  --semaforo-rojo-text: #B83232;
+  --semaforo-rojo-bg: #F9D9D6;
+  --semaforo-rojo-line: rgba(214, 69, 69, 0.35);
 
-  /* FAB / micro-controles seleccionados: vidrio morado glossy (chips, switch on,
-     seg thumb, avatar de perfil). Deriva del acento — no es el gradiente firma. */
-  --fab-grad: linear-gradient(150deg, var(--accent-light), var(--accent-deep));
-  /* Material glossy compartido FAB ↔ micro-controles (misma identidad) */
-  --fab-rim: rgba(165, 140, 255, 0.45);                /* borde morado que atrapa la luz */
-  --fab-hi: var(--glass-gloss);                        /* brillo especular superior (sutil en dark) */
+  --track: var(--trazo);
 
-  /* Verde glossy: MISMO material que el coral pero en verde (semántica SUMA)
-     — para el segment Ingreso (gradiente + rim + brillo, como Gasto). */
-  --verde-light: #4ADE80;
-  --verde-deep: #16A34A;
-  --verde-grad: linear-gradient(150deg, var(--verde-light), var(--verde-deep));
-  --verde-rim: rgba(134, 239, 172, 0.45);
-  --verde-glow: rgba(74, 222, 128, 0.35);
-  --sh-chip-sel-verde: 0 5px 12px -5px var(--verde-glow), inset 0 1px 0 var(--fab-hi);
-
-  /* Rojo glossy: MISMO material que el verde pero en rojo (semántica RESTA)
-     — para la burbuja Gasto del FAB (gradiente + rim + glow, como Ingreso). */
-  --rojo-light: #F87171;
-  --rojo-deep: #DC2626;
-  --rojo-grad: linear-gradient(150deg, var(--rojo-light), var(--rojo-deep));
-  --rojo-rim: rgba(252, 165, 165, 0.45);
-  --rojo-glow: rgba(248, 113, 113, 0.35);
-
-  /* ---- Semáforo financiero (dark, AA sobre --bg-2) ----
-     El valor base (-verde/-ambar/-rojo) es el color de TRAZO/cifra/dot.
-     El -text es el color legible sobre el tint translúcido (para pills). */
-  --semaforo-verde: #4ADE80;
-  --semaforo-verde-text: #86EFAC;
-  --semaforo-verde-bg: rgba(74, 222, 128, 0.13);
-  --semaforo-verde-line: rgba(74, 222, 128, 0.35);
-
-  --semaforo-ambar: #FBBF24;
-  --semaforo-ambar-text: #FCD34D;
-  --semaforo-ambar-bg: rgba(251, 191, 36, 0.13);
-  --semaforo-ambar-line: rgba(251, 191, 36, 0.35);
-
-  --semaforo-rojo: #F87171;
-  --semaforo-rojo-text: #FCA5A5;
-  --semaforo-rojo-bg: rgba(248, 113, 113, 0.13);
-  --semaforo-rojo-line: rgba(248, 113, 113, 0.35);
-
-  /* ---- Barras neutras (categoría / cobertura) — NUNCA semáforo ---- */
-  --track: rgba(255, 255, 255, 0.08);                    /* pista */
-  --bar-ink: #F5F5F7;                                     /* relleno neutro claro */
-  --bar-coral: color-mix(in srgb, var(--accent) 55%, #241a3a); /* relleno morado-tint sobre oscuro */
-  --grad-gauge: linear-gradient(90deg, #7C5CFC, #A98CFF);      /* gauge morado (solo barras neutras, opcional) */
-
-  /* ---- Mesh del hero (Hoy / onboarding), tokenizado ----
-     Canvas oscuro con glow coral arriba + eco violeta abajo. */
-  --hero-mesh:
-    radial-gradient(135% 100% at 50% 4%, #2B2169 0%, #1B1150 30%, #120B30 52%, #0A0519 78%),
-    #0A0519;
-
-  /* ---- Destello global de la app (Ontop) ----
-     Radial índigo/morado que emana de ARRIBA-CENTRO (pico #2B2169) y se funde a
-     transparente. Se pinta TRAS el contenido de CADA vista sobre --bg-app (mismo
-     radial), reforzando el mismo fondo Ontop de forma consistente en toda la app. */
-  --hoy-glow:
-    radial-gradient(135% 100% at 50% 0%, rgba(43, 33, 105, 0.92), rgba(43, 33, 105, 0) 58%),
-    radial-gradient(95% 58% at 50% 4%, rgba(60, 46, 138, 0.45), transparent 56%);
-
-  /* ---- Tints de categoría (identidad, NO estado) — re-derivados +lum para dark ---- */
-  --cat-persona1: #F0808A;
-  --cat-persona2: #6FA3E8;
-  --cat-persona3: #A87EEA;
-  --cat-yo: #4FC4A8;
-  --cat-vivienda: #7B97F0;
-  --cat-servicios: #4FBBD6;
-  --cat-mercado: #7FC55E;
-  --cat-transporte: #E8A03C;
-  --cat-colegio: #A87EEA;
-  --cat-seguros: #4FC4A8;
-  --cat-salud: #EE7AA8;
-  --cat-creditos: #7B92DE;
-  --cat-comisiones: #9AA2B4;
-  --cat-ocio: #A97CEA;
-  --cat-restaurantes: #E29A62;
-  --cat-hormiga: #D9AE2E;
-  --cat-negocios: #4FB8D6;
-  --cat-otros: #9AA2B4;
+  /* ---- Tints de categoría (identidad, NO estado) ----
+     F5 los pasa a monocromo; por ahora se oscurecen para leerse sobre claro. */
+  --cat-persona1: #C94B58;
+  --cat-persona2: #3F78C4;
+  --cat-persona3: #7C52C4;
+  --cat-yo: #1F9478;
+  --cat-vivienda: #4A68D0;
+  --cat-servicios: #1F8FAD;
+  --cat-mercado: #4E9433;
+  --cat-transporte: #B87414;
+  --cat-colegio: #7C52C4;
+  --cat-seguros: #1F9478;
+  --cat-salud: #C94B7C;
+  --cat-creditos: #4A62B4;
+  --cat-comisiones: #6B7285;
+  --cat-ocio: #8052C4;
+  --cat-restaurantes: #B8682E;
+  --cat-hormiga: #A88410;
+  --cat-negocios: #1F8DAD;
+  --cat-otros: #6B7285;
 
   /* ---- Tipografía ---- */
-  /* Fuente general = Plus Jakarta Sans (geométrica moderna, look fintech de las
-     referencias), self-hosted, en TODO el UI. Inter de respaldo. */
-  --font-ui: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
-  --font-num: 'Plus Jakarta Sans', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
-  --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  --font-display: 'Urbanist', -apple-system, 'SF Pro Display', system-ui, sans-serif;
+  --font-ui: 'Manrope', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-num: 'Manrope', -apple-system, 'SF Pro Text', system-ui, sans-serif;   /* siempre con tabular-nums */
 
+  --fw-light: 300;
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
-  --fw-bold: 700;
+  --fw-bold: 600;   /* 2.0 no usa 700 */
 
-  /* escala de texto: display fluido, UI fija (inputs >=16px anti-zoom iOS) */
-  --fs-display: clamp(2.6rem, 1.6rem + 5vw, 3.4rem);
-  --fs-h1: 1.5rem;      /* 24 */
-  --fs-h2: 1.1875rem;   /* 19 */
+  --fs-hero: 3.5rem;    /* 56 */
+  --fs-display: 2.5rem; /* 40 */
+  --fs-h1: 1.75rem;     /* 28 */
+  --fs-h2: 1.25rem;     /* 20 */
   --fs-h3: 1.0625rem;   /* 17 */
-  --fs-body: 1rem;      /* 16 */
-  --fs-sm: 0.875rem;    /* 14 */
-  --fs-xs: 0.75rem;     /* 12 */
+  --fs-body: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-xs: 0.75rem;
+  --fs-axis: 0.6875rem; /* 11 */
   --fs-input: 1rem;     /* 16 - evita zoom de iOS */
 
-  /* ---- Espaciado ---- */
+  /* ---- Espaciado (NO renumerado: ~400 usos; ver SISTEMA-UI §8.2) ---- */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -256,47 +255,40 @@
   --sp-8: 40px;
   --sp-9: 48px;
   --sp-10: 64px;
+  --gap-bento: 6px;
+  --gutter: 12px;
 
-  /* ---- Radios (bump bento: losas muy redondeadas) ---- */
+  /* ---- Radios ---- */
   --r-xs: 8px;
   --r-sm: 12px;
   --r-md: 16px;
-  --r-lg: 24px;
-  --r-xl: 28px;
-  --r-2xl: 34px;
+  --r-lg: 20px;
+  --r-xl: 24px;     /* = --r-hija */
+  --r-2xl: 30px;    /* = --r-losa */
+  --r-hija: 24px;
+  --r-losa: 30px;
+  --r-sheet: 38px;
   --r-full: 999px;
 
-  /* ---- Sombras / elevación (dark) ----
-     En dark la elevación la dan borde blanco-alpha + glow; la sombra solo ancla. */
-  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
-  --sh-card: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --sh-sheet: 0 -12px 48px -12px rgba(0, 0, 0, 0.60);
-  /* Glow del FAB: BICOLOR, para que la luz que suelta sea la del gradiente que
-     tiene encima (naranja cálido a un lado, azul al otro) y no un halo morado
-     que no se corresponde con nada de lo que se ve. Los tonos salen de los
-     extremos de --grad-cta. Tres capas: los dos halos de color desplazados a su
-     lado + una base amplia que los funde y ancla el botón sobre el fondo. */
-  --fab-glow-calido: rgba(255, 154, 107, 0.55);   /* extremo naranja de --grad-cta */
-  --fab-glow-frio: rgba(110, 123, 242, 0.55);     /* extremo azul-violeta */
-  --sh-fab:
-    -9px 10px 26px -6px var(--fab-glow-calido),
-    9px 10px 26px -6px var(--fab-glow-frio),
-    0 10px 32px -10px rgba(124, 92, 252, 0.50),
-    inset 0 1px 0 var(--fab-hi);
-  --sh-cta: 0 10px 26px -8px var(--accent-glow), 0 2px 6px -2px rgba(0, 0, 0, 0.50), inset 0 1px 0 var(--fab-hi); /* CTA ancho: glow morado + brillo especular + ancla */
-  --sh-chip-sel: 0 5px 12px -5px var(--accent-glow), inset 0 1px 0 var(--fab-hi); /* tag/switch SELECCIONADO = brillo del FAB a escala chip */
-  --sh-md: 0 8px 30px -8px rgba(0, 0, 0, 0.50);
-  --sh-nav: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 16px -10px rgba(0, 0, 0, 0.32); /* barra flotante: sombra suave; la grande y oscura ensombrecía el safe-area del home-indicator */
+  /* ---- Sombras: solo lo que flota ---- */
+  --sh-sm: none;
+  --sh-card: none;
+  --sh-cta: none;
+  --sh-chip-sel: none;
+  --sh-md: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
+  --sh-nav: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
+  --sh-sheet: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
+  --sh-fab: 0 10px 24px -10px rgba(29, 29, 31, 0.5);
 
   /* ---- Layout ---- */
-  --nav-h: 52px;                /* alto de la tab bar (sin safe-area). 62px llevaba
+  --nav-h: 60px;                /* alto de la tab bar (sin safe-area). 62px llevaba
                                    26px de aire interno alrededor de 34px de tinta
                                    (icono 22 + gap 2 + label 10); la tab bar nativa
                                    de iOS mide 49pt. A 52px la caja de contacto = 50px
                                    (>44pt HIG) y el aire baja a 8/8. A ≤52px el radio
                                    --r-xl 28px > h/2, así que la píldora pasa a cápsula
                                    pura (dock nativo), en vez de rectángulo redondeado. */
-  --nav-h-min: 46px;            /* alto colapsado (al hacer scroll, sin labels) */
+  --nav-h-min: 60px;            /* alto colapsado (al hacer scroll, sin labels) */
   --header-h: 56px;
   --page-max: 560px;            /* ancho máx. de contenido */
   /* Reserva inferior del contenido: el inset real, sin trucos. Comportamiento
@@ -361,16 +353,16 @@
      no solo el alto de la barra: el + está montado a caballo del borde superior
      y sobresale más que ella. Medido en dispositivo — con el toast apoyado solo
      en --nav-h seguían cruzándose 39px. */
-  --fab-asoma: 52px;
+  --fab-asoma: 60px;
   /* Curva con rebote corto para el acuse: sobrepasa un pelo y se asienta. Es lo
      que separa "se movió" de "lo empujaron". */
-  --ease-empuje: cubic-bezier(0.22, 1.4, 0.36, 1);
+  --ease-empuje: cubic-bezier(0.34, 1.3, 0.64, 1);
   /* Margen LATERAL del dock flotante. Token propio (y no el --sp-4 suelto que
      estaba escrito dentro del max() de .tabbar) para que la variante
      edge-to-edge de viewport corto se active desde la cascada de <html>, sin
      pelear especificidad contra `body.nav-min .tabbar--4`. --dock-x-min es el
      mismo margen cuando el nav está colapsado por scroll, que se angosta más. */
-  --dock-x: max(var(--sp-4), env(safe-area-inset-left));
+  --dock-x: max(var(--gutter), env(safe-area-inset-left));
   --dock-x-min: max(10%, env(safe-area-inset-left));
 
   /* Reserva inferior del CONTENIDO (padding-bottom de .view). FUENTE ÚNICA:
@@ -388,10 +380,11 @@
   --view-b: calc(max(var(--dock-b), 0px) + var(--nav-h) + var(--sp-5));
 
   /* ---- Motion ---- */
-  --dur-fast: 140ms;
-  --dur: 240ms;
-  --dur-slow: 420ms;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 380ms;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-respira: 4.2s;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-fan: cubic-bezier(0.28, 1.08, 0.4, 1); /* leve pop al abrir el abanico del onboarding */
 
@@ -437,7 +430,7 @@
   --halo-5: rgba(170, 138, 255, 0.48);
   --halo-6: rgba(190, 164, 255, 0.56);
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 /* ============================================================

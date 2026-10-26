@@ -4,6 +4,22 @@
    ============================================================ */
 
 /* ---- Fuentes self-hosted (variable, subset latin) ---- */
+/* olbo 2.0: Urbanist (display, cifras finas) + Manrope (UI). OFL. */
+@font-face {
+  font-family: 'Urbanist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/urbanist-latin-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('../fonts/manrope-latin-var.woff2') format('woff2');
+}
+/* Heredadas (F7 las borra junto con los woff2): ya no las referencia ningún token. */
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -75,6 +91,7 @@ body {
   font-weight: var(--fw-regular);
   line-height: 1.45;
   color: var(--text-1);
+  color-scheme: light;
   background: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -103,6 +120,8 @@ body::before {
    corte lo señalaba, y 40pt antes del corte real, agrandando la zona que se lee
    como muerta. Lo sustituye el piso sólido de .nav-blur, que termina en el
    mismo --bg-root y empalma sin rampa.) */
+
+::selection { background: var(--lila); color: var(--tinta); }
 
 /* toda cifra usa tabular-nums */
 .num,
@@ -145,10 +164,8 @@ svg { display: block; }
 img { max-width: 100%; display: block; }
 
 :focus-visible {
-  outline: 2px solid var(--text-1);
+  outline: 2px solid var(--line-accent);
   outline-offset: 2px;
-  border-radius: var(--r-xs);
-  box-shadow: 0 0 0 3px var(--glass-3);
 }
 
 /* ============================================================
@@ -212,8 +229,8 @@ img { max-width: 100%; display: block; }
     to bottom,
     var(--glass-header) 0%,
     var(--glass-header-medio) 50%,
-    rgba(11, 11, 13, 0.10) 78%,
-    rgba(11, 11, 13, 0) 100%
+    rgba(240, 239, 242, 0.10) 78%,
+    rgba(240, 239, 242, 0) 100%
   );
   /* Blur fuerte: es lo que hace el esmerilado. Se ve lo que pasa por detrás,
      pero desenfocado. */

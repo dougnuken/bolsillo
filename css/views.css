@@ -817,7 +817,7 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 /* Spark de entrada en el header de Hoy: gradiente firma = "esto es IA". */
 .hoy-greet__orb {
   background: var(--grad-cta);
-  color: var(--text-inverse);
+  color: var(--tinta);
   border: 1px solid var(--glass-gloss);
   box-shadow: var(--sh-ia);
 }
@@ -880,7 +880,7 @@ body[data-route="asesor"] .nav-blur {
   width: 64px; height: 64px; flex: none;
   display: grid; place-items: center;
   border-radius: var(--r-xl);
-  background: var(--grad-cta); color: var(--text-inverse);
+  background: var(--grad-cta); color: var(--tinta);
   box-shadow: var(--sh-ia);
 }
 .asesor-orb-big svg { width: 34px; height: 34px; }
@@ -916,7 +916,7 @@ body[data-route="asesor"] .nav-blur {
   font-size: var(--fs-body); line-height: 1.5;
   white-space: pre-wrap; word-break: break-word;
 }
-.chat-msg--yo { align-self: flex-end; background: var(--grad-cta); color: var(--text-inverse); border-bottom-right-radius: var(--r-sm); }
+.chat-msg--yo { align-self: flex-end; background: var(--grad-cta); color: var(--tinta); border-bottom-right-radius: var(--r-sm); }
 .chat-msg--ia { align-self: flex-start; background: var(--glass-2); color: var(--text-1); border: 1px solid var(--line-2); border-bottom-left-radius: var(--r-sm); }
 /* Marcado de la respuesta de la conciencia (ver js/formato-chat.js). La
    burbuja ya es --text-1, así que la negrita no puede destacar por color: lo
@@ -978,7 +978,7 @@ body[data-route="asesor"] .nav-blur {
   flex: none; width: 40px; height: 40px;
   border-radius: var(--r-full);
   display: grid; place-items: center;
-  background: var(--grad-cta); color: var(--text-inverse);
+  background: var(--grad-cta); color: var(--tinta);
   transition: transform var(--dur-fast) var(--ease);
 }
 .chat-send:active { transform: scale(0.94); }
@@ -1971,7 +1971,7 @@ body[data-route="asesor"] .nav-blur {
   border-radius: var(--r-md);
   background: var(--grad-cta);
   border: 1px solid var(--glass-gloss);
-  color: var(--text-inverse);
+  color: var(--tinta);
   font-size: var(--fs-body);
   font-weight: var(--fw-bold);
   box-shadow: var(--sh-ia);
@@ -2809,12 +2809,12 @@ select.field__input::-ms-expand { display: none; }
 
 /* El borde plano se apaga en todos; el anillo lo reemplaza. */
 .card, .mov-search,
-.tabbar, .composer, .chat-bar, .chat-msg--ia, .susurro,
+.composer, .chat-bar, .chat-msg--ia, .susurro,
 .persona-card, .prestamo-card, .bonus-card,
 .hormiga-note, .cat-preview, .empty__art, .hoy-skeleton,
 .settings-list, .cfg-list, .bcard, .hoy-productos, .pcard, .vf-card,
 .cred-summary, .ob__resumen {
-  border-color: transparent;
+  border-color: var(--canto);   /* 2.0: canto blanco de 1px (el borde vivo ya no pinta nada) */
 }
 
 /* Solo los que NO traen posición propia necesitan el contexto para el anillo.
@@ -2835,7 +2835,7 @@ select.field__input::-ms-expand { display: none; }
 }
 
 .card::before, .mov-search::before,
-.tabbar::before, .composer::before, .chat-bar::before, .chat-msg--ia::before,
+.composer::before, .chat-bar::before, .chat-msg--ia::before,
 .susurro::before,
 .persona-card::before, .prestamo-card::before, .bonus-card::before,
 .hormiga-note::before,

@@ -137,7 +137,7 @@ function syncTabbar(routeId) {
   tabbar.querySelectorAll('.tab').forEach((tab) => {
     const active = tab.dataset.route === routeId;
     tab.classList.toggle('is-active', active);
-    tab.setAttribute('aria-current', active ? 'page' : 'false');
+    tab.setAttribute('aria-selected', active ? 'true' : 'false');
   });
 }
 
