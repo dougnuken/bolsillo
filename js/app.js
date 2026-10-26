@@ -153,12 +153,24 @@ function refreshActive(routeId) {
 }
 
 /* ---- tab bar ---- */
+/* Ancho natural de cada etiqueta: el CSS anima max-width hasta este valor
+   exacto (un tope genérico haría que la curva acabara antes de tiempo). Se
+   mide plegada —scrollWidth ignora el max-width— y se repite cuando cargan
+   las fuentes, que cambian el ancho real de Manrope. */
+function medirEtiquetasDock() {
+  tabbar.querySelectorAll('.tab__label').forEach((label) => {
+    label.style.setProperty('--tab-label-w', Math.ceil(label.scrollWidth) + 'px');
+  });
+}
+
 function initTabbar() {
   tabbar.querySelectorAll('.tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       location.hash = '#/' + tab.dataset.route;
     });
   });
+  medirEtiquetasDock();
+  if (document.fonts?.ready) document.fonts.ready.then(medirEtiquetasDock);
 }
 
 /* ---- nav colapsable al hacer scroll: al bajar se resume (sin labels, más

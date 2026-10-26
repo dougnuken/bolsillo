@@ -67,3 +67,9 @@
 - `tools/capturas.mjs`: `--statusbar` (safe-area 59/34 por CDP + overlay 9:41 solo en la captura, con `bypassCSP` únicamente en ese modo) y `--formato jpg`. Datos de demo ampliados (nombre «Ana», 3 meses, créditos, personas placeholder).
 - Gráfica del mes: escala raíz con tope en el percentil 85; el chip va sobre su barra salvo en los bordes (día 1 queda a 10 px del borde).
 - `.sheet` ya respeta `safe-area-inset-top`. SW v161.
+
+## Ajuste de motion (dock y vistas) · v163
+
+- Etiqueta del dock: ya no es `display:none`. Se pliega a ancho 0 y se abre hasta su ancho natural (`--tab-label-w`, medido en `js/app.js` tras cargar fuentes) con `--ease-suave` (in-out) en `--dur-dock` 420 ms; el texto entra con fundido + escala + desenfoque y sale rápido antes de que el ancho lo recorte. Empuja a las otras pestañas igual al hacer scroll (nav-min) que al cambiar de pestaña. El papel de la pestaña saliente se va rápido y el de la entrante llega con 60 ms de retardo (sin dos píldoras grises cruzadas).
+- Cambio de vista: entra con `translateY(14px) scale(.985)` → reposo en `--dur-vista`/`--dur-slow`; la saliente se aparta en `--dur-vista-sale`. Reduced motion: igual que antes (fundido lineal corto).
+- Excepción consciente a «solo transform/opacity/filter»: `max-width`/`padding` de la pestaña (4 elementos, como los puntos del onboarding). Pendiente de ver en dispositivo: con «Movimientos» activo el dock queda muy cerca del FAB (ya pasaba antes).

@@ -329,15 +329,24 @@ img { max-width: 100%; display: block; }
 .view.is-active {
   opacity: 1;
   visibility: visible;
-  transition: opacity var(--dur) var(--ease),
-              transform var(--dur) var(--ease),
+  transition: opacity var(--dur-vista) var(--ease-suave),
+              transform var(--dur-slow) var(--ease-suave),
               visibility 0s;
   z-index: 2;
 }
 
-/* transición: entrante desde abajo, saliente hacia arriba (solo transform/opacity) */
-.view.is-entering { transform: translateY(14px); opacity: 0; }
-.view.is-leaving  { transform: translateY(-10px); opacity: 0; }
+/* transición: entrante desde abajo, saliente hacia arriba (solo transform/opacity).
+   La que entra se asienta con la curva in-out (y un 1,5 % de escala, que es lo
+   que la hace "llegar" en vez de deslizarse); la que sale se aparta más rápido
+   para no cruzarse con ella a media opacidad. */
+.view.is-entering { transform: translateY(14px) scale(0.985); opacity: 0; }
+.view.is-leaving  {
+  transform: translateY(-8px);
+  opacity: 0;
+  transition: opacity var(--dur-vista-sale) var(--ease-suave),
+              transform var(--dur) var(--ease-suave),
+              visibility 0s linear var(--dur-vista-sale);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .view,

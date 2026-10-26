@@ -248,23 +248,80 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
-  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  /* 13 + 22 de ícono + 13 = 48: el círculo inactivo. El padding se anima con
+     la etiqueta para que la pill crezca de una pieza y empuje a las demás. */
+  padding: 0 13px;
+  /* El papel de la pestaña que se va desaparece rápido y el de la que llega
+     entra después (regla .is-active): si los dos se cruzan a media opacidad,
+     el dock enseña dos píldoras grises en vez de una que cambia de sitio. */
+  transition: color var(--dur-fast) var(--ease-suave),
+              background var(--dur-fast) var(--ease-suave),
+              padding var(--dur-dock) var(--ease-suave),
+              transform var(--dur-fast) var(--ease);
 }
 .tab svg { width: 22px; height: 22px; flex: none; stroke-width: 1.6; }
 .tab:active { transform: scale(0.93); }
-.tab__label { display: none; line-height: 1; }
+/* La etiqueta vive en todas las pestañas y se pliega a ancho 0: nunca
+   display:none, que la hacía aparecer de golpe con todo el dock saltando
+   detrás. Abre hasta su ancho natural (--tab-label-w lo mide js/app.js; sin
+   él, 7em) para que la curva dure lo que dura y no termine antes de tiempo
+   contra un tope genérico. Al plegarse, el texto se va RÁPIDO y sin retardo
+   (antes de que el ancho lo recorte); al abrirse, entra un poco DESPUÉS, ya
+   con sitio: así nunca se ve una palabra aplastada. */
+.tab__label {
+  display: inline-block;
+  max-width: 0;
+  margin-left: -6px;             /* anula el gap del botón mientras no ocupa sitio */
+  overflow: hidden;
+  line-height: 1.25;             /* sin cortar descendentes: la caja recorta */
+  opacity: 0;
+  transform: translateX(-3px) scale(0.88);
+  transform-origin: left center;
+  filter: blur(2px);
+  transition: max-width var(--dur-dock) var(--ease-suave),
+              margin-left var(--dur-dock) var(--ease-suave),
+              opacity var(--dur-fast) var(--ease-suave),
+              transform var(--dur) var(--ease-suave),
+              filter var(--dur-fast) var(--ease-suave);
+}
 /* activo = pill papel con ícono + etiqueta en tinta */
 .tab.is-active {
   background: var(--papel);
   color: var(--tinta);
   padding: 0 16px 0 14px;
   box-shadow: inset 0 -1px 0 rgba(29, 29, 31, 0.08);
+  transition: color var(--dur) var(--ease-suave) 60ms,
+              background var(--dur) var(--ease-suave) 60ms,
+              padding var(--dur-dock) var(--ease-suave),
+              transform var(--dur-fast) var(--ease);
 }
-.tab.is-active .tab__label { display: inline; animation: tab-label-in var(--dur) var(--ease) both; }
-@keyframes tab-label-in { from { opacity: 0; } to { opacity: 1; } }
-/* colapsado por scroll (body.nav-min, js/app.js): sin etiqueta, el activo queda en círculo */
-body.nav-min .tab.is-active { padding: 0; width: 48px; }
-body.nav-min .tab.is-active .tab__label { display: none; }
+.tab.is-active .tab__label {
+  max-width: var(--tab-label-w, 7em);
+  margin-left: 0;
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+  transition: max-width var(--dur-dock) var(--ease-suave),
+              margin-left var(--dur-dock) var(--ease-suave),
+              opacity var(--dur) var(--ease-suave) 90ms,
+              transform var(--dur-dock) var(--ease-suave) 40ms,
+              filter var(--dur) var(--ease-suave) 90ms;
+}
+/* colapsado por scroll (body.nav-min, js/app.js): la etiqueta se pliega con la
+   misma curva y el activo vuelve a círculo; nada cambia de golpe. */
+body.nav-min .tab.is-active { padding: 0 13px; }
+body.nav-min .tab.is-active .tab__label {
+  max-width: 0;
+  margin-left: -6px;
+  opacity: 0;
+  transform: translateX(-3px) scale(0.88);
+  filter: blur(2px);
+  transition: max-width var(--dur-dock) var(--ease-suave),
+              margin-left var(--dur-dock) var(--ease-suave),
+              opacity var(--dur-fast) var(--ease-suave),
+              transform var(--dur) var(--ease-suave),
+              filter var(--dur-fast) var(--ease-suave);
+}
 
 /* ---- FAB: esfera de IA (única pieza multicolor) ---- */
 .fab {
@@ -390,8 +447,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 
 @media (prefers-reduced-motion: reduce) {
   .fab::before, .fab::after { animation: none; }
-  .tab.is-active .tab__label { animation: none; }
-  .tabbar, .tab, .fab, .fab svg, .fab-bubble, .fab-veil,
+  .tabbar, .tab, .tab__label, .tab.is-active .tab__label, body.nav-min .tab.is-active .tab__label, .fab, .fab svg, .fab-bubble, .fab-veil,
   body[data-fab="open"] .fab-bubble { transition-duration: 0.01ms; transition-delay: 0s; }
 }
 @media (prefers-reduced-transparency: reduce) {

@@ -343,6 +343,14 @@
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --dur-respira: 4.2s;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* In-out asimétrico: arranca sin tirón y se asienta largo, como el dock de
+     iOS. Para lo que CAMBIA DE TAMAÑO y empuja a sus vecinos (la etiqueta del
+     dock, el cambio de vista): con --ease, que es casi todo salida, el
+     vecino arrancaba de golpe y se leía como un salto. */
+  --ease-suave: cubic-bezier(0.45, 0, 0.2, 1);
+  --dur-dock: 420ms;
+  --dur-vista: 300ms;        /* la vista que entra se asienta */
+  --dur-vista-sale: 180ms;   /* la que sale se aparta antes */
 
   /* ---- Z-index ---- */
   --z-nav: 40;
