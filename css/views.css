@@ -89,7 +89,7 @@ body[data-route="hoy"] .app-header__title { display: none; }
   font-weight: var(--fw-light); color: var(--text-1);
 }
 .hoy-greet__hola { display: block; font-weight: var(--fw-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hoy-greet__mes { display: block; }
+.hoy-greet__mes { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hoy-greet__actions { display: flex; align-items: center; gap: var(--gap-bento); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }
 
@@ -213,9 +213,9 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 }
 .cifra__sig { margin-right: 0.08em; }
 .losa-negra .cifra__cur { color: var(--sobre-negro-2); }
-.losa-lila .cifra__cur { color: var(--tinta); opacity: 0.62; }
+.losa-lila .cifra__cur { color: var(--tinta); opacity: 0.8; }
 .cifra--hero { font-size: var(--fs-hero); letter-spacing: -0.03em; }
-.cifra--tile { font-size: 31px; letter-spacing: -0.02em; }
+.cifra--tile { font-size: clamp(24px, 7.4vw, 31px); letter-spacing: -0.02em; }
 
 .lbl { font-size: 13px; font-weight: var(--fw-medium); color: var(--text-2); letter-spacing: 0.01em; }
 .losa-negra .lbl { color: var(--sobre-negro-2); }
@@ -405,6 +405,7 @@ body[data-route="hoy"] .hoy-greet__orb:active {
 .stat__ic svg { width: 18px; height: 18px; }
 .losa-negra .stat__ic { background: var(--sobre-negro-3); }
 .stat__value { display: block; margin-top: auto; }
+.stat__value--neg { color: var(--tinta); }   /* el signo − y «Te pasaste» lo dicen; el rojo no da AA sobre lila */
 .stat__sub { font-size: 13px; font-weight: var(--fw-medium); margin-top: 6px; }
 .losa-lila .stat__sub { color: var(--tinta); }
 .losa-negra .stat__sub { color: var(--sobre-negro-2); }

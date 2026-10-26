@@ -14,8 +14,8 @@
 | ✅ | **Aprobación de Doug** (26 oct) | — | aprobado | dirección + textos «Resumen/Análisis», saludo sin «¡Bienvenido!»/emoji; pidió aurora más intensa en la card héroe |
 | F1 | Tokens, fuentes, fondo | S1 · Sonnet + QA Sonnet | ✅ | `2497f37` — tokens §2 completos, Urbanist/Manrope, color-scheme light, theme-color perla, grano en `img/`, obsoletos neutros. SW v152 |
 | F2 | Shell (dock, FAB, sheets, botones) | S1 · Sonnet + QA Sonnet | ✅ | `2497f37` — dock grafito (activo pill papel, `role=tab`+`aria-selected`), FAB esfera a la derecha, burbujas papel, sheet flotante r38, botones/seg/switch/toast. QA sin bloqueantes |
-| F3 | Hoy | ídem (QA Opus si el bento falla 2 veces) | — | |
-| F4 | Registrar + keypad | ídem | — | |
+| F3 | Hoy | S2 · Sonnet + QA Sonnet | ✅ | aurora en «Tu dinero», regla del mes, losas lila/negra, orbe-símbolo, Resumen/Análisis, saludo sin emoji. SW v155 |
+| F4 | Registrar + keypad | S2 · Sonnet + QA Sonnet | ✅ | monto Urbanist 300 + caret + meta fecha·cuenta, keypad hundido (pointerdown), pills de categoría (lila), Guardar sticky |
 | F5 | Movimientos, Personas, Perfil/cfg | ídem | — | |
 | F6 | Asesor, onboarding, splash | ídem | — | |
 | F7 | Íconos, manifest, limpieza | ídem | — | |
@@ -46,3 +46,10 @@
 - `--cat-*` se oscurecieron para leerse sobre claro; F5 decide el monocromo.
 - `--nav-h-min` sin uso (borrar en F7); `.tabbar` ya no usa borde vivo.
 - Pendiente de Doug: verificar franja de estado iOS sobre perla en dispositivo.
+
+## Notas de S2 (F3+F4)
+
+- `.field__input`, `.field__label` y `.acct-chip` cambiaron de forma GLOBAL (hundido, r18, 52 px, label en minúscula tinta-2): S3 debe revisarlos en Perfil/cfg y onboarding (el hundido al 5 % sobre perla es sutil).
+- Minibarras de Gastado = gasto variable de los últimos 10 días (vacías si no hay). Anillo y «Flujo» (losa negra de Análisis) restilados.
+- QA: sin bloqueantes. Corregidos: «Te pasaste» (Disponible negativo sin rojo, no da AA sobre lila), solape del chip «hoy» (ini ≤6, fin ≥ dias−4), cifra tile con clamp, `$` lila a .8, velo del botón Guardar.
+- Pendiente menor: rodillo del saldo con rojo/verde-text sobre aurora (transitorio, 2,5:1); tokenizar rgba literales; `.susurro__spark` sigue con `--grad-cta` (S3).

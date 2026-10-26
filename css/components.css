@@ -1063,7 +1063,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   position: sticky; bottom: var(--sp-3); z-index: 2;
   margin-top: var(--sp-4); min-height: 56px; font-size: var(--fs-body);
   /* velo sólido: el contenido que pasa por debajo se desvanece antes de tocar el botón */
-  box-shadow: 0 -16px 16px 2px var(--glass-solido), 0 var(--sp-3) 0 0 var(--glass-solido);
+  box-shadow: 0 -20px 18px 4px var(--glass-solido), 0 var(--sp-5) 0 0 var(--glass-solido);
 }
 @keyframes fadeInSm { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .detalles { animation: none; } }

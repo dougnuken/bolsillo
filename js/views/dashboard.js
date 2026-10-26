@@ -212,7 +212,7 @@ function avanceHTML(hoy) {
     trazos += `<i class="avance__t${d < dia ? ' avance__t--ya' : d === dia ? ' avance__t--hoy' : ''}"></i>`;
   }
   const mesCorto = hoy.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '');
-  const borde = dia <= 3 ? ' avance--ini' : dia >= dias - 2 ? ' avance--fin' : '';
+  const borde = dia <= 6 ? ' avance--ini' : dia >= dias - 4 ? ' avance--fin' : '';
   return `
       <div class="avance${borde}" role="img" aria-label="Día ${dia} de ${dias}" data-dia="${dia}" data-dias="${dias}">
         <div class="avance__trazos" aria-hidden="true">${trazos}</div>
@@ -357,7 +357,7 @@ function statRowHTML(e, dias10) {
       <div class="stat losa-lila">
         <div class="stat__top"><span class="lbl">Disponible</span><span class="stat__ic" aria-hidden="true">${ICON_DOWN}</span></div>
         <span class="stat__value cifra cifra--tile${dispClase} num">${conDivisa(formatCOP(disp))}</span>
-        <span class="stat__sub num">${formatCOP(e.disponiblePorDia).replace('$', '$\u2009')} por día</span>
+        <span class="stat__sub num">${disp != null && disp < 0 ? 'Te pasaste este mes' : `${cop(e.disponiblePorDia)} por día`}</span>
       </div>
       <div class="stat losa-negra" data-anim>
         <div class="stat__top"><span class="lbl">Gastado</span><span class="stat__ic" aria-hidden="true">${ICON_UP}</span></div>
