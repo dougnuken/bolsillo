@@ -19,23 +19,6 @@
   font-display: swap;
   src: url('../fonts/manrope-latin-var.woff2') format('woff2');
 }
-/* Heredadas (F7 las borra junto con los woff2): ya no las referencia ningún token. */
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url('../fonts/inter-latin-var.woff2') format('woff2');
-}
-/* Fuente estilizada de referencia (geométrica moderna, look fintech de los
-   ejemplos): Plus Jakarta Sans variable, self-hosted. Es la fuente general. */
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 200 800;
-  font-display: swap;
-  src: url('../fonts/plusjakarta-latin-var.woff2') format('woff2');
-}
 
 /* ---- Reset acotado ---- */
 *,

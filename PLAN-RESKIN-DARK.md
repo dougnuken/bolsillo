@@ -1,9 +1,11 @@
+> **OBSOLETO (olbo 2.0).** Plan del re-skin oscuro/morado, reemplazado por `docs/rediseno/` (claro, lila, Urbanist + Manrope). Referencia histórica.
+
 # PLAN — Re-skin Bolsillo → Dark Fintech Premium
 
 > **Planeado por:** Fable 5 · 2026-07-25
 > **Ejecuta:** Opus 4.8 (este documento es la fuente de verdad de la ejecución)
 > **Alcance:** re-skin visual completo. CERO cambios de funcionalidad, datos o flujos. Micro-cambios de markup solo donde el CSS no alcanza (señalados explícitamente).
-> **Base:** Bolsillo 0.4 (post-onboarding 3D, commit `134f1de`), PWA vanilla en `/Users/dvargas/Desktop/bolsillo`, deploy GitHub Pages desde `main`. Dev server: `http://127.0.0.1:4150`.
+> **Base:** Bolsillo 0.4 (post-onboarding 3D, commit `134f1de`), PWA vanilla en `~/Desktop/bolsillo`, deploy GitHub Pages desde `main`. Dev server: `http://127.0.0.1:4150`.
 
 ---
 

@@ -32,7 +32,6 @@
      <html> (--bg-root = último stop del fondo, sin costura). */
   --bg-root: #E2E7EC;
   --bg-0: var(--perla);
-  --bg-1: var(--perla);
   --bg-2: var(--papel);
   --bg-3: rgba(29, 29, 31, 0.05);
   --scrim: rgba(29, 29, 31, 0.26);
@@ -47,7 +46,6 @@
   --glass-1: rgba(255, 255, 255, 0.46);      /* chips/botones sobre el fondo */
   --glass-2: rgba(255, 255, 255, 0.62);      /* N1: losas */
   --glass-3: rgba(255, 255, 255, 0.82);      /* N2: vidrio fuerte */
-  --glass-tag: var(--glass-1);
   --glass-nav: rgba(255, 255, 255, 0.82);
   --glass-solido: #F5F4F9;                   /* prefers-reduced-transparency */
   --glass-tinta: rgba(29, 29, 31, 0.8);      /* dock grafito */
@@ -148,40 +146,6 @@
 
   /* ---- Acento ---- */
   --accent: var(--lila);
-  --accent-deep: var(--lila-tinta);
-
-  /* ---- OBSOLETOS: neutros para no romper nada; se borran en F7 ---- */
-  --accent-strong: var(--lila-tinta);
-  --accent-light: var(--lila);
-  --accent-soft: var(--glass-hundido);
-  --accent-glow: transparent;
-  --accent-grad: var(--tinta);
-  --grad-cta-border: var(--tinta);
-  --grad-edge: linear-gradient(transparent, transparent);
-  --fab-grad: var(--tinta);
-  --fab-glow-calido: transparent;
-  --fab-glow-frio: transparent;
-  --hero-mesh: none;
-  --hoy-glow: none;
-  --wash-coral: transparent;
-  --wash-mint: transparent;
-  --wash-top: transparent;
-  --wash-bottom: transparent;
-  --verde-light: var(--papel);
-  --verde-deep: var(--papel);
-  --verde-grad: var(--papel);
-  --verde-rim: var(--line-2);
-  --verde-glow: transparent;
-  --rojo-light: var(--papel);
-  --rojo-deep: var(--papel);
-  --rojo-grad: var(--papel);
-  --rojo-rim: var(--line-2);
-  --rojo-glow: transparent;
-  --bar-coral: var(--trazo);
-  --bar-ink: var(--tinta);
-  --grad-gauge: var(--semaforo-verde);
-  --sh-ia: none;
-  --sh-chip-sel-verde: none;
 
   /* ---- Semáforo (claro): solo estado ---- */
   --semaforo-verde: #25935A;
@@ -254,7 +218,6 @@
   --sp-7: 32px;
   --sp-8: 40px;
   --sp-9: 48px;
-  --sp-10: 64px;
   --gap-bento: 6px;
   --gutter: 12px;
 
@@ -271,14 +234,10 @@
   --r-full: 999px;
 
   /* ---- Sombras: solo lo que flota ---- */
-  --sh-sm: none;
   --sh-card: none;
-  --sh-cta: none;
-  --sh-chip-sel: none;
   --sh-md: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
   --sh-nav: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
   --sh-sheet: 0 12px 32px -16px rgba(29, 29, 31, 0.22);
-  --sh-fab: 0 10px 24px -10px rgba(29, 29, 31, 0.5);
 
   /* ---- Layout ---- */
   --nav-h: 60px;                /* alto de la tab bar (sin safe-area). 62px llevaba
@@ -288,7 +247,6 @@
                                    (>44pt HIG) y el aire baja a 8/8. A ≤52px el radio
                                    --r-xl 28px > h/2, así que la píldora pasa a cápsula
                                    pura (dock nativo), en vez de rectángulo redondeado. */
-  --nav-h-min: 60px;            /* alto colapsado (al hacer scroll, sin labels) */
   --header-h: 56px;
   --page-max: 560px;            /* ancho máx. de contenido */
   /* Reserva inferior del contenido: el inset real, sin trucos. Comportamiento
@@ -353,7 +311,6 @@
      no solo el alto de la barra: el + está montado a caballo del borde superior
      y sobresale más que ella. Medido en dispositivo — con el toast apoyado solo
      en --nav-h seguían cruzándose 39px. */
-  --fab-asoma: 60px;
   /* Curva con rebote corto para el acuse: sobrepasa un pelo y se asienta. Es lo
      que separa "se movió" de "lo empujaron". */
   --ease-empuje: cubic-bezier(0.34, 1.3, 0.64, 1);
@@ -386,7 +343,6 @@
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
   --dur-respira: 4.2s;
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-fan: cubic-bezier(0.28, 1.08, 0.4, 1); /* leve pop al abrir el abanico del onboarding */
 
   /* ---- Z-index ---- */
   --z-nav: 40;

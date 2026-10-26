@@ -1,3 +1,5 @@
+> **OBSOLETO (olbo 2.0).** La marca ya no usa renders 3D: `img/brand-3d` y `img/empty-states` se borraron en F7. Se conserva solo como referencia histórica.
+
 # Bolsillo — Pack 3D "Molten Platinum" (brand art)
 
 Análisis de referencias + prompts de generación. Destino de salida: `img/brand-3d/`.

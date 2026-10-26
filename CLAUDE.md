@@ -27,11 +27,11 @@ PWA **local-first, sin backend**, para ordenar la plata de una persona/familia. 
 gasto toma segundos; una IA lee recibos/extractos; un **semáforo** dice de un vistazo si el
 ritmo de gasto del mes va bien contra el sueldo.
 
-- **Marca:** olbo (griego *ὄλβος* = riqueza como bienestar/calma). Antes se llamaba "Bolsillo".
+- **Marca:** olbo (griego *ὄλβος* = riqueza como bienestar/calma). Antes se llamaba "Bolsillo". Desde olbo 2.0 es **clara** (perla + lila), con símbolo **«Anillo y centro»** (dos arcos blancos y un punto lila sobre tinta). Fuente de verdad: `docs/rediseno/` (`MARCA.md`, `SISTEMA-UI.md`).
 - **Deploy:** GitHub Pages → `https://dougnuken.github.io/bolsillo/` (repo `dougnuken/bolsillo`).
 - **Datos:** IndexedDB (local). Export/import JSON. Nada sale del dispositivo salvo las
   llamadas a la API de Claude (`api.anthropic.com`) para las funciones de IA.
-- **Vistas:** Hoy (dashboard + semáforo), Movimientos, Personas, Perfil (ajustes), Registrar,
+- **Vistas:** Hoy (Resumen + semáforo), Análisis, Movimientos, Personas, Perfil (ajustes), Registrar,
   Asesor ("voz de conciencia"), y el onboarding.
 - **Captura de gasto:** manual · voz (dictado) · foto de recibo (IA visión) · SMS/notif del banco.
 - **IA:** "voz de conciencia" que comenta cada gasto · foto/extracto por visión · categorización.
@@ -61,7 +61,7 @@ ritmo de gasto del mes va bien contra el sueldo.
 
 ## 4. Stack y arquitectura técnica
 
-- **HTML/CSS/JS vanilla**, ES modules, **sin build tools**. Fuentes self-hosted (Plus Jakarta Sans).
+- **HTML/CSS/JS vanilla**, ES modules, **sin build tools**. Fuentes self-hosted: **Urbanist** (display, cifras) + **Manrope** (UI), OFL.
 - **CSP ESTRICTA** (en `index.html`): `default-src 'self'; style-src 'self'; script-src 'self';
   connect-src 'self' https://api.anthropic.com; img-src 'self' data: blob:`.
   → **PROHIBIDO** estilo inline (`style="..."`, `<style>`) y script inline, **incluso `<style>`
@@ -76,28 +76,29 @@ ritmo de gasto del mes va bien contra el sueldo.
     sms-banco, extracto-pdf, conciencia, prestamos, reconciliacion, recurring, backup…)
   - `js/views/*.js` (vistas: dashboard, movimientos, personas, perfil, registrar, asesor,
     onboarding, creditos, y `cfg-*` de ajustes)
-  - `test/*.test.js` (node:test) · `icons/` · `img/{brand-3d,empty-states}/`
+  - `test/*.test.js` (node:test) · `icons/` · `img/` (solo grano SVG)
 - **Todo el color/espaciado/motion vive en `css/tokens.css`** — *"cero hex fuera de este archivo"*.
   Animar SOLO `transform`/`opacity`/`filter`; honrar `prefers-reduced-motion`.
 
 ---
 
-## 5. Identidad visual (olbo — morada)
+## 5. Identidad visual (olbo 2.0 — clara, lila)
 
-- **Dirección:** dark fintech premium. Fondo **estilo Ontop**: base `#0A0519` (casi-negro violeta)
-  + radial índigo/morado `#2B2169` desde **arriba-centro** que se funde a la base
-  (tokens `--bg-app` y `--hoy-glow`).
-- **Acento MORADO:** `--accent #8B6CFF` · `--accent-strong #7C5CFC` · `--accent-deep #5B3FE0` ·
-  `--accent-light #A98CFF` · `--accent-soft rgba(139,108,255,.14)`.
-- **SE MANTIENE el multicolor (no lo cambies):**
-  - Gradiente firma `--grad-cta` (naranja→morado→azul) en CTA primario, FAB y orbe del asesor.
-  - Burbujas **verde (Ingreso) / rojo (Gasto)** del FAB.
-  - **Semáforo:** verde `#4ADE80` / ámbar `#FBBF24` / rojo `#F87171` — SOLO en el anillo/estado.
-- **Marca:** ícono "**anillo O**" morado (aro + "+" en vidrio, `icons/icon.svg` + 6 PNG). Wordmark
-  "olbo" en minúsculas. **Splash** de bienvenida al abrir (logo animado, `css/splash.css`).
-  Onboarding con **entrada 3D** (los renders "aterrizan" con overshoot + glow, luego flotan).
-- **Componentes:** glassmorphism translúcido; `.btn--primary` usa el gradiente firma; anillo del
-  semáforo **sólido** (no punteado); chips de categoría con fondo morado transparente.
+Fuente de verdad: `docs/rediseno/MARCA.md` (marca) y `docs/rediseno/SISTEMA-UI.md` (tokens, materiales, componentes).
+
+- **Dirección:** fintech **clara** y calmada. Fondo `--perla #F0EFF2`; superficies en losas bento (vidrio claro,
+  losa lila, losa negra/grafito) y aurora lila solo en la card héroe. `color-scheme: light`, `theme_color` y
+  `background_color` del manifest `#F0EFF2`.
+- **Color:** tinta `#1D1D1F`; acento **lila** `--lila #B49CFF` (rellenos, siempre con contenido en tinta) y
+  `--lila-tinta #5B3FE0` cuando el acento es texto o trazo sobre claro. Todo el color vive en `css/tokens.css`.
+- **Tipografía:** **Urbanist** (títulos, cifras finas) + **Manrope** (UI y cuerpo).
+- **Multicolor que se conserva:** `--grad-cta` (naranja→morado→azul) **solo en el FAB** (esfera IA); el resto de
+  CTAs son tinta. **Semáforo** verde/ámbar/rojo (`--semaforo-*`) SOLO en anillo/estado.
+- **Marca:** símbolo **«Anillo y centro»** (`icons/icon.svg` + PNG 192/512/maskable/apple-touch/favicon, generados
+  desde `docs/rediseno/marca/olbo-icono-app-1024.svg`). Wordmark «olbo» en minúsculas. Splash perla en dos tiempos
+  (~900 ms, `css/splash.css`). Íconos de categoría monocromos.
+- **Componentes:** dock grafito (activo = pill papel, `role=tab` + `aria-selected`), FAB esfera a la derecha, sheet
+  flotante, keypad hundido; losas `.vidrio` SIN `backdrop-filter`; anillo del semáforo sólido.
 
 ---
 
@@ -108,7 +109,7 @@ ritmo de gasto del mes va bien contra el sueldo.
    incidentes; se limpiaron. **Verifica en cada cambio** (`grep -riE "nombres reales" excluyendo
    backups`). Los datos reales viven SOLO en `~/Desktop/bolsillo-privado/`.
 2. **No rompas la matemática del semáforo** (`js/budget.js`). Cambios ahí = **aditivos y testeados**.
-3. **Tests verdes antes de deployar:** `node --test` (hoy 423/423). Nunca publiques con tests rojos.
+3. **Tests verdes antes de deployar:** `node --test` (hoy 647/647). Nunca publiques con tests rojos.
 4. **Version bump en cada cambio de CSS/JS:** sube `CACHE = 'olbo-shell-vN'` en `sw.js` **y** todos
    los `?v=N` de `index.html` (son 7 assets). Sin esto, el SW/caché sirve código viejo.
 5. **Backup/rollback:** existe `backup-tema-coral/` (local, gitignored) + el historial git. Ante un
@@ -136,15 +137,12 @@ ritmo de gasto del mes va bien contra el sueldo.
 - **Confirma antes de acciones outward-facing** (push/deploy, borrar historial git, etc.).
 - Sé **honesto sobre límites** del entorno (p. ej.: hoy no hay motor de imágenes fotorrealistas
   conectado — para renders 3D se generan aparte y el agente solo los cablea).
-- Respeta sus decisiones de diseño ya tomadas (identidad morada, fondo Ontop, multicolor que se queda).
+- Respeta sus decisiones de diseño ya tomadas (identidad clara con acento lila, Urbanist + Manrope, `--grad-cta` solo en el FAB).
 
 ---
 
 ## 9. Backlog / pendientes conocidos
 
-- **Assets 3D en morado:** los renders `img/brand-3d/*.jpg` y `img/empty-states/*.png` siguen en su
-  naranja original. Falta regenerarlos como renders morados (con un motor de imágenes externo) y
-  cablearlos. Hay un pack de prompts base en `PACK-3D-PROMPTS.md`.
 - **Pulido/a11y restante** (de una auditoría previa): switches operables por teclado, wayfinding de
   toasts ("Perfil → Clave de Anthropic"), `aria-selected` en la tab bar, tap targets ≥44px, etc.
 - **Features de finanzas futuras:** créditos v2/v3 (estrategia de pago avalancha/bola de nieve),
@@ -161,6 +159,9 @@ cd ~/Desktop/bolsillo && node --test
 # dev server (para ver la app en localhost:4150)
 cd ~/Desktop/bolsillo && node .claude/dev-server.mjs
 
-# regenerar íconos PNG desde el SVG (requiere rsvg-convert)
-rsvg-convert -w 512 -h 512 icons/icon.svg -o icons/icon-512.png
+# regenerar íconos PNG (Playwright rasteriza docs/rediseno/marca/olbo-icono-app-1024.svg; no hay rsvg-convert)
+# ver el script en el commit de F7; tamaños: 1024, 512, 512-maskable, 192, 180 (apple-touch), 32 (favicon)
+
+# capturas para portafolio (1179×2556, barra de estado 9:41)
+node tools/capturas.mjs docs/rediseno/capturas-3x --scale 3 --statusbar
 ```
