@@ -12,8 +12,8 @@
 | 0c | QA de diseño (`QA-diseno.md`) | agente Sonnet medio | ✅ hecho | 3 bloqueantes del plan → SISTEMA-UI §8 (obligatorio) |
 | 0d | Tablero ronda 2 (gradientes, grano, dock grafito, FAB esfera IA, motion) | agente Opus | ✅ hecho | `tablero.jpg`, `tablero-motion.webm` |
 | ✅ | **Aprobación de Doug** (26 oct) | — | aprobado | dirección + textos «Resumen/Análisis», saludo sin «¡Bienvenido!»/emoji; pidió aurora más intensa en la card héroe |
-| F1 | Tokens, fuentes, fondo | sesión nueva · ejecutor Sonnet medio + QA Sonnet | — | |
-| F2 | Shell (dock, FAB, sheets, botones) | ídem | — | |
+| F1 | Tokens, fuentes, fondo | S1 · Sonnet + QA Sonnet | ✅ | `2497f37` — tokens §2 completos, Urbanist/Manrope, color-scheme light, theme-color perla, grano en `img/`, obsoletos neutros. SW v152 |
+| F2 | Shell (dock, FAB, sheets, botones) | S1 · Sonnet + QA Sonnet | ✅ | `2497f37` — dock grafito (activo pill papel, `role=tab`+`aria-selected`), FAB esfera a la derecha, burbujas papel, sheet flotante r38, botones/seg/switch/toast. QA sin bloqueantes |
 | F3 | Hoy | ídem (QA Opus si el bento falla 2 veces) | — | |
 | F4 | Registrar + keypad | ídem | — | |
 | F5 | Movimientos, Personas, Perfil/cfg | ídem | — | |
@@ -38,3 +38,11 @@
 - Cadena de sesiones S1–S5: ver `CADENA.md`.
 - Barra de estado iOS sobre perla: verificar en dispositivo (Doug).
 - Íconos de categoría monocromos (se pierde el color por categoría).
+
+## Notas de S1 (F1+F2)
+
+- Splash conserva sus tokens oscuros (`--splash-*`, `--losa-*`) hasta F6.
+- Quedan para S2/S3: orbe del header de Hoy y `.chat-msg--yo`/CTAs con `--grad-cta` (texto en tinta), `.hoy-greet` con emoji/«¡Bienvenido!», íconos grandes en `.stat`, «Dashboard/Analytics» sin renombrar.
+- `--cat-*` se oscurecieron para leerse sobre claro; F5 decide el monocromo.
+- `--nav-h-min` sin uso (borrar en F7); `.tabbar` ya no usa borde vivo.
+- Pendiente de Doug: verificar franja de estado iOS sobre perla en dispositivo.
