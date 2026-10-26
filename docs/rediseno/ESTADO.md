@@ -18,9 +18,9 @@
 | F4 | Registrar + keypad | S2 · Sonnet + QA Sonnet | ✅ | monto Urbanist 300 + caret + meta fecha·cuenta, keypad hundido (pointerdown), pills de categoría (lila), Guardar sticky |
 | F5 | Movimientos, Personas, Perfil/cfg | S3 · Sonnet + QA Sonnet | ✅ | losa de mes con trazos por día, una losa por día, íconos monocromos, Perfil/cfg en losas (cfg dentro de sheet = hundido), susurro/vínculo en grafito, `--text-3` fuera de todo texto. SW v157 |
 | F6 | Asesor, onboarding, splash | S3 · Sonnet + QA Sonnet | ✅ | orbe = símbolo, burbujas tinta/vidrio, onboarding con gauge/captura/categorías/semáforo en losa aurora tenue + CTA negro (sin brand-3d), splash perla en dos tiempos ~900 ms |
-| F7 | Íconos, manifest, limpieza | ídem | — | |
-| QA | Verificación final (tests, CSP, AA, 390 px, capturas antes/después) | Sonnet medio | — | |
-| M1 | Capturas 3x con `tools/capturas.mjs --scale 3` + SHOTLIST | Sonnet medio, skill `portfolio-mockups` | — | |
+| F7 | Íconos, manifest, limpieza | S4 · Sonnet | ✅ | `77b37af` — íconos Anillo y centro (PNG desde el SVG), manifest `#F0EFF2`, fuera Plus Jakarta/Space Grotesk/Inter, `img/brand-3d|empty-states|tex|onboarding`, `--nav-h-min` y tokens/reglas muertas; CLAUDE.md §2/§4/§5/§10 |
+| QA | Verificación final (tests, CSP, AA, 390 px, capturas antes/después) | Sonnet medio | ✅ | `267401f` — sin desborde, consola ni CSP; AA en estados y tarjeta lila; Guardar opaco. Pendientes menores: `.cat-ord-btn` 44×34, toast del onboarding sobre Continuar, dock/FAB ~2 px |
+| M1 | Capturas 3x con `tools/capturas.mjs --scale 3` + SHOTLIST | S4 · Sonnet | ✅ | `docs/rediseno/capturas-3x/` (14 JPG 1179×2556 con barra 9:41, 5,8 MB): hoy, análisis, movimientos, personas, perfil, asesor, productos, fab, registrar-metodos, registrar, onboarding-1…4 |
 | M2 | Escenas Higgsfield (`gpt_image_2_5`, 3:4, 2k) + composición | Sonnet medio | — | ~13 escenas ≈ 36 créditos |
 | M3 | Caso `/work/olbo` en `dougnuken/douguizard` (formato largo como MakeaPet: cover, film, story) | Sonnet medio + revisión Opus | — | |
 | ⏸ | **Confirmación de Doug** antes de merge a `main` (deploy Pages) y del portafolio | — | — | |
@@ -61,3 +61,9 @@
 - `--grad-cta` ya solo vive en el FAB. Tokens del splash viejo (`--losa-1…6`, `--canto-1…6`, `--halo-1…6`) eliminados.
 - Pendiente menor (F7): reglas muertas en views.css (`.hormiga-dot`, `.asesor-top__spark`…), `img/tex/dither.png`, `img/brand-3d`, `img/empty-states`; tokenizar `rgba(255,255,255,.55/.16)` en `.ob2a__via`/`.ob2__cta`.
 - Movimientos: las barras usan raíz cuadrada del gasto diario (un arriendo no aplasta el resto).
+
+## Notas de S4 (F7+QA+M1)
+
+- `tools/capturas.mjs`: `--statusbar` (safe-area 59/34 por CDP + overlay 9:41 solo en la captura, con `bypassCSP` únicamente en ese modo) y `--formato jpg`. Datos de demo ampliados (nombre «Ana», 3 meses, créditos, personas placeholder).
+- Gráfica del mes: escala raíz con tope en el percentil 85; el chip va sobre su barra salvo en los bordes (día 1 queda a 10 px del borde).
+- `.sheet` ya respeta `safe-area-inset-top`. SW v161.

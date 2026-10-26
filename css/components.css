@@ -614,7 +614,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
    Sheet Registrar — scroll interno + volver
    ============================================================ */
 .sheet {
-  max-height: calc(100dvh - 58px);
+  max-height: calc(100dvh - 58px - env(safe-area-inset-top));
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
