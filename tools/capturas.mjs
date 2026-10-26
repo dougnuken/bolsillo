@@ -156,6 +156,7 @@ await page.waitForTimeout(1000);
 const metodo = page.locator('[data-metodo="teclado"]');
 if (await metodo.count()) { await foto('registrar-metodos'); await metodo.first().click(); await page.waitForTimeout(800); }
 for (const k of ['1', '2', '8', '5', '0', '0']) { await page.locator(`[data-key="${k}"]`).first().click(); await page.waitForTimeout(90); }
+await page.getByText('Supermercado', { exact: true }).last().click(); // categoría elegida → Guardar activo
 await page.waitForTimeout(700);
 await foto('registrar');
 
