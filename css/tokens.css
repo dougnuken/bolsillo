@@ -47,7 +47,8 @@
   --glass-2: rgba(255, 255, 255, 0.62);      /* N1: losas */
   --glass-3: rgba(255, 255, 255, 0.82);      /* N2: vidrio fuerte */
   --glass-nav: rgba(255, 255, 255, 0.82);
-  --glass-solido: #F5F4F9;                   /* prefers-reduced-transparency */
+  --glass-solido: #F5F4F9;
+  --sheet-fondo: #FBFBFC;                    /* fondo OPACO de sheets/paneles: el velo del botón Guardar usa el mismo, así no se nota la costura */                   /* prefers-reduced-transparency */
   --glass-tinta: rgba(29, 29, 31, 0.8);      /* dock grafito */
   --glass-header: rgba(240, 239, 242, 0.78);
   --glass-header-medio: rgba(240, 239, 242, 0.4);

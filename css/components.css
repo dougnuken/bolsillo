@@ -553,7 +553,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   left: var(--sp-2); right: var(--sp-2);
   bottom: var(--sp-2);
   z-index: var(--z-sheet);
-  background: var(--grano-fino) 0 0 / 160px, rgba(255, 255, 255, 0.95);
+  background: var(--grano-fino) 0 0 / 160px, var(--sheet-fondo);
   border: 1px solid var(--canto);
   border-radius: var(--r-sheet);
   -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(180%);
@@ -569,7 +569,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
   .sheet { transition: transform var(--dur-fast) linear; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .sheet, .ov-panel { background: var(--glass-solido); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .sheet, .ov-panel { background: var(--sheet-fondo); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 .sheet__grip {
@@ -1134,16 +1134,38 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 .detalles-toggle.is-open .detalles-toggle__chev { transform: rotate(180deg); }
 .detalles { animation: fadeInSm var(--dur) var(--ease); }
 
-/* Guardar siempre visible: se queda pegado abajo mientras el sheet scrollea. */
+/* Guardar siempre visible: se queda pegado abajo mientras el sheet scrollea.
+   El botón lleva su propia «base» del sheet: ::after es una banda RECTANGULAR del
+   mismo material que el sheet (grano + --sheet-fondo) que va de borde a borde y
+   hasta abajo, con un desvanecido arriba; ::before es la pill negra. Antes el velo
+   era un box-shadow: seguía el radio de la pill (esquinas redondeadas a la vista),
+   era de otro color y no tenía grano, así que el botón parecía transparente y
+   ajeno al sheet, con texto asomando por debajo. */
 .btn--save {
-  position: sticky; bottom: var(--sp-3); z-index: 2;
+  position: sticky; bottom: var(--sp-4); z-index: 2; isolation: isolate;
   margin-top: var(--sp-4); min-height: 56px; font-size: var(--fs-body);
-  /* velo sólido: el contenido que pasa por debajo se desvanece antes de tocar el botón */
-  box-shadow: 0 -20px 18px 4px var(--glass-solido), 0 var(--sp-5) 0 0 var(--glass-solido);
+  background: transparent; border-color: transparent; box-shadow: none;
 }
-/* Deshabilitado OPACO: con opacity .42 el botón pegajoso deja ver las categorías que pasan por debajo
-   ("Guardar gasto" se montaba sobre "Comisiones/Ocio"). Se atenúa mezclando color, no con opacity. */
-.btn--save[disabled] { opacity: 1; background: color-mix(in srgb, var(--tinta) 42%, var(--glass-solido)); border-color: transparent; }
+.btn--save::before {
+  content: ''; position: absolute; inset: -1px; z-index: -1;
+  border-radius: inherit; background: var(--tinta);
+  transition: filter var(--dur-fast) var(--ease);
+}
+.btn--save::after {
+  content: ''; position: absolute; z-index: -2; pointer-events: none;
+  left: calc(-1 * var(--sp-4)); right: calc(-1 * var(--sp-4));
+  top: -28px; bottom: -48px;
+  background: var(--grano-fino) 0 0 / 160px, var(--sheet-fondo);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+}
+/* el brillo de :hover/:active va solo a la pill, no a la banda */
+.btn--save:hover, .btn--save:active { filter: none; }
+.btn--save:hover::before { filter: brightness(1.2); }
+.btn--save:active::before { filter: brightness(1.25); }
+/* Deshabilitado OPACO (mezcla de color, no opacity): nada se transparenta. */
+.btn--save[disabled] { opacity: 1; background: transparent; border-color: transparent; }
+.btn--save[disabled]::before { background: color-mix(in srgb, var(--tinta) 42%, var(--sheet-fondo)); }
 @keyframes fadeInSm { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .detalles { animation: none; } }
 
@@ -1375,7 +1397,7 @@ body.has-toast .fab {
   position: relative;
   width: 100%;
   max-width: var(--page-max);
-  background: var(--grano-fino) 0 0 / 160px, rgba(255, 255, 255, 0.95);
+  background: var(--grano-fino) 0 0 / 160px, var(--sheet-fondo);
   border: 1px solid var(--canto);
   border-radius: var(--r-sheet);
   -webkit-backdrop-filter: blur(var(--blur-strong)) saturate(180%);
