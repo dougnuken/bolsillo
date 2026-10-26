@@ -1323,6 +1323,7 @@ body[data-route="asesor"] .nav-blur {
 .cat-ord-btn {
   flex: 1 1 0;
   width: 44px;
+  min-height: 44px;   /* área táctil mínima (QA final): antes medía 44×34 */
   display: grid;
   place-items: center;
   color: var(--text-2);

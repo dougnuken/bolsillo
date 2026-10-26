@@ -1080,6 +1080,11 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 /* ENTRADA con rebote corto: sube, se pasa un pelo y se asienta. La escala
    acompaña al desplazamiento —llega "tomando cuerpo"— en vez de deslizarse
    rígido. Solo transform y opacity. */
+/* En el onboarding no hay dock: el toast se apoyaba encima de donde estaría y
+   tapaba el CTA «Continuar» (112 px de alto). Se sube por encima del CTA. */
+body[data-ob="open"] .toast {
+  bottom: calc(var(--dock-b) + 112px + var(--sp-4));
+}
 .toast.is-show {
   opacity: 1;
   visibility: visible;
