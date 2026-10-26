@@ -219,7 +219,7 @@
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 5px;
   border-radius: var(--r-full);
   background: var(--grano) 0 0 / 160px, var(--glass-tinta);
@@ -239,7 +239,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 48px;
+  min-width: var(--tab-d);
   height: 48px;
   border-radius: var(--r-full);
   color: var(--sobre-tinta-icono);
@@ -248,9 +248,9 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
-  /* 13 + 22 de ícono + 13 = 48: el círculo inactivo. El padding se anima con
-     la etiqueta para que la pill crezca de una pieza y empuje a las demás. */
-  padding: 0 13px;
+  /* ícono de 22 centrado en --tab-d: el círculo inactivo. El padding se anima
+     con la etiqueta para que la pill crezca de una pieza y empuje a las demás. */
+  padding: 0 calc((var(--tab-d) - 22px) / 2);
   /* El papel de la pestaña que se va desaparece rápido y el de la que llega
      entra después (regla .is-active): si los dos se cruzan a media opacidad,
      el dock enseña dos píldoras grises en vez de una que cambia de sitio. */
@@ -288,7 +288,7 @@
 .tab.is-active {
   background: var(--papel);
   color: var(--tinta);
-  padding: 0 16px 0 14px;
+  padding: 0 var(--tab-pad-act-d) 0 var(--tab-pad-act-i);
   box-shadow: inset 0 -1px 0 rgba(29, 29, 31, 0.08);
   transition: color var(--dur) var(--ease-suave) 60ms,
               background var(--dur) var(--ease-suave) 60ms,
@@ -309,8 +309,12 @@
 }
 /* colapsado por scroll (body.nav-min, js/app.js): la etiqueta se pliega con la
    misma curva y el activo vuelve a círculo; nada cambia de golpe. */
-body.nav-min .tab.is-active { padding: 0 13px; }
-body.nav-min .tab.is-active .tab__label {
+/* .tab--sin-sitio (js/app.js): en pantallas angostas una etiqueta larga no
+   cabe sin meterse bajo el FAB; esa pestaña se queda en círculo, como plegada. */
+body.nav-min .tab.is-active,
+.tab.is-active.tab--sin-sitio { padding: 0 calc((var(--tab-d) - 22px) / 2); }
+body.nav-min .tab.is-active .tab__label,
+.tab.is-active.tab--sin-sitio .tab__label {
   max-width: 0;
   margin-left: -6px;
   opacity: 0;
@@ -447,7 +451,7 @@ body[data-fab="open"] .fab-veil { opacity: 1; pointer-events: auto; }
 
 @media (prefers-reduced-motion: reduce) {
   .fab::before, .fab::after { animation: none; }
-  .tabbar, .tab, .tab__label, .tab.is-active .tab__label, body.nav-min .tab.is-active .tab__label, .fab, .fab svg, .fab-bubble, .fab-veil,
+  .tabbar, .tab, .tab__label, .tab.is-active .tab__label, body.nav-min .tab.is-active .tab__label, .tab.is-active.tab--sin-sitio .tab__label, .fab, .fab svg, .fab-bubble, .fab-veil,
   body[data-fab="open"] .fab-bubble { transition-duration: 0.01ms; transition-delay: 0s; }
 }
 @media (prefers-reduced-transparency: reduce) {

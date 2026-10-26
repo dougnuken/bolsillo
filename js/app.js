@@ -161,6 +161,36 @@ function medirEtiquetasDock() {
   tabbar.querySelectorAll('.tab__label').forEach((label) => {
     label.style.setProperty('--tab-label-w', Math.ceil(label.scrollWidth) + 'px');
   });
+  encajarDock();
+}
+
+/* Marca .tab--sin-sitio en las pestañas cuya etiqueta, abierta, llevaría el
+   dock a menos de --dock-aire-fab del FAB (en un teléfono de 375 «Movimientos»
+   no cabe). Se calcula con la geometría de reposo —tokens y estilos
+   computados—, no con el ancho actual del dock, que puede estar a media
+   transición. */
+function encajarDock() {
+  const fab = document.getElementById('fab');
+  const tabs = [...tabbar.querySelectorAll('.tab')];
+  if (!fab || !tabs.length) return;
+  const num = (v) => parseFloat(v) || 0;
+  const root = getComputedStyle(document.documentElement);
+  const dock = getComputedStyle(tabbar);
+  const d = num(root.getPropertyValue('--tab-d'));
+  const gap = num(dock.columnGap);
+  const plegado = tabs.length * d + (tabs.length - 1) * gap
+    + num(dock.paddingLeft) + num(dock.paddingRight) + num(dock.borderLeftWidth) + num(dock.borderRightWidth);
+  const libre = fab.getBoundingClientRect().left - num(root.getPropertyValue('--dock-aire-fab'))
+    - tabbar.getBoundingClientRect().left;
+  tabs.forEach((tab) => {
+    const label = tab.querySelector('.tab__label');
+    const svg = tab.querySelector('svg');
+    if (!label || !svg) return;
+    const abierta = num(root.getPropertyValue('--tab-pad-act-i')) + num(getComputedStyle(svg).width)
+      + num(getComputedStyle(tab).columnGap) + num(label.style.getPropertyValue('--tab-label-w'))
+      + num(root.getPropertyValue('--tab-pad-act-d'));
+    tab.classList.toggle('tab--sin-sitio', plegado - d + abierta > libre);
+  });
 }
 
 function initTabbar() {
@@ -779,6 +809,7 @@ function boot() {
   // ancho: rotar el teléfono o abrir el teclado lo invalida.
   window.addEventListener('resize', () => {
     requestAnimationFrame(medirViajesHeader);
+    requestAnimationFrame(encajarDock);
   }, { passive: true });
 
   // Al vincular un gasto con su fijo desde Movimientos, recalculamos pendientes

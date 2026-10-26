@@ -349,6 +349,14 @@
      vecino arrancaba de golpe y se leía como un salto. */
   --ease-suave: cubic-bezier(0.45, 0, 0.2, 1);
   --dur-dock: 420ms;
+  /* Geometría del dock. Pestaña inactiva de 44 (el mínimo táctil, no 48) y
+     píldora activa más ceñida: con «Movimientos» activa el dock se metía bajo
+     el FAB (−3 px a 393 de ancho, −21 a 375). js/app.js lee estos tokens para
+     decidir si una etiqueta cabe dejando --dock-aire-fab de aire hasta el FAB. */
+  --tab-d: 44px;
+  --tab-pad-act-i: 12px;
+  --tab-pad-act-d: 14px;
+  --dock-aire-fab: 12px;
   --dur-vista: 300ms;        /* la vista que entra se asienta */
   --dur-vista-sale: 180ms;   /* la que sale se aparta antes */
 
