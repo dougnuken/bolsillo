@@ -76,12 +76,15 @@ body[data-route="hoy"] .app-header__title { display: none; }
   padding: 10px 8px 18px;      /* 8 + el gutter de 12 de la vista = 20 de texto */
 }
 .hoy-greet__txt { min-width: 0; }
+/* line-height 1.18 + padding inferior: con 1.08 y overflow:hidden (el ellipsis)
+   la cola de la «g» de «Doug» se cortaba. Tracking -0.01em: a -0.025em el peso
+   300 de «Así va tu octubre» se apelmazaba. */
 .hoy-greet__name {
-  font-family: var(--font-display); font-size: 28px; line-height: 1.08; letter-spacing: -0.025em;
+  font-family: var(--font-display); font-size: clamp(24px, 6.7vw, 28px); line-height: 1.18; letter-spacing: -0.01em;
   font-weight: var(--fw-light); color: var(--text-1);
 }
-.hoy-greet__hola { display: block; font-weight: var(--fw-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hoy-greet__mes { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hoy-greet__hola { display: block; font-weight: var(--fw-medium); letter-spacing: -0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 0.08em; }
+.hoy-greet__mes { display: block; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 0.08em; }
 .hoy-greet__actions { display: flex; align-items: center; gap: var(--gap-bento); flex: 0 0 auto; }
 .hoy-greet__bell { position: relative; }
 
@@ -2665,8 +2668,12 @@ select.field__input::-ms-expand { display: none; }
 /* Pestañas Resumen / Análisis: el control segmentado ya es el de F2; aquí solo
    su aire dentro del bento. */
 .hoy-greet + .bcard { margin-top: 0; }
-.view[data-route="hoy"] > .bcard, .view[data-route="hoy"] > .hoy-productos, .view[data-route="hoy"] > .seg { margin-bottom: var(--gap-bento); }
-.view[data-route="hoy"] > .seg { margin-top: 0; }
+/* El contenido de la vista vive dentro de .view-inner: con «.view > .bcard» la
+   regla no aplicaba y las losas quedaban pegadas (0 px). */
+.view[data-route="hoy"] .view-inner > .bcard,
+.view[data-route="hoy"] .view-inner > .hoy-productos,
+.view[data-route="hoy"] .view-inner > .seg { margin-bottom: var(--gap-bento); }
+.view[data-route="hoy"] .view-inner > .seg { margin-top: 0; }
 
 /* Anillo del semáforo (Análisis): pista punteada, arco fino con extremo
    redondo, punta con pulso y cifra Urbanist 300 con % atenuado. */
