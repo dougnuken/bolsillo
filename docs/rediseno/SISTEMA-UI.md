@@ -224,3 +224,23 @@ Todas las fases cumplen lo mismo: `node --test` en verde, version bump (`sw.js` 
   multicolor del sistema, por decisión de Doug. MARCA §«Se elimina» debe exceptuar el FAB (y nada más: ni el CTA ni el orbe del asesor).
 - **Copy:** el saludo deja de usar «¡Bienvenido!» y emoji (MARCA: sin exclamaciones). En el mockup, «Dashboard/Analytics» se lee «Resumen/Análisis»,
   y es la única etiqueta que cambia.
+
+## 8. Correcciones obligatorias de QA (mandan sobre §2 y §6) — ver `QA-diseno.md`
+
+1. **F1 · color-scheme y theme-color:** `color-scheme: dark` → `light` (`css/tokens.css` y meta en `index.html`) y
+   `theme-color` `#0A0519` → `#F0EFF2`. NO tocar `apple-mobile-web-app-status-bar-style`. Doug prueba la franja de iOS en
+   su iPhone antes de cerrar F2.
+2. **F1 · espaciado:** NO renumerar `--sp-*` (tienen ~400 usos y mueven `--dock-gap`/`--dock-x`). Añadir tokens nuevos
+   `--gap-bento: 6px` y `--gutter: 12px` y usarlos solo donde el sistema lo pide.
+3. **F1 · `--text-inverse`:** auditar cada uso al invertirlo; ningún texto blanco puede quedar sobre superficie clara.
+4. **F2 · geometría real del dock y FAB:** incluir `js/viewport.js`, `--nav-h` (52→60), `nav-min` (`js/app.js` ~l.173),
+   `--fab-asoma`, `--view-b`, y los 5 `translateX(-50%)` del FAB centrado en `css/components.css` (pasa a la derecha).
+   Dock: `role=tab` + `aria-selected` (no `aria-current`), label accesible en cada ícono.
+5. **Contraste:** etiquetas de eje en tinta-2 (no tinta-3); foco sobre negro en blanco/lila claro (≥3:1);
+   `--sobre-negro-2` sube a ≥4,5:1 en el punto más claro del grafito.
+6. **Tap targets ≥44 px** (área táctil, aunque el dibujo sea menor): `.seg__opt`, `.cat-chip`, `.mfilter`, `.chat-chip`,
+   `.toast__act`, `.mov-row__more`, `.icon-btn--s`, `.btn--sm`.
+7. **Blur:** las losas `.vidrio` van SIN `backdrop-filter` en la app (el tablero lo usa: no copiar). Máximo 3–5 capas con
+   blur visibles (header, dock, sheet, FAB).
+8. **Nombres reales:** `.view-head` es `.section-head`; `.composer` es `.chat-bar`.
+9. Línea base de tests: **647/647** (CLAUDE.md dice 423; actualizarlo en F7).

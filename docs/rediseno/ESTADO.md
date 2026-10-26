@@ -9,7 +9,8 @@
 |---|---|---|---|---|
 | 0a | Marca (`MARCA.md`, fuentes, logo SVG) | orquestador → agente Opus alto | ✅ hecho | fundamentos claro + lila `#B49CFF`, Urbanist + Manrope |
 | 0b | Sistema UI + tablero (`SISTEMA-UI.md`, `mockups/`) | orquestador → agente Opus alto | ✅ hecho | plan F1–F7 en SISTEMA-UI §6 |
-| 0c | QA de diseño (`QA-diseno.md`) | agente Sonnet medio | en curso | |
+| 0c | QA de diseño (`QA-diseno.md`) | agente Sonnet medio | ✅ hecho | 3 bloqueantes del plan → SISTEMA-UI §8 (obligatorio) |
+| 0d | Tablero ronda 2 (gradientes, grano, dock grafito, FAB esfera IA, motion) | agente Opus | ✅ hecho | `tablero.jpg`, `tablero-motion.webm` |
 | ⏸ | **Aprobación de Doug** de dirección + tablero | — | pendiente | sin esto no se toca código |
 | F1 | Tokens, fuentes, fondo | sesión nueva · ejecutor Sonnet medio + QA Sonnet | — | |
 | F2 | Shell (dock, FAB, sheets, botones) | ídem | — | |
