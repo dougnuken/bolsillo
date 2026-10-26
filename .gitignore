@@ -7,3 +7,6 @@ node_modules/
 
 # Backup local del tema coral (rollback); no se publica. Baseline en commit c7ccefd.
 backup-tema-coral/
+
+# Referencias de terceros (Dribbble) para el rediseño: no se publican
+docs/rediseno/refs-local/
