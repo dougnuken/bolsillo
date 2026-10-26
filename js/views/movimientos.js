@@ -174,11 +174,21 @@ function mesHTML(ym, total, porDia) {
   const [a, m] = ym.split('-').map(Number);
   const dias = new Date(a, m, 0).getDate();
   let max = 0;
-  for (let d = 1; d <= dias; d++) max = Math.max(max, porDia[`${ym}-${String(d).padStart(2, '0')}`] || 0);
+  const vals = [];
+  for (let d = 1; d <= dias; d++) {
+    const v = porDia[`${ym}-${String(d).padStart(2, '0')}`] || 0;
+    max = Math.max(max, v);
+    if (v > 0) vals.push(v);
+  }
+  /* Escala con tope: un día enorme (el arriendo) no aplasta al resto. La referencia es el
+     percentil 85 de los días con gasto (≥ 1/4 del máximo si hay pocos días); lo que la pasa
+     llega a tope y solo el día mayor lleva el chip con su valor real. */
+  vals.sort((x, y) => x - y);
+  const ref = Math.max(1, vals[Math.min(vals.length - 1, Math.floor(vals.length * 0.85))] || 1);
   let trazos = '';
   for (let d = 1; d <= dias; d++) {
     const v = porDia[`${ym}-${String(d).padStart(2, '0')}`] || 0;
-    trazos += `<i class="mov-bar${v === max && max > 0 ? ' mov-bar--max' : ''}${v ? '' : ' mov-bar--vacio'}" data-v="${max ? Math.sqrt(v / max).toFixed(3) : 0}"></i>`;
+    trazos += `<i class="mov-bar${v === max && max > 0 ? ' mov-bar--max' : ''}${v ? '' : ' mov-bar--vacio'}" data-v="${max ? Math.min(1, Math.sqrt(v / ref)).toFixed(3) : 0}"></i>`;
   }
   const chip = max > 0 ? `<span class="chip-valor mov-month__chip">${esc(formatCOP(max))}</span>` : '';
   const nombre = MESES[m - 1] ? MESES[m - 1][0].toUpperCase() + MESES[m - 1].slice(1) : ym;
@@ -337,8 +347,15 @@ export default {
         const mx = bars.querySelector('.mov-bar--max');
         const chip = bars.parentElement.querySelector('.mov-month__chip');
         if (mx && chip) {
-          const idx = [...bars.children].indexOf(mx);
-          chip.style.setProperty('--x', String(idx / Math.max(1, bars.children.length - 1)));
+          /* Chip centrado sobre su barra; solo se desplaza lo justo para no salirse de la losa. */
+          requestAnimationFrame(() => {
+            const losa = bars.parentElement.getBoundingClientRect();
+            const b = mx.getBoundingClientRect();
+            if (!losa.width) return;
+            const mitad = chip.offsetWidth / 2 + 10;
+            const x = b.left + b.width / 2 - losa.left;
+            chip.style.left = `${Math.min(Math.max(x, mitad), losa.width - mitad)}px`;
+          });
         }
       });
     }

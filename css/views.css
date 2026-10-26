@@ -2979,9 +2979,9 @@ select.field__input::-ms-expand { display: none; }
 .ob2a__pill--rojo { background: var(--semaforo-rojo-bg); }
 .ob2a__pill--rojo::before { background: var(--semaforo-rojo); }
 .ob2a__fila {
-  position: absolute; left: var(--sp-4); right: var(--sp-4); bottom: -26px; height: 72px;
-  display: flex; align-items: flex-start; gap: var(--sp-3); padding: 12px var(--sp-3) 0;
-  border-radius: var(--r-hija) var(--r-hija) 0 0; background: var(--papel);
+  position: absolute; left: var(--sp-4); right: var(--sp-4); bottom: var(--sp-4); height: 68px;
+  display: flex; align-items: center; gap: var(--sp-3); padding: 0 var(--sp-3);
+  border-radius: var(--r-hija); background: var(--papel);
 }
 .ob2a__fila-ic { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: var(--r-full); background: var(--perla); }
 .ob2a__fila-ic svg { width: 20px; height: 20px; }

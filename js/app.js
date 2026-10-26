@@ -743,7 +743,7 @@ function registerSW() {
   if (!('serviceWorker' in navigator)) return;
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(
-      (reg) => console.info('[Bolsillo] SW registrado, scope:', reg.scope),
+      (reg) => console.info('[Bolsillo] SW registrado, scope:', reg?.scope),
       (err) => console.warn('[Bolsillo] SW no registrado:', err),
     );
   });

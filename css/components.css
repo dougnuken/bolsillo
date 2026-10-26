@@ -1471,7 +1471,7 @@ body.has-toast .fab {
 .mov-bar--max { width: 2px; background: var(--tinta); }
 .mov-month__chip {
   position: absolute;
-  left: clamp(64px, calc(20px + (100% - 40px) * var(--x, 0)), calc(100% - 64px));
+  left: 20px;
   bottom: 54px;
   transform: translateX(-50%);
   height: 24px;
